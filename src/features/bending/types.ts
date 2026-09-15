@@ -35,3 +35,51 @@ export interface BendingDispatchSuccess {
   itemCount: number
   totalQuantity: number
 }
+
+export interface BendingDispatchListItem {
+  createdAt: string
+  destination: string | null
+  dispatchDate: string
+  dispatchNumber: string
+  id: string
+  sheetNumber: string | null
+}
+
+export interface BendingReturnLine {
+  article: string
+  designation: string | null
+  dispatchItemId: string
+  outstandingQuantity: number
+  previousReturnedQuantity: number
+  productionItemId: string
+  profile: string | null
+  sentQuantity: number
+  unitWeightKg: number | null
+}
+
+export interface BendingReturnDraftItem extends BendingReturnLine {
+  quantity: number
+}
+
+export interface BendingReturnHeaderValues {
+  receivedByName: string
+  returnDate: string
+  returnReference: string
+}
+
+export interface CreateBendingReturnInput extends BendingReturnHeaderValues {
+  dispatchId: string
+  items: Array<{
+    dispatch_item_id: string
+    quantity: number
+  }>
+  lotId: string
+}
+
+export type BendingReturnResult = Database['public']['Tables']['bending_returns']['Row']
+
+export interface BendingReturnSuccess {
+  itemCount: number
+  returnReference: string
+  totalQuantity: number
+}

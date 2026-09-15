@@ -49,6 +49,120 @@ export interface Database {
         }
         Relationships: []
       }
+      bending_dispatch_items: {
+        Row: {
+          created_at: string
+          designation_snapshot: string | null
+          dispatch_id: string
+          id: string
+          production_item_id: string
+          profile_snapshot: string | null
+          quantity: number
+          remark_snapshot: string | null
+          stage_entry_id: string
+          unit_weight_kg_snapshot: number | null
+        }
+        Insert: {
+          created_at?: string
+          designation_snapshot?: string | null
+          dispatch_id: string
+          id?: string
+          production_item_id: string
+          profile_snapshot?: string | null
+          quantity: number
+          remark_snapshot?: string | null
+          stage_entry_id: string
+          unit_weight_kg_snapshot?: number | null
+        }
+        Update: {
+          created_at?: string
+          designation_snapshot?: string | null
+          dispatch_id?: string
+          id?: string
+          production_item_id?: string
+          profile_snapshot?: string | null
+          quantity?: number
+          remark_snapshot?: string | null
+          stage_entry_id?: string
+          unit_weight_kg_snapshot?: number | null
+        }
+        Relationships: []
+      }
+      bending_return_items: {
+        Row: {
+          created_at: string
+          designation_snapshot: string | null
+          dispatch_item_id: string
+          id: string
+          production_item_id: string
+          profile_snapshot: string | null
+          quantity: number
+          return_id: string
+          stage_entry_id: string
+          unit_weight_kg_snapshot: number | null
+        }
+        Insert: {
+          created_at?: string
+          designation_snapshot?: string | null
+          dispatch_item_id: string
+          id?: string
+          production_item_id: string
+          profile_snapshot?: string | null
+          quantity: number
+          return_id: string
+          stage_entry_id: string
+          unit_weight_kg_snapshot?: number | null
+        }
+        Update: {
+          created_at?: string
+          designation_snapshot?: string | null
+          dispatch_item_id?: string
+          id?: string
+          production_item_id?: string
+          profile_snapshot?: string | null
+          quantity?: number
+          return_id?: string
+          stage_entry_id?: string
+          unit_weight_kg_snapshot?: number | null
+        }
+        Relationships: []
+      }
+      bending_returns: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dispatch_id: string
+          id: string
+          lot_id: string
+          pdf_path: string | null
+          received_by_name: string | null
+          return_date: string
+          return_reference: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dispatch_id: string
+          id?: string
+          lot_id: string
+          pdf_path?: string | null
+          received_by_name?: string | null
+          return_date?: string
+          return_reference: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dispatch_id?: string
+          id?: string
+          lot_id?: string
+          pdf_path?: string | null
+          received_by_name?: string | null
+          return_date?: string
+          return_reference?: string
+        }
+        Relationships: []
+      }
       app_users: {
         Row: {
           auth_user_id: string | null
@@ -276,6 +390,16 @@ export interface Database {
           p_sheet_number: string | null
         }
         Returns: Database['public']['Tables']['bending_dispatches']['Row']
+      }
+      create_bending_return: {
+        Args: {
+          p_dispatch_id: string
+          p_items: Json
+          p_received_by_name: string | null
+          p_return_date: string
+          p_return_reference: string
+        }
+        Returns: Database['public']['Tables']['bending_returns']['Row']
       }
       import_production_preparation_file: {
         Args: {

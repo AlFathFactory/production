@@ -1852,6 +1852,62 @@ button.hierarchy-list__select:hover,
   gap: 18px;
 }
 
+.bending-tabs {
+  display: inline-flex;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 3px;
+  background: var(--surface-subtle);
+}
+
+.bending-tabs button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 17px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.bending-tabs button:hover,
+.bending-tabs button:focus-visible {
+  color: var(--brand);
+  background: #edf3f0;
+  outline: none;
+}
+
+.bending-tabs .bending-tabs__tab--active {
+  color: #fff;
+  background: var(--brand);
+  box-shadow: 0 1px 2px rgb(12 51 51 / 18%);
+}
+
+.bending-dispatch-workflow,
+.bending-return-workflow {
+  display: grid;
+  gap: 14px;
+}
+
+.bending-return-selector {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px 20px;
+  background: var(--surface);
+  box-shadow: 0 10px 28px rgb(14 44 43 / 6%);
+}
+
+.bending-return-selector .form-field {
+  max-width: 760px;
+}
+
 .bending-dispatch {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -1925,6 +1981,25 @@ button.hierarchy-list__select:hover,
   grid-column: span 2;
 }
 
+.bending-return-header-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px 18px;
+  margin: 0;
+  padding: 20px;
+  border: 0;
+}
+
+.bending-return-header-fields legend {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+  padding: 0;
+  color: var(--ink);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .bending-section {
   display: grid;
   gap: 13px;
@@ -1972,6 +2047,10 @@ button.hierarchy-list__select:hover,
 
 .bending-table--draft {
   min-width: 900px;
+}
+
+.bending-table--return {
+  min-width: 1050px;
 }
 
 .bending-table th,
@@ -2077,6 +2156,44 @@ button.hierarchy-list__select:hover,
 .bending-feedback .button {
   min-height: 32px;
   padding: 5px 10px;
+}
+
+.bending-document-details {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfb;
+}
+
+.bending-document-details div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border-right: 1px solid var(--line);
+  padding: 12px 20px;
+}
+
+.bending-document-details div:last-child {
+  border-right: 0;
+}
+
+.bending-document-details dt {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.bending-document-details dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bending-dispatch__footer {
@@ -2227,6 +2344,18 @@ button.hierarchy-list__select:hover,
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .bending-return-header-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bending-document-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bending-document-details div:nth-child(2n) {
+    border-right: 0;
+  }
+
   .bending-header-fields .form-field:first-of-type,
   .bending-header-fields .form-field:nth-of-type(3) {
     grid-column: auto;
@@ -2371,6 +2500,29 @@ button.hierarchy-list__select:hover,
   .bending-header-fields {
     grid-template-columns: 1fr;
     padding: 18px;
+  }
+
+  .bending-return-header-fields {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .bending-return-selector {
+    padding: 18px;
+  }
+
+  .bending-document-details {
+    grid-template-columns: 1fr;
+  }
+
+  .bending-document-details div,
+  .bending-document-details div:nth-child(2n) {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bending-document-details div:last-child {
+    border-bottom: 0;
   }
 
   .bending-section,
