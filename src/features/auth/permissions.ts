@@ -4,6 +4,10 @@ export function canManageUsers(role: AppRole): boolean {
   return canAccessUserManagement(role)
 }
 
+export function canManageProjects(role: AppRole): boolean {
+  return role === 'admin'
+}
+
 export function canCorrectProduction(role: AppRole): boolean {
   return role === 'admin'
 }

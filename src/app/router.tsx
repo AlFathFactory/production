@@ -5,6 +5,7 @@ import { NotFoundPage } from '../components/shared/NotFoundPage'
 import { canAccessBendingDocuments, canAccessUserManagement } from '../features/auth/permissions'
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
+import { ProjectsPage } from '../features/projects/ProjectsPage'
 import { AppLayout } from './layouts/AppLayout'
 import { RequirePermission } from './navigation/RequirePermission'
 
@@ -25,7 +26,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'projects',
-            element: <PlaceholderPage title="Projects" description="Project management will be available in a later task." />,
+            element: <ProjectsPage />,
           },
           {
             path: 'production',

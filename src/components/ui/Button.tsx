@@ -5,7 +5,7 @@ import { LoadingSpinner } from './LoadingSpinner'
 interface ButtonProps
   extends PropsWithChildren<ButtonHTMLAttributes<HTMLButtonElement>> {
   isLoading?: boolean
-  variant?: 'primary' | 'secondary'
+  variant?: 'primary' | 'secondary' | 'danger'
 }
 
 export function Button({
