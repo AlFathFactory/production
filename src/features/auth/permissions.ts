@@ -1,7 +1,7 @@
 import type { AppRole } from './types'
 
 export function canManageUsers(role: AppRole): boolean {
-  return role === 'admin'
+  return canAccessUserManagement(role)
 }
 
 export function canCorrectProduction(role: AppRole): boolean {
@@ -9,9 +9,27 @@ export function canCorrectProduction(role: AppRole): boolean {
 }
 
 export function canCreateBendingDocuments(role: AppRole): boolean {
-  return role === 'admin' || role === 'supervisor'
+  return canAccessBendingDocuments(role)
 }
 
 export function canAddProductionStageEntry(role: AppRole): boolean {
   return role === 'admin' || role === 'supervisor' || role === 'operator'
+}
+
+export function canAccessUserManagement(role: AppRole): boolean {
+  return role === 'admin'
+}
+
+export function canAccessBendingDocuments(role: AppRole): boolean {
+  return role === 'admin' || role === 'supervisor'
+}
+
+export function getRoleLabel(role: AppRole): string {
+  const labels: Record<AppRole, string> = {
+    admin: 'Admin',
+    supervisor: 'Supervisor',
+    operator: 'Operator',
+  }
+
+  return labels[role]
 }

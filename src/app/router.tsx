@@ -1,8 +1,12 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter } from 'react-router-dom'
 
+import { PlaceholderPage } from '../components/shared/PlaceholderPage'
+import { NotFoundPage } from '../components/shared/NotFoundPage'
+import { canAccessBendingDocuments, canAccessUserManagement } from '../features/auth/permissions'
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
-import { HomePage } from './HomePage'
+import { AppLayout } from './layouts/AppLayout'
+import { RequirePermission } from './navigation/RequirePermission'
 
 export const router = createBrowserRouter([
   {
@@ -13,13 +17,46 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
-        path: '/',
-        element: <HomePage />,
+        element: <AppLayout />,
+        children: [
+          {
+            index: true,
+            element: <PlaceholderPage title="Dashboard" description="Dashboard insights will be available in a later task." />,
+          },
+          {
+            path: 'projects',
+            element: <PlaceholderPage title="Projects" description="Project management will be available in a later task." />,
+          },
+          {
+            path: 'production',
+            element: <PlaceholderPage title="Production" description="Production tracking and stage entry will be available in a later task." />,
+          },
+          {
+            path: 'bending',
+            element: (
+              <RequirePermission canAccess={canAccessBendingDocuments}>
+                <PlaceholderPage title="Bending" description="Bending document management will be available in a later task." />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'documents',
+            element: <PlaceholderPage title="Documents" description="The documents register will be available in a later task." />,
+          },
+          {
+            path: 'users',
+            element: (
+              <RequirePermission canAccess={canAccessUserManagement}>
+                <PlaceholderPage title="Users" description="User management will be available in a later task." />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: '*',
+            element: <NotFoundPage />,
+          },
+        ],
       },
     ],
-  },
-  {
-    path: '*',
-    element: <Navigate to="/" replace />,
   },
 ])
