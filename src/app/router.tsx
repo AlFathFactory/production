@@ -6,6 +6,7 @@ import { canAccessBendingDocuments, canAccessUserManagement } from '../features/
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
+import { ProductionPage } from '../features/production/ProductionPage'
 import { AppLayout } from './layouts/AppLayout'
 import { RequirePermission } from './navigation/RequirePermission'
 
@@ -30,7 +31,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'production',
-            element: <PlaceholderPage title="Production" description="Production tracking and stage entry will be available in a later task." />,
+            element: <ProductionPage />,
           },
           {
             path: 'bending',
