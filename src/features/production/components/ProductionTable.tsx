@@ -1,7 +1,12 @@
 import { ProductionTableRow } from './ProductionTableRow'
-import type { ProductionSearchRow } from '../types'
+import type { DirectStageAction, ProductionSearchRow } from '../types'
 
-export function ProductionTable({ items }: { items: ProductionSearchRow[] }) {
+interface ProductionTableProps {
+  items: ProductionSearchRow[]
+  onStageAction: (item: ProductionSearchRow, action: DirectStageAction) => void
+}
+
+export function ProductionTable({ items, onStageAction }: ProductionTableProps) {
   return (
     <div className="production-table-wrap" tabIndex={0} aria-label="Production items table. Scroll horizontally to view all columns.">
       <table className="production-table">
@@ -19,9 +24,10 @@ export function ProductionTable({ items }: { items: ProductionSearchRow[] }) {
             <th scope="col">Dispensed</th>
             <th scope="col">Next Action</th>
             <th scope="col">Progress</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
-        <tbody>{items.map((item, index) => <ProductionTableRow key={item.production_item_id ?? `production-row-${index}`} item={item} />)}</tbody>
+        <tbody>{items.map((item, index) => <ProductionTableRow key={item.production_item_id ?? `production-row-${index}`} item={item} onStageAction={onStageAction} />)}</tbody>
       </table>
     </div>
   )

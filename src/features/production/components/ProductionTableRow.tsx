@@ -1,14 +1,20 @@
 import { ProductionActionBadge } from './ProductionActionBadge'
 import { ProductionProgressBadge } from './ProductionProgressBadge'
 import { ProductionRouteBadge } from './ProductionRouteBadge'
-import type { ProductionSearchRow } from '../types'
+import { ProductionRowActions } from './ProductionRowActions'
+import type { DirectStageAction, ProductionSearchRow } from '../types'
 import { formatPercent, formatQuantity } from '../utils'
 
 function stageValue(value: number | null, applicable: boolean): string {
   return applicable ? formatQuantity(value) : '—'
 }
 
-export function ProductionTableRow({ item }: { item: ProductionSearchRow }) {
+interface ProductionTableRowProps {
+  item: ProductionSearchRow
+  onStageAction: (item: ProductionSearchRow, action: DirectStageAction) => void
+}
+
+export function ProductionTableRow({ item, onStageAction }: ProductionTableRowProps) {
   const supportsOutBend = item.routing === 'BEND'
   const supportsBendOrRolling = item.routing === 'BEND' || item.routing === 'ROLLING'
   const finalStage = item.routing === 'BEND' ? item.bend_total : item.routing === 'ROLLING' ? item.rolling_total : null
@@ -34,6 +40,7 @@ export function ProductionTableRow({ item }: { item: ProductionSearchRow }) {
           <ProductionProgressBadge progressState={item.progress_state} />
         </div>
       </td>
+      <td><ProductionRowActions item={item} onSelectAction={onStageAction} /></td>
     </tr>
   )
 }

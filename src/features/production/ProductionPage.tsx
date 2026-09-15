@@ -4,36 +4,75 @@ import type { ReactNode } from 'react'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
+import { canCreateProductionItems } from '../auth/permissions'
+import { useAuth } from '../auth/hooks/useAuth'
+import { AddMaterialDialog } from './components/AddMaterialDialog'
 import { ProductionFilters } from './components/ProductionFilters'
 import { ProjectLotSelector } from './components/ProjectLotSelector'
+import { StageEntryDialog } from './components/StageEntryDialog'
 import { ProductionSummary } from './components/ProductionSummary'
 import { ProductionTable } from './components/ProductionTable'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 import { useProductionFilters } from './hooks/useProductionFilters'
+import { useAddProductionStageEntry } from './mutations/useAddProductionStageEntry'
+import { useCreateProductionItem } from './mutations/useCreateProductionItem'
 import { useProductionItems } from './queries/productionQueries'
+import type { CreateProductionItemInput, DirectStageAction, ProductionSearchRow } from './types'
 
 function ProductionState({ children }: { children: ReactNode }) {
   return <section className="production-state">{children}</section>
 }
 
 export function ProductionPage() {
+  const { session, userProfile } = useAuth()
   const [projectId, setProjectId] = useState<string | null>(null)
   const [projectNumberId, setProjectNumberId] = useState<string | null>(null)
   const [lotId, setLotId] = useState<string | null>(null)
+  const [isAddMaterialOpen, setIsAddMaterialOpen] = useState(false)
+  const [stageSelection, setStageSelection] = useState<{ action: DirectStageAction; item: ProductionSearchRow } | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const productionFilters = useProductionFilters()
   const debouncedQuery = useDebouncedValue(productionFilters.filters.query)
-  const itemsQuery = useProductionItems({
+  const searchFilters = {
     projectId,
     projectNumberId,
     lotId,
     ...productionFilters.filters,
     query: debouncedQuery,
-  })
+  }
+  const itemsQuery = useProductionItems(searchFilters)
+  const createMaterialMutation = useCreateProductionItem(searchFilters)
+  const addStageMutation = useAddProductionStageEntry(searchFilters)
+  const canAddMaterial = Boolean(userProfile && canCreateProductionItems(userProfile.role))
 
   const selectProject = (nextProjectId: string | null) => {
     setProjectId(nextProjectId)
     setProjectNumberId(null)
     setLotId(null)
+  }
+
+  const addMaterial = async (values: Omit<CreateProductionItemInput, 'createdBy' | 'lotId'>) => {
+    if (!lotId || !session?.user.id) {
+      throw new Error('Select a lot before adding a material.')
+    }
+
+    await createMaterialMutation.mutateAsync({ ...values, lotId, createdBy: session.user.id })
+    setSuccessMessage('Material added successfully.')
+  }
+
+  const addStageEntry = async ({ entryDate, note, quantity }: { entryDate: string; note: string; quantity: number }) => {
+    if (!stageSelection?.item.production_item_id) {
+      throw new Error('The selected Production item is no longer available.')
+    }
+
+    await addStageMutation.mutateAsync({
+      entryDate,
+      note,
+      productionItemId: stageSelection.item.production_item_id,
+      quantity,
+      stage: stageSelection.action.stage,
+    })
+    setSuccessMessage(`${stageSelection.action.stage} progress added successfully.`)
   }
 
   const selectProjectNumber = (nextProjectNumberId: string | null) => {
@@ -43,8 +82,17 @@ export function ProductionPage() {
 
   return (
     <>
-      <PageHeader title="Production" description="View calculated production status for items in a selected lot." />
+      <PageHeader
+        title="Production"
+        description="View calculated production status for items in a selected lot."
+        actions={canAddMaterial ? (
+          <Button type="button" disabled={!lotId} title={lotId ? undefined : 'Select a lot to add material.'} onClick={() => setIsAddMaterialOpen(true)}>
+            Add Material
+          </Button>
+        ) : undefined}
+      />
       <div className="production-workspace">
+        {successMessage ? <p className="production-feedback" role="status">{successMessage}</p> : null}
         <ProjectLotSelector
           projectId={projectId}
           projectNumberId={projectNumberId}
@@ -81,10 +129,18 @@ export function ProductionPage() {
         {itemsQuery.data && itemsQuery.data.length > 0 ? (
           <section className="production-results" aria-label="Production results">
             <ProductionSummary items={itemsQuery.data} />
-            <ProductionTable items={itemsQuery.data} />
+            <ProductionTable items={itemsQuery.data} onStageAction={(item, action) => setStageSelection({ item, action })} />
           </section>
         ) : null}
       </div>
+      {canAddMaterial ? <AddMaterialDialog isOpen={isAddMaterialOpen} onClose={() => setIsAddMaterialOpen(false)} onSubmit={addMaterial} /> : null}
+      <StageEntryDialog
+        action={stageSelection?.action ?? null}
+        isOpen={Boolean(stageSelection)}
+        item={stageSelection?.item ?? null}
+        onClose={() => setStageSelection(null)}
+        onSubmit={addStageEntry}
+      />
     </>
   )
 }

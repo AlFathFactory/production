@@ -132,9 +132,91 @@ export interface Database {
         }
         Relationships: []
       }
+      production_items: {
+        Row: {
+          article: string
+          created_at: string
+          created_by: string | null
+          designation: string | null
+          id: string
+          is_active: boolean
+          lot_id: string
+          material: string | null
+          profile: string | null
+          remark: string | null
+          routing: Database['public']['Enums']['production_route']
+          source: Database['public']['Enums']['production_item_source']
+          source_row: number | null
+          total_quantity: number
+          unit_weight_kg: number | null
+          updated_at: string
+        }
+        Insert: {
+          article: string
+          created_at?: string
+          created_by?: string | null
+          designation?: string | null
+          id?: string
+          is_active?: boolean
+          lot_id: string
+          material?: string | null
+          profile?: string | null
+          remark?: string | null
+          routing: Database['public']['Enums']['production_route']
+          source?: Database['public']['Enums']['production_item_source']
+          source_row?: number | null
+          total_quantity: number
+          unit_weight_kg?: number | null
+          updated_at?: string
+        }
+        Update: {
+          article?: string
+          created_at?: string
+          created_by?: string | null
+          designation?: string | null
+          id?: string
+          is_active?: boolean
+          lot_id?: string
+          material?: string | null
+          profile?: string | null
+          remark?: string | null
+          routing?: Database['public']['Enums']['production_route']
+          source?: Database['public']['Enums']['production_item_source']
+          source_row?: number | null
+          total_quantity?: number
+          unit_weight_kg?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
+      add_production_stage_entry: {
+        Args: {
+          p_entry_date?: string
+          p_note?: string
+          p_production_item_id: string
+          p_quantity: number
+          p_source?: string
+          p_source_reference?: string
+          p_stage: Database['public']['Enums']['production_stage']
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          entry_date: string
+          id: string
+          note: string | null
+          performed_by: string | null
+          performed_by_name_snapshot: string | null
+          production_item_id: string
+          quantity: number
+          source: string
+          source_reference: string | null
+          stage: Database['public']['Enums']['production_stage']
+        }
+      }
       search_production_items: {
         Args: {
           p_last_activity_from?: string
@@ -184,7 +266,9 @@ export interface Database {
     }
     Enums: {
       app_role: AppRole
+      production_item_source: 'excel_import' | 'manual'
       production_route: 'BEND' | 'NO BEND' | 'ROD' | 'ROLLING' | 'LADDER' | 'OTHER'
+      production_stage: 'CUT' | 'OUT_BEND' | 'BEND' | 'ROLLING' | 'DISPENSE'
     }
     CompositeTypes: Record<string, never>
   }

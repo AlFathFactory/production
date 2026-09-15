@@ -20,6 +20,10 @@ export function canAddProductionStageEntry(role: AppRole): boolean {
   return role === 'admin' || role === 'supervisor' || role === 'operator'
 }
 
+export function canCreateProductionItems(role: AppRole): boolean {
+  return role === 'admin'
+}
+
 export function canAccessUserManagement(role: AppRole): boolean {
   return role === 'admin'
 }
