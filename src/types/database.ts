@@ -1,4 +1,5 @@
 export type AppRole = 'admin' | 'supervisor' | 'operator'
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export interface Database {
   public: {
@@ -216,6 +217,14 @@ export interface Database {
           source_reference: string | null
           stage: Database['public']['Enums']['production_stage']
         }
+      }
+      import_production_preparation_file: {
+        Args: {
+          p_file_name: string
+          p_lot_id: string
+          p_rows: Json
+        }
+        Returns: Json
       }
       search_production_items: {
         Args: {

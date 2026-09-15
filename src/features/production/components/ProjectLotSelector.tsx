@@ -9,9 +9,9 @@ interface ProjectLotSelectorProps {
   projectId: string | null
   projectNumberId: string | null
   lotId: string | null
-  onProjectChange: (projectId: string | null) => void
-  onProjectNumberChange: (projectNumberId: string | null) => void
-  onLotChange: (lotId: string | null) => void
+  onProjectChange: (projectId: string | null, label: string | null) => void
+  onProjectNumberChange: (projectNumberId: string | null, label: string | null) => void
+  onLotChange: (lotId: string | null, label: string | null) => void
 }
 
 function SelectorError({ message, onRetry }: { message: string; onRetry: () => void }) {
@@ -41,7 +41,11 @@ export function ProjectLotSelector({
           id="production-project"
           value={projectId ?? ''}
           disabled={projectsQuery.isPending}
-          onChange={(event) => onProjectChange(event.target.value || null)}
+          onChange={(event) => {
+            const id = event.target.value || null
+            const project = projectsQuery.data?.find((candidate) => candidate.id === id)
+            onProjectChange(id, project?.project_name ?? null)
+          }}
         >
           <option value="">{projectsQuery.isPending ? 'Loading projects…' : 'Select a project'}</option>
           {projectsQuery.data?.map((project) => <option key={project.id} value={project.id}>{project.project_name}</option>)}
@@ -55,7 +59,11 @@ export function ProjectLotSelector({
           id="production-project-number"
           value={projectNumberId ?? ''}
           disabled={!projectId || projectNumbersQuery.isPending || projectNumbersQuery.isError}
-          onChange={(event) => onProjectNumberChange(event.target.value || null)}
+          onChange={(event) => {
+            const id = event.target.value || null
+            const projectNumber = projectNumbersQuery.data?.find((candidate) => candidate.id === id)
+            onProjectNumberChange(id, projectNumber?.project_number ?? null)
+          }}
         >
           <option value="">{projectNumbersQuery.isPending ? 'Loading project numbers…' : 'Select a project number'}</option>
           {projectNumbersQuery.data?.map((projectNumber) => <option key={projectNumber.id} value={projectNumber.id}>{projectNumber.project_number}</option>)}
@@ -69,7 +77,11 @@ export function ProjectLotSelector({
           id="production-lot"
           value={lotId ?? ''}
           disabled={!projectNumberId || lotsQuery.isPending || lotsQuery.isError}
-          onChange={(event) => onLotChange(event.target.value || null)}
+          onChange={(event) => {
+            const id = event.target.value || null
+            const lot = lotsQuery.data?.find((candidate) => candidate.id === id)
+            onLotChange(id, lot?.lot_number ?? null)
+          }}
         >
           <option value="">{lotsQuery.isPending ? 'Loading lots…' : 'Select a lot'}</option>
           {lotsQuery.data?.map((lot) => <option key={lot.id} value={lot.id}>{lot.lot_number}</option>)}

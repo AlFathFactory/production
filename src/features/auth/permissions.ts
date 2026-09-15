@@ -24,6 +24,10 @@ export function canCreateProductionItems(role: AppRole): boolean {
   return role === 'admin'
 }
 
+export function canImportProduction(role: AppRole): boolean {
+  return role === 'admin'
+}
+
 export function canAccessUserManagement(role: AppRole): boolean {
   return role === 'admin'
 }
