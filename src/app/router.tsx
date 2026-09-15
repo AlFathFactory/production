@@ -5,6 +5,7 @@ import { NotFoundPage } from '../components/shared/NotFoundPage'
 import { canAccessBendingDocuments, canAccessUserManagement } from '../features/auth/permissions'
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
+import { BendingPage } from '../features/bending/BendingPage'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
 import { ProductionPage } from '../features/production/ProductionPage'
 import { AppLayout } from './layouts/AppLayout'
@@ -37,7 +38,7 @@ export const router = createBrowserRouter([
             path: 'bending',
             element: (
               <RequirePermission canAccess={canAccessBendingDocuments}>
-                <PlaceholderPage title="Bending" description="Bending document management will be available in a later task." />
+                <BendingPage />
               </RequirePermission>
             ),
           },

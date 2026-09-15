@@ -4,6 +4,51 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
+      bending_dispatches: {
+        Row: {
+          approval_name: string | null
+          created_at: string
+          created_by: string | null
+          destination: string | null
+          dispatch_date: string
+          dispatch_name: string | null
+          dispatch_number: string
+          follow_name: string | null
+          id: string
+          lot_id: string
+          pdf_path: string | null
+          sheet_number: string | null
+        }
+        Insert: {
+          approval_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          dispatch_date?: string
+          dispatch_name?: string | null
+          dispatch_number: string
+          follow_name?: string | null
+          id?: string
+          lot_id: string
+          pdf_path?: string | null
+          sheet_number?: string | null
+        }
+        Update: {
+          approval_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          destination?: string | null
+          dispatch_date?: string
+          dispatch_name?: string | null
+          dispatch_number?: string
+          follow_name?: string | null
+          id?: string
+          lot_id?: string
+          pdf_path?: string | null
+          sheet_number?: string | null
+        }
+        Relationships: []
+      }
       app_users: {
         Row: {
           auth_user_id: string | null
@@ -217,6 +262,20 @@ export interface Database {
           source_reference: string | null
           stage: Database['public']['Enums']['production_stage']
         }
+      }
+      create_bending_dispatch: {
+        Args: {
+          p_approval_name: string | null
+          p_destination: string | null
+          p_dispatch_date: string
+          p_dispatch_name: string | null
+          p_dispatch_number: string
+          p_follow_name: string | null
+          p_items: Json
+          p_lot_id: string
+          p_sheet_number: string | null
+        }
+        Returns: Database['public']['Tables']['bending_dispatches']['Row']
       }
       import_production_preparation_file: {
         Args: {

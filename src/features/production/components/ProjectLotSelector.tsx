@@ -6,6 +6,8 @@ import { useProjectNumbers } from '../../projects/queries/useProjectNumbers'
 import { useProjects } from '../../projects/queries/useProjects'
 
 interface ProjectLotSelectorProps {
+  ariaLabel?: string
+  idPrefix?: string
   projectId: string | null
   projectNumberId: string | null
   lotId: string | null
@@ -23,6 +25,8 @@ function SelectorError({ message, onRetry }: { message: string; onRetry: () => v
 }
 
 export function ProjectLotSelector({
+  ariaLabel = 'Production hierarchy selection',
+  idPrefix = 'production',
   projectId,
   projectNumberId,
   lotId,
@@ -33,12 +37,15 @@ export function ProjectLotSelector({
   const projectsQuery = useProjects()
   const projectNumbersQuery = useProjectNumbers(projectId)
   const lotsQuery = useLots(projectNumberId)
+  const projectInputId = `${idPrefix}-project`
+  const projectNumberInputId = `${idPrefix}-project-number`
+  const lotInputId = `${idPrefix}-lot`
 
   return (
-    <section className="production-selector" aria-label="Production hierarchy selection">
-      <FormField label="Project" htmlFor="production-project">
+    <section className="production-selector" aria-label={ariaLabel}>
+      <FormField label="Project" htmlFor={projectInputId}>
         <Select
-          id="production-project"
+          id={projectInputId}
           value={projectId ?? ''}
           disabled={projectsQuery.isPending}
           onChange={(event) => {
@@ -54,9 +61,9 @@ export function ProjectLotSelector({
         {projectsQuery.isError ? <SelectorError message="Projects could not be loaded." onRetry={() => void projectsQuery.refetch()} /> : null}
       </FormField>
 
-      <FormField label="Project Number" htmlFor="production-project-number">
+      <FormField label="Project Number" htmlFor={projectNumberInputId}>
         <Select
-          id="production-project-number"
+          id={projectNumberInputId}
           value={projectNumberId ?? ''}
           disabled={!projectId || projectNumbersQuery.isPending || projectNumbersQuery.isError}
           onChange={(event) => {
@@ -72,9 +79,9 @@ export function ProjectLotSelector({
         {projectNumbersQuery.isError ? <SelectorError message="Project numbers could not be loaded." onRetry={() => void projectNumbersQuery.refetch()} /> : null}
       </FormField>
 
-      <FormField label="Lot" htmlFor="production-lot">
+      <FormField label="Lot" htmlFor={lotInputId}>
         <Select
-          id="production-lot"
+          id={lotInputId}
           value={lotId ?? ''}
           disabled={!projectNumberId || lotsQuery.isPending || lotsQuery.isError}
           onChange={(event) => {
