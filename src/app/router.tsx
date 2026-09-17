@@ -6,6 +6,7 @@ import { canAccessBendingDocuments, canAccessUserManagement } from '../features/
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { BendingPage } from '../features/bending/BendingPage'
+import { DocumentsPage } from '../features/documents/DocumentsPage'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
 import { ProductionPage } from '../features/production/ProductionPage'
 import { AppLayout } from './layouts/AppLayout'
@@ -44,7 +45,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'documents',
-            element: <PlaceholderPage title="Documents" description="The documents register will be available in a later task." />,
+            element: <DocumentsPage />,
           },
           {
             path: 'users',

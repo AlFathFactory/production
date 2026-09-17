@@ -350,7 +350,37 @@ export interface Database {
         Relationships: []
       }
     }
-    Views: Record<string, never>
+    Views: {
+      production_documents_register: {
+        Row: {
+          approval_name: string | null
+          created_at: string | null
+          created_by: string | null
+          created_by_name: string | null
+          destination: string | null
+          dispatch_name: string | null
+          document_date: string | null
+          document_id: string | null
+          document_reference: string | null
+          document_type: string | null
+          follow_name: string | null
+          item_count: number | null
+          lot_id: string | null
+          lot_number: string | null
+          pdf_path: string | null
+          project_id: string | null
+          project_name: string | null
+          project_number: string | null
+          project_number_id: string | null
+          received_by_name: string | null
+          sheet_number: string | null
+          source_dispatch_id: string | null
+          source_dispatch_reference: string | null
+          total_quantity: number | null
+        }
+        Relationships: []
+      }
+    }
     Functions: {
       attach_bending_dispatch_pdf: {
         Args: {
