@@ -1,7 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom'
 
 import { NotFoundPage } from '../components/shared/NotFoundPage'
-import { PlaceholderPage } from '../components/shared/PlaceholderPage'
 import { canAccessBendingDocuments, canAccessUserManagement } from '../features/auth/permissions'
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
@@ -10,6 +9,7 @@ import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { DocumentsPage } from '../features/documents/DocumentsPage'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
 import { ProductionPage } from '../features/production/ProductionPage'
+import { UsersPage } from '../features/users/UsersPage'
 import { AppLayout } from './layouts/AppLayout'
 import { RequirePermission } from './navigation/RequirePermission'
 
@@ -52,7 +52,7 @@ export const router = createBrowserRouter([
             path: 'users',
             element: (
               <RequirePermission canAccess={canAccessUserManagement}>
-                <PlaceholderPage title="Users" description="User management will be available in a later task." />
+                <UsersPage />
               </RequirePermission>
             ),
           },
