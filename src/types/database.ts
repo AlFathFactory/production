@@ -379,6 +379,58 @@ export interface Database {
           total_quantity: number | null
         }
         Relationships: []
+      },
+      production_lot_dashboard: {
+        Row: {
+          lot_id: string
+          lot_number: string
+          project_id: string
+          project_name: string
+          project_number: string
+          project_number_id: string
+          total_items: number
+          completed_items: number
+          in_progress_items: number
+          not_started_items: number
+          total_quantity: number
+          cut_total: number
+          out_bend_total: number
+          bend_total: number
+          rolling_total: number
+          warehouse_stock: number
+          dispensed_total: number
+          remaining_to_dispense: number
+          completion_percent: number
+          last_activity_at: string | null
+        }
+        Relationships: []
+      },
+      production_action_queue: {
+        Row: {
+          lot_id: string
+          lot_number: string
+          project_id: string
+          project_name: string
+          project_number: string
+          project_number_id: string
+          production_item_id: string
+          article: string
+          designation: string | null
+          profile: string | null
+          routing: string
+          next_action: string
+          available_action_quantity: number
+          progress_state: string
+          total_quantity: number
+          cut_total: number
+          out_bend_total: number
+          bend_total: number
+          rolling_total: number
+          warehouse_stock: number
+          dispensed_total: number
+          last_activity_at: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {

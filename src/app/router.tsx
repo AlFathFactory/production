@@ -1,11 +1,12 @@
 import { createBrowserRouter } from 'react-router-dom'
 
-import { PlaceholderPage } from '../components/shared/PlaceholderPage'
 import { NotFoundPage } from '../components/shared/NotFoundPage'
+import { PlaceholderPage } from '../components/shared/PlaceholderPage'
 import { canAccessBendingDocuments, canAccessUserManagement } from '../features/auth/permissions'
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { BendingPage } from '../features/bending/BendingPage'
+import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { DocumentsPage } from '../features/documents/DocumentsPage'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
 import { ProductionPage } from '../features/production/ProductionPage'
@@ -25,7 +26,7 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <PlaceholderPage title="Dashboard" description="Dashboard insights will be available in a later task." />,
+            element: <DashboardPage />,
           },
           {
             path: 'projects',
