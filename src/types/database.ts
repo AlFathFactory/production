@@ -4,6 +4,51 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
+      production_stage_entries: {
+        Row: {
+          id: string
+          production_item_id: string
+          stage: Database['public']['Enums']['production_stage']
+          quantity: number
+          entry_date: string
+          note: string | null
+          source: string
+          source_reference: string | null
+          created_at: string
+          created_by: string | null
+          performed_by: string | null
+          performed_by_name_snapshot: string | null
+        }
+        Insert: {
+          id?: string
+          production_item_id: string
+          stage: Database['public']['Enums']['production_stage']
+          quantity: number
+          entry_date?: string
+          note?: string | null
+          source?: string
+          source_reference?: string | null
+          created_at?: string
+          created_by?: string | null
+          performed_by?: string | null
+          performed_by_name_snapshot?: string | null
+        }
+        Update: {
+          id?: string
+          production_item_id?: string
+          stage?: Database['public']['Enums']['production_stage']
+          quantity?: number
+          entry_date?: string
+          note?: string | null
+          source?: string
+          source_reference?: string | null
+          created_at?: string
+          created_by?: string | null
+          performed_by?: string | null
+          performed_by_name_snapshot?: string | null
+        }
+        Relationships: []
+      },
       bending_dispatches: {
         Row: {
           approval_name: string | null
@@ -348,6 +393,45 @@ export interface Database {
           updated_at?: string
         }
         Relationships: []
+      },
+      production_stage_entry_audit: {
+        Row: {
+          id: string
+          stage_entry_id: string
+          production_item_id: string
+          action: 'corrected' | 'deleted'
+          reason: string
+          old_data: Json | null
+          new_data: Json | null
+          corrected_by: string | null
+          corrected_by_name: string | null
+          corrected_at: string
+        }
+        Insert: {
+          id?: string
+          stage_entry_id: string
+          production_item_id: string
+          action: 'corrected' | 'deleted'
+          reason: string
+          old_data?: Json | null
+          new_data?: Json | null
+          corrected_by?: string | null
+          corrected_by_name?: string | null
+          corrected_at?: string
+        }
+        Update: {
+          id?: string
+          stage_entry_id?: string
+          production_item_id?: string
+          action?: 'corrected' | 'deleted'
+          reason?: string
+          old_data?: Json | null
+          new_data?: Json | null
+          corrected_by?: string | null
+          corrected_by_name?: string | null
+          corrected_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -497,14 +581,57 @@ export interface Database {
         }
         Returns: Database['public']['Tables']['bending_returns']['Row']
       }
-      import_production_preparation_file: {
+import_production_preparation_file: {
         Args: {
           p_file_name: string
           p_lot_id: string
           p_rows: Json
         }
         Returns: Json
-      }
+      },
+      correct_production_stage_entry: {
+        Args: {
+          p_entry_id: string
+          p_quantity: number
+          p_entry_date: string
+          p_note: string | null
+          p_reason: string
+        }
+        Returns: {
+          id: string
+          production_item_id: string
+          stage: Database['public']['Enums']['production_stage']
+          quantity: number
+          entry_date: string
+          note: string | null
+          source: string
+          source_reference: string | null
+          created_at: string
+          created_by: string | null
+          performed_by: string | null
+          performed_by_name_snapshot: string | null
+        }
+      },
+      delete_production_stage_entry: {
+        Args: {
+          p_entry_id: string
+          p_reason: string
+        }
+        Returns: {
+          id: string
+          production_item_id: string
+          stage: Database['public']['Enums']['production_stage']
+          quantity: number
+          entry_date: string
+          note: string | null
+          source: string
+          source_reference: string | null
+          created_at: string
+          created_by: string | null
+          performed_by: string | null
+          performed_by_name_snapshot: string | null
+        }
+      },
       search_production_items: {
         Args: {
           p_last_activity_from?: string

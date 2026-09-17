@@ -12,6 +12,7 @@ import { ProjectLotSelector } from './components/ProjectLotSelector'
 import { StageEntryDialog } from './components/StageEntryDialog'
 import { ProductionSummary } from './components/ProductionSummary'
 import { ProductionTable } from './components/ProductionTable'
+import { ProductionHistoryDialog } from './history/components/ProductionHistoryDialog'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 import { useProductionFilters } from './hooks/useProductionFilters'
 import { ProductionImportDialog } from './import/components/ProductionImportDialog'
@@ -35,6 +36,7 @@ export function ProductionPage() {
   const [isAddMaterialOpen, setIsAddMaterialOpen] = useState(false)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [stageSelection, setStageSelection] = useState<{ action: DirectStageAction; item: ProductionSearchRow } | null>(null)
+  const [historySelection, setHistorySelection] = useState<ProductionSearchRow | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const productionFilters = useProductionFilters()
   const debouncedQuery = useDebouncedValue(productionFilters.filters.query)
@@ -166,7 +168,11 @@ export function ProductionPage() {
         {itemsQuery.data && itemsQuery.data.length > 0 ? (
           <section className="production-results" aria-label="Production results">
             <ProductionSummary items={itemsQuery.data} />
-            <ProductionTable items={itemsQuery.data} onStageAction={(item, action) => setStageSelection({ item, action })} />
+            <ProductionTable
+              items={itemsQuery.data}
+              onStageAction={(item, action) => setStageSelection({ item, action })}
+              onViewHistory={(item) => setHistorySelection(item)}
+            />
           </section>
         ) : null}
       </div>
@@ -185,6 +191,14 @@ export function ProductionPage() {
         item={stageSelection?.item ?? null}
         onClose={() => setStageSelection(null)}
         onSubmit={addStageEntry}
+      />
+      <ProductionHistoryDialog
+        isOpen={Boolean(historySelection)}
+        onClose={() => setHistorySelection(null)}
+        productionItemId={historySelection?.production_item_id ?? null}
+        itemArticle={historySelection?.article ?? ''}
+        itemDesignation={historySelection?.designation ?? null}
+        userRole={userProfile?.role ?? null}
       />
     </>
   )
