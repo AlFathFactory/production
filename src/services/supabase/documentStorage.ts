@@ -4,7 +4,12 @@ const DOCUMENT_BUCKET = 'production-documents'
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024
 const SIGNED_URL_EXPIRY_SECONDS = 120
 
-export type DocumentStorageErrorKind = 'download' | 'network' | 'permission' | 'size' | 'signed_url' | 'upload'
+export type DocumentStorageErrorKind = 'download' | 'network' | 'permission' | 'remove' | 'size' | 'signed_url' | 'upload'
+
+export interface DocumentUploadResult {
+  path: string
+  wasUploaded: boolean
+}
 
 export class DocumentStorageError extends Error {
   constructor(message: string, public readonly kind: DocumentStorageErrorKind) {
@@ -21,7 +26,7 @@ function storageErrorDetails(error: unknown) {
   }
 }
 
-function mapStorageError(error: unknown, action: 'download' | 'signed_url' | 'upload') {
+function mapStorageError(error: unknown, action: 'download' | 'remove' | 'signed_url' | 'upload') {
   const { message, statusCode } = storageErrorDetails(error)
   if (statusCode === '401' || statusCode === '403' || /permission|policy|unauthorized|forbidden/i.test(message)) {
     return new DocumentStorageError('You do not have permission to access this PDF.', 'permission')
@@ -31,6 +36,7 @@ function mapStorageError(error: unknown, action: 'download' | 'signed_url' | 'up
   }
   const messages = {
     download: 'The PDF download could not be started. Please retry.',
+    remove: 'The uploaded PDF could not be removed from Storage.',
     signed_url: 'A secure link for this PDF could not be created. Please retry.',
     upload: 'The PDF could not be uploaded. Please retry.',
   } as const
@@ -51,7 +57,7 @@ function getPdfPath(folder: string, prefix: string, reference: string, id: strin
   return `${folder}/${prefix}_${sanitizePathPart(reference)}_${sanitizePathPart(id)}.pdf`
 }
 
-async function uploadPdf(path: string, pdf: Blob): Promise<string> {
+async function uploadPdf(path: string, pdf: Blob): Promise<DocumentUploadResult> {
   if (pdf.size > MAX_PDF_SIZE_BYTES) {
     throw new DocumentStorageError('The generated PDF is larger than the 10 MB upload limit.', 'size')
   }
@@ -64,12 +70,12 @@ async function uploadPdf(path: string, pdf: Blob): Promise<string> {
   if (error) {
     const { message, statusCode } = storageErrorDetails(error)
     if (statusCode === '409' || /duplicate|already exists|resource already exists/i.test(message)) {
-      return path
+      return { path, wasUploaded: false }
     }
     throw mapStorageError(error, 'upload')
   }
 
-  return data.path
+  return { path: data.path, wasUploaded: true }
 }
 
 export const documentStorage = {
@@ -81,11 +87,11 @@ export const documentStorage = {
     return getPdfPath('bending-returns', 'return', reference, id)
   },
 
-  uploadDispatchPdf(reference: string, id: string, pdf: Blob): Promise<string> {
+  uploadDispatchPdf(reference: string, id: string, pdf: Blob): Promise<DocumentUploadResult> {
     return uploadPdf(this.buildDispatchPath(reference, id), pdf)
   },
 
-  uploadReturnPdf(reference: string, id: string, pdf: Blob): Promise<string> {
+  uploadReturnPdf(reference: string, id: string, pdf: Blob): Promise<DocumentUploadResult> {
     return uploadPdf(this.buildReturnPath(reference, id), pdf)
   },
 
@@ -95,6 +101,11 @@ export const documentStorage = {
       .createSignedUrl(path, SIGNED_URL_EXPIRY_SECONDS, downloadFileName ? { download: downloadFileName } : undefined)
     if (error) throw mapStorageError(error, 'signed_url')
     return data.signedUrl
+  },
+
+  async removeDocument(path: string): Promise<void> {
+    const { error } = await supabase.storage.from(DOCUMENT_BUCKET).remove([path])
+    if (error) throw mapStorageError(error, 'remove')
   },
 
   async downloadDocument(path: string, fileName: string): Promise<void> {

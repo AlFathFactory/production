@@ -1,6 +1,27 @@
-import { documentStorage } from '../../services/supabase/documentStorage'
+import { DocumentStorageError, documentStorage, type DocumentUploadResult } from '../../services/supabase/documentStorage'
 import { bendingPdfRepository } from './bendingPdfRepository'
 import type { BendingPdfTarget } from './types'
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'The PDF path could not be attached to the document.'
+}
+
+async function throwAttachmentFailure(error: unknown, upload: DocumentUploadResult): Promise<never> {
+  if (!upload.wasUploaded) {
+    throw new Error(`${errorMessage(error)} The existing uploaded PDF may remain unattached in Storage.`)
+  }
+
+  try {
+    await documentStorage.removeDocument(upload.path)
+  } catch (cleanupError) {
+    const cleanupMessage = cleanupError instanceof DocumentStorageError && cleanupError.kind === 'permission'
+      ? 'Your role cannot remove it, so the uploaded PDF may remain orphaned in Storage.'
+      : 'Cleanup also failed, so the uploaded PDF may remain orphaned in Storage.'
+    throw new Error(`${errorMessage(error)} ${cleanupMessage}`)
+  }
+
+  throw new Error(`${errorMessage(error)} The uploaded PDF was removed from Storage.`)
+}
 
 export async function attachBendingPdf(target: BendingPdfTarget): Promise<string> {
   if (target.pdfPath) return target.pdfPath
@@ -20,9 +41,12 @@ export async function attachBendingPdf(target: BendingPdfTarget): Promise<string
     } catch {
       throw new Error('The Dispatch PDF could not be generated. Please retry.')
     }
-    const path = await documentStorage.uploadDispatchPdf(target.reference, target.id, pdf)
-    await bendingPdfRepository.saveDispatchPdfPath(target.id, path)
-    return path
+    const upload = await documentStorage.uploadDispatchPdf(target.reference, target.id, pdf)
+    try {
+      return await bendingPdfRepository.saveDispatchPdfPath(target.id, upload.path)
+    } catch (error) {
+      return throwAttachmentFailure(error, upload)
+    }
   }
 
   const model = await bendingPdfRepository.getReturnModel(target.id)
@@ -32,7 +56,10 @@ export async function attachBendingPdf(target: BendingPdfTarget): Promise<string
   } catch {
     throw new Error('The Return PDF could not be generated. Please retry.')
   }
-  const path = await documentStorage.uploadReturnPdf(target.reference, target.id, pdf)
-  await bendingPdfRepository.saveReturnPdfPath(target.id, path)
-  return path
+  const upload = await documentStorage.uploadReturnPdf(target.reference, target.id, pdf)
+  try {
+    return await bendingPdfRepository.saveReturnPdfPath(target.id, upload.path)
+  } catch (error) {
+    return throwAttachmentFailure(error, upload)
+  }
 }

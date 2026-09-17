@@ -34,11 +34,17 @@ function mapPdfReadError(error: unknown): BendingPdfRepositoryError {
 
 function mapPdfUpdateError(error: unknown): BendingPdfRepositoryError {
   const { code, message } = errorDetails(error)
-  if (code === '42501' || code === 'PGRST116' || /permission denied|0 rows/i.test(message)) {
+  if (code === '42501' || /permission denied|role required|Authentication required/i.test(message)) {
     return new BendingPdfRepositoryError(
-      'The PDF was uploaded, but your role cannot save pdf_path on this document. Ask an administrator to retry after the database permission is updated.',
+      'You do not have permission to attach this PDF.',
       'permission',
     )
+  }
+  if (code === '22023') {
+    return new BendingPdfRepositoryError('The generated PDF path was rejected as invalid.', 'update')
+  }
+  if (code === 'P0002' || /not found/i.test(message)) {
+    return new BendingPdfRepositoryError('The document no longer exists, so the PDF could not be attached.', 'update')
   }
   if (error instanceof TypeError || /fetch|network|connection|offline/i.test(message)) {
     return new BendingPdfRepositoryError('The PDF was uploaded, but pdf_path could not be saved. Check your connection and retry.', 'network')
@@ -165,23 +171,27 @@ export const bendingPdfRepository = {
     }
   },
 
-  async saveDispatchPdfPath(dispatchId: string, pdfPath: string): Promise<void> {
-    const { error } = await supabase
-      .from('bending_dispatches')
-      .update({ pdf_path: pdfPath })
-      .eq('id', dispatchId)
-      .select('pdf_path')
-      .single()
+  async saveDispatchPdfPath(dispatchId: string, pdfPath: string): Promise<string> {
+    const { data, error } = await supabase.rpc('attach_bending_dispatch_pdf', {
+      p_dispatch_id: dispatchId,
+      p_pdf_path: pdfPath,
+    })
     if (error) throw mapPdfUpdateError(error)
+    if (!data?.pdf_path) {
+      throw new BendingPdfRepositoryError('The Dispatch PDF attachment returned an unexpected response.', 'update')
+    }
+    return data.pdf_path
   },
 
-  async saveReturnPdfPath(returnId: string, pdfPath: string): Promise<void> {
-    const { error } = await supabase
-      .from('bending_returns')
-      .update({ pdf_path: pdfPath })
-      .eq('id', returnId)
-      .select('pdf_path')
-      .single()
+  async saveReturnPdfPath(returnId: string, pdfPath: string): Promise<string> {
+    const { data, error } = await supabase.rpc('attach_bending_return_pdf', {
+      p_pdf_path: pdfPath,
+      p_return_id: returnId,
+    })
     if (error) throw mapPdfUpdateError(error)
+    if (!data?.pdf_path) {
+      throw new BendingPdfRepositoryError('The Return PDF attachment returned an unexpected response.', 'update')
+    }
+    return data.pdf_path
   },
 }

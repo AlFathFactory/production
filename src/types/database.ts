@@ -352,6 +352,20 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      attach_bending_dispatch_pdf: {
+        Args: {
+          p_dispatch_id: string
+          p_pdf_path: string
+        }
+        Returns: Database['public']['Tables']['bending_dispatches']['Row']
+      }
+      attach_bending_return_pdf: {
+        Args: {
+          p_pdf_path: string
+          p_return_id: string
+        }
+        Returns: Database['public']['Tables']['bending_returns']['Row']
+      }
       add_production_stage_entry: {
         Args: {
           p_entry_date?: string
