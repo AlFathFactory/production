@@ -5,6 +5,7 @@ import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
 import { formatQuantity, getCurrentDateInputValue } from '../../production/utils'
 import { calculateReturnSummary } from '../returnValidation'
 import { useBendingReturnDraft } from '../hooks/useBendingReturnDraft'
+import { useBendingPdfAttachment } from '../hooks/useBendingPdfAttachment'
 import { useCreateBendingReturn } from '../mutations/useCreateBendingReturn'
 import { useBendingDispatches, useBendingReturnLines } from '../queries/bendingQueries'
 import type { BendingReturnHeaderValues, BendingReturnSuccess } from '../types'
@@ -12,6 +13,7 @@ import { BendingDispatchSelector } from './BendingDispatchSelector'
 import { BendingReturnHeaderFields } from './BendingReturnHeaderFields'
 import { BendingReturnItemsTable } from './BendingReturnItemsTable'
 import { BendingReturnSummary } from './BendingReturnSummary'
+import { BendingPdfStatus } from './BendingPdfStatus'
 
 interface BendingReturnWorkflowProps {
   lotId: string
@@ -36,6 +38,7 @@ export function BendingReturnWorkflow({ lotId }: BendingReturnWorkflowProps) {
   const dispatchesQuery = useBendingDispatches(lotId)
   const returnLinesQuery = useBendingReturnLines(selectedDispatchId)
   const draft = useBendingReturnDraft()
+  const pdfAttachment = useBendingPdfAttachment()
   const createReturnMutation = useCreateBendingReturn()
   const selectedDispatch = dispatchesQuery.data?.find((dispatch) => dispatch.id === selectedDispatchId) ?? null
   const returnableItems = draft.items.filter((item) => item.outstandingQuantity > 0 || item.quantity > 0)
@@ -94,6 +97,12 @@ export function BendingReturnWorkflow({ lotId }: BendingReturnWorkflowProps) {
         returnReference: result.return_reference,
         totalQuantity: summary.totalQuantity,
       })
+      void pdfAttachment.attach({
+        id: result.id,
+        kind: 'return',
+        pdfPath: result.pdf_path,
+        reference: result.return_reference,
+      })
       draft.clear()
       setHeaderValues(initialHeaderValues())
     } catch (error) {
@@ -104,10 +113,13 @@ export function BendingReturnWorkflow({ lotId }: BendingReturnWorkflowProps) {
   return (
     <div aria-labelledby="bending-return-tab" className="bending-return-workflow" id="bending-return-panel" role="tabpanel">
       {success ? (
-        <p className="bending-feedback bending-feedback--success" role="status">
-          Bending Return created successfully. <strong>Reference: {success.returnReference}</strong>
-          <span>Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}</span>
-        </p>
+        <div className="bending-document-success">
+          <p className="bending-feedback bending-feedback--success" role="status">
+            Bending Return created successfully. <strong>Reference: {success.returnReference}</strong>
+            <span>Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}</span>
+          </p>
+          <BendingPdfStatus state={pdfAttachment.state} onRetry={pdfAttachment.retry} />
+        </div>
       ) : null}
       <section className="bending-return-selector" aria-labelledby="bending-existing-dispatches">
         <div className="bending-section__heading">

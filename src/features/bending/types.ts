@@ -83,3 +83,41 @@ export interface BendingReturnSuccess {
   returnReference: string
   totalQuantity: number
 }
+
+export interface BendingPdfItem {
+  article: string
+  designation: string | null
+  profile: string | null
+  quantity: number
+  remark?: string | null
+  unitWeightKg: number | null
+}
+
+interface BendingPdfHierarchy {
+  lot: string
+  project: string
+  projectNumber: string
+}
+
+export interface BendingDispatchPdfModel extends BendingPdfHierarchy {
+  approvalName: string | null
+  destination: string | null
+  dispatchDate: string
+  dispatchName: string | null
+  dispatchNumber: string
+  followName: string | null
+  items: BendingPdfItem[]
+  sheetNumber: string | null
+}
+
+export interface BendingReturnPdfModel extends BendingPdfHierarchy {
+  items: BendingPdfItem[]
+  originalDispatchNumber: string
+  receivedByName: string | null
+  returnDate: string
+  returnReference: string
+}
+
+export type BendingPdfTarget =
+  | { id: string; kind: 'dispatch'; pdfPath: string | null; reference: string }
+  | { id: string; kind: 'return'; pdfPath: string | null; reference: string }

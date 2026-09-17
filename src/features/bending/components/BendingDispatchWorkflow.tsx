@@ -7,12 +7,14 @@ import type { ProductionFilters } from '../../production/types'
 import { formatQuantity, getCurrentDateInputValue } from '../../production/utils'
 import { calculateDispatchSummary } from '../dispatchValidation'
 import { useBendingDispatchDraft } from '../hooks/useBendingDispatchDraft'
+import { useBendingPdfAttachment } from '../hooks/useBendingPdfAttachment'
 import { useCreateBendingDispatch } from '../mutations/useCreateBendingDispatch'
 import type { BendingDispatchHeaderValues, BendingDispatchSuccess } from '../types'
 import { BendingDispatchHeaderFields } from './BendingDispatchHeaderFields'
 import { BendingDispatchItemsTable } from './BendingDispatchItemsTable'
 import { BendingDispatchSummary } from './BendingDispatchSummary'
 import { BendingEligibleItemsTable } from './BendingEligibleItemsTable'
+import { BendingPdfStatus } from './BendingPdfStatus'
 
 interface BendingDispatchWorkflowProps {
   lotId: string
@@ -37,6 +39,7 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState<BendingDispatchSuccess | null>(null)
   const draft = useBendingDispatchDraft()
+  const pdfAttachment = useBendingPdfAttachment()
   const createDispatchMutation = useCreateBendingDispatch()
   const searchFilters: ProductionFilters = {
     lotId,
@@ -94,6 +97,12 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
         itemCount: submittedItems.length,
         totalQuantity: summary.totalQuantity,
       })
+      void pdfAttachment.attach({
+        id: result.id,
+        kind: 'dispatch',
+        pdfPath: result.pdf_path,
+        reference: result.dispatch_number,
+      })
       draft.clear()
       setHeaderValues(initialHeaderValues())
     } catch (error) {
@@ -104,10 +113,13 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
   return (
     <div aria-labelledby="bending-dispatch-tab" className="bending-dispatch-workflow" id="bending-dispatch-panel" role="tabpanel">
       {success ? (
-        <p className="bending-feedback bending-feedback--success" role="status">
-          Bending dispatch created successfully. <strong>Dispatch: {success.dispatchNumber}</strong>
-          <span>Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}</span>
-        </p>
+        <div className="bending-document-success">
+          <p className="bending-feedback bending-feedback--success" role="status">
+            Bending dispatch created successfully. <strong>Dispatch: {success.dispatchNumber}</strong>
+            <span>Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}</span>
+          </p>
+          <BendingPdfStatus state={pdfAttachment.state} onRetry={pdfAttachment.retry} />
+        </div>
       ) : null}
       <form className="bending-dispatch" onSubmit={(event) => void createDispatch(event)}>
         <div className="bending-dispatch__heading">
