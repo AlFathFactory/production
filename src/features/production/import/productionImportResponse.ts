@@ -24,17 +24,21 @@ function readableBackendFailure(message: string): string {
   if (/Production lot not found/i.test(message)) {
     return 'The selected Lot is no longer available.'
   }
-  if (/Missing Component Article/i.test(message)) {
-    return 'The backend found a row with no Component Article.'
-  }
-  if (/Invalid T\.QTY|T\.QTY must be zero or greater/i.test(message)) {
-    return 'The backend rejected an invalid T. QTY value.'
-  }
-  if (/Stage quantities cannot be negative/i.test(message)) {
-    return 'The backend rejected a negative stage quantity.'
+  return message.trim() || 'The backend rejected this workbook without providing a reason.'
+}
+
+function formatImportFailure(stage: string, message: string): string {
+  const rowMatch = /\b(?:source\s+)?row\s+(\d+)\b/i.exec(message)
+  let reason = readableBackendFailure(message)
+  const lines = ['Import failed:', `${stage}:`]
+
+  if (rowMatch) {
+    lines.push(`Row ${rowMatch[1]}:`)
+    reason = reason.replace(/\s+at\s+(?:source\s+)?row\s+\d+\b[.:]?/i, '').trim()
   }
 
-  return 'The backend rejected this workbook. Review the preview and try again.'
+  lines.push(reason)
+  return lines.join('\n')
 }
 
 function requiredNumber(record: Record<string, unknown>, key: string): number {
@@ -52,7 +56,7 @@ export function parseProductionImportResponse(data: Json): ProductionImportResul
 
   if (data.success !== true) {
     const message = typeof data.error === 'string' ? data.error : ''
-    throw new ProductionImportError(readableBackendFailure(message))
+    throw new ProductionImportError(formatImportFailure('Backend validation error', message))
   }
 
   if (typeof data.import_id !== 'string' || !isRecord(data.result)) {
@@ -78,11 +82,11 @@ export function mapProductionImportRequestError(error: unknown): ProductionImpor
       : ''
 
   if (code === '42501' || /Admin role required|permission denied/i.test(message)) {
-    return new ProductionImportError('Only an active Admin can import Production workbooks.')
+    return new ProductionImportError(formatImportFailure('Authorization error', 'Only an active Admin can import Production workbooks.'))
   }
   if (error instanceof TypeError || /fetch|network|connection|offline/i.test(message)) {
-    return new ProductionImportError('Unable to reach Production Control. Check your connection and try again.')
+    return new ProductionImportError(formatImportFailure('RPC request error', 'Unable to reach Production Control. Check your connection and try again.'))
   }
 
-  return new ProductionImportError(readableBackendFailure(message))
+  return new ProductionImportError(formatImportFailure('RPC request error', message))
 }

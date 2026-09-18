@@ -13,15 +13,40 @@ function formatDateParts(year: number, month: number, day: number): string | nul
   return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
+function parseTextDate(text: string): [year: number, month: number, day: number] | null {
+  const yearFirstSlash = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(text)
+  if (yearFirstSlash) {
+    return [Number(yearFirstSlash[1]), Number(yearFirstSlash[2]), Number(yearFirstSlash[3])]
+  }
+
+  const monthFirstSlash = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text)
+  if (monthFirstSlash) {
+    return [Number(monthFirstSlash[3]), Number(monthFirstSlash[1]), Number(monthFirstSlash[2])]
+  }
+
+  const yearFirstHyphen = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(text)
+  if (yearFirstHyphen) {
+    return [Number(yearFirstHyphen[1]), Number(yearFirstHyphen[2]), Number(yearFirstHyphen[3])]
+  }
+
+  const dayFirstHyphen = /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(text)
+  if (dayFirstHyphen) {
+    return [Number(dayFirstHyphen[3]), Number(dayFirstHyphen[2]), Number(dayFirstHyphen[1])]
+  }
+
+  return null
+}
+
 export function normalizeProductionDate(value: unknown): NormalizedDateValue {
   if (value === null || value === undefined || (typeof value === 'string' && !value.trim())) {
     return { isValid: true, value: null }
   }
 
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const normalized = formatDateParts(value.getUTCFullYear(), value.getUTCMonth() + 1, value.getUTCDate())
     return {
-      isValid: true,
-      value: formatDateParts(value.getUTCFullYear(), value.getUTCMonth() + 1, value.getUTCDate()),
+      isValid: normalized !== null,
+      value: normalized,
     }
   }
 
@@ -39,13 +64,7 @@ export function normalizeProductionDate(value: unknown): NormalizedDateValue {
   }
 
   const text = value.trim()
-  const isoMatch = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(text)
-  const dayFirstMatch = /^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4})$/.exec(text)
-  const parts = isoMatch
-    ? [Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3])]
-    : dayFirstMatch
-      ? [Number(dayFirstMatch[3]), Number(dayFirstMatch[2]), Number(dayFirstMatch[1])]
-      : null
+  const parts = parseTextDate(text)
   const normalized = parts ? formatDateParts(parts[0], parts[1], parts[2]) : null
 
   return { isValid: normalized !== null, value: normalized }

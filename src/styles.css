@@ -1825,6 +1825,10 @@ button.hierarchy-list__select:hover,
   grid-column: 1 / -1;
 }
 
+.production-import-failure {
+  white-space: pre-line;
+}
+
 .production-import-preview {
   display: grid;
   min-width: 0;

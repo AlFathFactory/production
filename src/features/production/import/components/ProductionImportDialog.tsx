@@ -84,16 +84,20 @@ export function ProductionImportDialog({ destination, isOpen, onClose, onImport 
             sheetNames={productionImport.sheetNames}
           />
           {productionImport.preview ? <ImportPreview preview={productionImport.preview} /> : null}
-          {importError ? <p className="form-error" role="alert">{importError}</p> : null}
+          {importError ? <p className="form-error production-import-failure" role="alert">{importError}</p> : null}
           <div className="entity-form__actions">
             <Button type="button" variant="secondary" disabled={isImporting} onClick={closeDialog}>Cancel</Button>
             <Button
               type="button"
-              disabled={!productionImport.preview?.payload}
+              disabled={!productionImport.preview?.payload?.length}
               isLoading={isImporting}
               onClick={() => void importWorkbook()}
             >
-              {isImporting ? 'Importing…' : `Import ${productionImport.preview?.totalRows ?? 0} Rows`}
+              {isImporting
+                ? 'Importing…'
+                : productionImport.preview?.errorRows
+                  ? `Fix ${productionImport.preview.errorRows} Invalid ${productionImport.preview.errorRows === 1 ? 'Row' : 'Rows'} to Import`
+                  : `Import ${productionImport.preview?.validRows ?? 0} Rows`}
             </Button>
           </div>
         </div>

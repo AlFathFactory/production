@@ -8,7 +8,13 @@ function previewQuantity(value: number | null): string {
 }
 
 export function ImportPreview({ preview }: { preview: ProductionImportPreview }) {
-  const visibleRows = preview.rows.slice(0, PREVIEW_ROW_LIMIT)
+  const invalidRows = preview.rows.filter((row) => row.errors.length > 0)
+  const validPreviewRows = preview.rows
+    .filter((row) => row.errors.length === 0)
+    .slice(0, Math.max(PREVIEW_ROW_LIMIT - invalidRows.length, 0))
+  const visibleRows = invalidRows.length > 0
+    ? [...invalidRows, ...validPreviewRows]
+    : preview.rows.slice(0, PREVIEW_ROW_LIMIT)
   const summary = [
     ['Header row', preview.headerRow],
     ['Parsed rows', preview.totalRows],
@@ -29,8 +35,16 @@ export function ImportPreview({ preview }: { preview: ProductionImportPreview })
         </p>
       ) : null}
 
+      {preview.errorRows > 0 ? (
+        <p className="form-error" role="alert">
+          Import blocked. Fix the {preview.errorRows} invalid {preview.errorRows === 1 ? 'row' : 'rows'} shown below before importing.
+        </p>
+      ) : null}
+
       <p className="production-import-preview__count">
-        Showing first {visibleRows.length} of {preview.totalRows} rows.
+        {invalidRows.length > 0
+          ? `Showing all ${invalidRows.length} invalid ${invalidRows.length === 1 ? 'row' : 'rows'} first, plus ${validPreviewRows.length} valid preview rows.`
+          : `Showing the first ${visibleRows.length} of ${preview.totalRows} rows.`}
       </p>
       <div className="production-import-table-wrap" tabIndex={0} aria-label="Production import preview table. Scroll horizontally to see all columns.">
         <table className="production-import-table">
