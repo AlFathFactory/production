@@ -124,7 +124,7 @@ function LotDashboardSection({
         </section>
       ) : lots.length === 0 ? (
         <section className="dashboard-state">
-          <p>No Production dashboard data available.</p>
+          <p>No dashboard data available.</p>
         </section>
       ) : (
         <LotDashboardTable lots={lots} />
@@ -184,7 +184,7 @@ function ActionQueueSection({
         </section>
       ) : items.length === 0 ? (
         <section className="dashboard-state">
-          <p>{hasActiveFilters ? 'No items match the current filters.' : 'No pending Production actions.'}</p>
+          <p>{hasActiveFilters ? 'No items match the current filters.' : 'No pending production actions.'}</p>
           {hasActiveFilters ? <button type="button" className="button button--secondary" onClick={onReset}>Reset Filters</button> : null}
         </section>
       ) : (

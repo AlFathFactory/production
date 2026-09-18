@@ -9,17 +9,17 @@ export class DashboardRepositoryError extends Error {
 }
 
 type LotDashboardSelectRow = {
-  lot_id: string
-  lot_number: string
-  project_id: string
-  project_name: string
-  project_number: string
-  project_number_id: string
-  total_items: number
-  completed_items: number
-  in_progress_items: number
-  not_started_items: number
-  completion_percent: number
+  lot_id: string | null
+  lot_number: string | null
+  project_id: string | null
+  project_name: string | null
+  project_number: string | null
+  project_number_id: string | null
+  total_items: number | null
+  completed_items: number | null
+  in_progress_items: number | null
+  not_started_items: number | null
+  completion_percent: number | null
   last_activity_at: string | null
 }
 
@@ -38,17 +38,17 @@ function mapDashboardError(error: unknown, context: 'lot_dashboard' | 'action_qu
 
 function mapLotDashboardRow(row: LotDashboardSelectRow): LotDashboardItem {
   return {
-    lotId: row.lot_id,
-    lotNumber: row.lot_number,
-    projectId: row.project_id,
-    projectName: row.project_name,
-    projectNumber: row.project_number,
-    projectNumberId: row.project_number_id,
-    totalItems: row.total_items,
-    completedItems: row.completed_items,
-    inProgressItems: row.in_progress_items,
-    notStartedItems: row.not_started_items,
-    completionPercent: row.completion_percent,
+    lotId: row.lot_id ?? '',
+    lotNumber: row.lot_number ?? '—',
+    projectId: row.project_id ?? '',
+    projectName: row.project_name ?? '—',
+    projectNumber: row.project_number ?? '—',
+    projectNumberId: row.project_number_id ?? '',
+    totalItems: row.total_items ?? 0,
+    completedItems: row.completed_items ?? 0,
+    inProgressItems: row.in_progress_items ?? 0,
+    notStartedItems: row.not_started_items ?? 0,
+    completionPercent: row.completion_percent ?? 0,
     lastActivityAt: row.last_activity_at,
   }
 }
@@ -85,7 +85,7 @@ export const dashboardRepository = {
     if (filters.projectNumberId) query = query.eq('project_number_id', filters.projectNumberId)
     if (filters.lotId) query = query.eq('lot_id', filters.lotId)
     if (filters.nextAction) query = query.eq('next_action', filters.nextAction)
-    if (filters.route) query = query.eq('routing', filters.route)
+    if (filters.route) query = query.eq('routing', filters.route as NonNullable<ActionQueueRow['routing']>)
     if (filters.search.trim()) query = query.ilike('article', `%${escapeIlike(filters.search.trim())}%`)
 
     const { data, error } = await query

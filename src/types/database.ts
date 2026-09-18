@@ -466,53 +466,64 @@ export interface Database {
       },
       production_lot_dashboard: {
         Row: {
-          lot_id: string
-          lot_number: string
-          project_id: string
-          project_name: string
-          project_number: string
-          project_number_id: string
-          total_items: number
-          completed_items: number
-          in_progress_items: number
-          not_started_items: number
-          total_quantity: number
-          cut_total: number
-          out_bend_total: number
-          bend_total: number
-          rolling_total: number
-          warehouse_stock: number
-          dispensed_total: number
-          remaining_to_dispense: number
-          completion_percent: number
+          lot_id: string | null
+          lot_number: string | null
+          project_number_id: string | null
+          project_number: string | null
+          project_id: string | null
+          project_name: string | null
+          total_items: number | null
+          active_items: number | null
+          total_required_quantity: number | null
+          total_cut_quantity: number | null
+          remaining_cut_quantity: number | null
+          total_out_bend_quantity: number | null
+          remaining_out_bend_quantity: number | null
+          total_bend_quantity: number | null
+          remaining_bend_quantity: number | null
+          total_rolling_quantity: number | null
+          remaining_rolling_quantity: number | null
+          warehouse_stock_quantity: number | null
+          total_dispensed_quantity: number | null
+          remaining_to_dispense_quantity: number | null
+          items_waiting_cut: number | null
+          items_waiting_out_bend: number | null
+          items_waiting_bend_return: number | null
+          items_waiting_rolling: number | null
+          items_in_warehouse: number | null
+          completed_items: number | null
+          completion_percent: number | null
           last_activity_at: string | null
+          in_progress_items: number | null
+          not_started_items: number | null
         }
         Relationships: []
       },
       production_action_queue: {
         Row: {
-          lot_id: string
-          lot_number: string
-          project_id: string
-          project_name: string
-          project_number: string
-          project_number_id: string
-          production_item_id: string
-          article: string
+          production_item_id: string | null
+          lot_id: string | null
+          article: string | null
           designation: string | null
           profile: string | null
-          routing: string
-          next_action: string
-          available_action_quantity: number
-          progress_state: string
-          total_quantity: number
-          cut_total: number
-          out_bend_total: number
-          bend_total: number
-          rolling_total: number
-          warehouse_stock: number
-          dispensed_total: number
+          routing: Database['public']['Enums']['production_route'] | null
+          total_quantity: number | null
+          cut_total: number | null
+          out_bend_total: number | null
+          bend_total: number | null
+          rolling_total: number | null
+          warehouse_stock: number | null
+          dispensed_total: number | null
           last_activity_at: string | null
+          next_action: string | null
+          available_action_quantity: number | null
+          completion_percent: number | null
+          lot_number: string | null
+          project_number_id: string | null
+          project_number: string | null
+          project_id: string | null
+          project_name: string | null
+          progress_state: string | null
         }
         Relationships: []
       }

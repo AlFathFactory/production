@@ -40,6 +40,40 @@ export function ProjectLotSelector({
   const projectInputId = `${idPrefix}-project`
   const projectNumberInputId = `${idPrefix}-project-number`
   const lotInputId = `${idPrefix}-lot`
+  const projects = projectsQuery.data ?? []
+  const projectNumbers = projectNumbersQuery.data ?? []
+  const lots = lotsQuery.data ?? []
+  const hasNoProjects = !projectsQuery.isLoading && !projectsQuery.isError && projects.length === 0
+  const hasNoProjectNumbers = hasNoProjects || (
+    Boolean(projectId)
+    && !projectNumbersQuery.isLoading
+    && !projectNumbersQuery.isError
+    && projectNumbers.length === 0
+  )
+
+  const projectPlaceholder = projectsQuery.isLoading
+    ? 'Loading projects…'
+    : projects.length === 0
+      ? 'No Projects available'
+      : 'Select a project'
+  const projectNumberPlaceholder = hasNoProjects
+    ? 'No Project Numbers available'
+    : !projectId
+      ? 'Select a project first'
+      : projectNumbersQuery.isLoading
+        ? 'Loading project numbers…'
+        : projectNumbers.length === 0
+          ? 'No Project Numbers available'
+          : 'Select a project number'
+  const lotPlaceholder = hasNoProjectNumbers
+    ? 'No Lots available'
+    : !projectNumberId
+      ? 'Select a project number first'
+      : lotsQuery.isLoading
+        ? 'Loading lots…'
+        : lots.length === 0
+          ? 'No Lots available'
+          : 'Select a lot'
 
   return (
     <section className="production-selector" aria-label={ariaLabel}>
@@ -47,17 +81,17 @@ export function ProjectLotSelector({
         <Select
           id={projectInputId}
           value={projectId ?? ''}
-          disabled={projectsQuery.isPending}
+          disabled={projectsQuery.isLoading}
           onChange={(event) => {
             const id = event.target.value || null
             const project = projectsQuery.data?.find((candidate) => candidate.id === id)
             onProjectChange(id, project?.project_name ?? null)
           }}
         >
-          <option value="">{projectsQuery.isPending ? 'Loading projects…' : 'Select a project'}</option>
-          {projectsQuery.data?.map((project) => <option key={project.id} value={project.id}>{project.project_name}</option>)}
+          <option value="">{projectPlaceholder}</option>
+          {projects.map((project) => <option key={project.id} value={project.id}>{project.project_name}</option>)}
         </Select>
-        {projectsQuery.isPending ? <LoadingSpinner size="small" label="Loading projects" /> : null}
+        {projectsQuery.isLoading ? <LoadingSpinner size="small" label="Loading projects" /> : null}
         {projectsQuery.isError ? <SelectorError message="Projects could not be loaded." onRetry={() => void projectsQuery.refetch()} /> : null}
       </FormField>
 
@@ -65,17 +99,17 @@ export function ProjectLotSelector({
         <Select
           id={projectNumberInputId}
           value={projectNumberId ?? ''}
-          disabled={!projectId || projectNumbersQuery.isPending || projectNumbersQuery.isError}
+          disabled={!projectId || projectNumbersQuery.isLoading}
           onChange={(event) => {
             const id = event.target.value || null
             const projectNumber = projectNumbersQuery.data?.find((candidate) => candidate.id === id)
             onProjectNumberChange(id, projectNumber?.project_number ?? null)
           }}
         >
-          <option value="">{projectNumbersQuery.isPending ? 'Loading project numbers…' : 'Select a project number'}</option>
-          {projectNumbersQuery.data?.map((projectNumber) => <option key={projectNumber.id} value={projectNumber.id}>{projectNumber.project_number}</option>)}
+          <option value="">{projectNumberPlaceholder}</option>
+          {projectNumbers.map((projectNumber) => <option key={projectNumber.id} value={projectNumber.id}>{projectNumber.project_number}</option>)}
         </Select>
-        {projectNumbersQuery.isPending ? <LoadingSpinner size="small" label="Loading project numbers" /> : null}
+        {projectNumbersQuery.isLoading ? <LoadingSpinner size="small" label="Loading project numbers" /> : null}
         {projectNumbersQuery.isError ? <SelectorError message="Project numbers could not be loaded." onRetry={() => void projectNumbersQuery.refetch()} /> : null}
       </FormField>
 
@@ -83,17 +117,17 @@ export function ProjectLotSelector({
         <Select
           id={lotInputId}
           value={lotId ?? ''}
-          disabled={!projectNumberId || lotsQuery.isPending || lotsQuery.isError}
+          disabled={!projectNumberId || lotsQuery.isLoading}
           onChange={(event) => {
             const id = event.target.value || null
             const lot = lotsQuery.data?.find((candidate) => candidate.id === id)
             onLotChange(id, lot?.lot_number ?? null)
           }}
         >
-          <option value="">{lotsQuery.isPending ? 'Loading lots…' : 'Select a lot'}</option>
-          {lotsQuery.data?.map((lot) => <option key={lot.id} value={lot.id}>{lot.lot_number}</option>)}
+          <option value="">{lotPlaceholder}</option>
+          {lots.map((lot) => <option key={lot.id} value={lot.id}>{lot.lot_number}</option>)}
         </Select>
-        {lotsQuery.isPending ? <LoadingSpinner size="small" label="Loading lots" /> : null}
+        {lotsQuery.isLoading ? <LoadingSpinner size="small" label="Loading lots" /> : null}
         {lotsQuery.isError ? <SelectorError message="Lots could not be loaded." onRetry={() => void lotsQuery.refetch()} /> : null}
       </FormField>
     </section>
