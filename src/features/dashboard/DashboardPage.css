@@ -1,0 +1,19 @@
+.dashboard-secondary-toggle {
+  width: fit-content;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--brand);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.dashboard-secondary-toggle:hover {
+  background: var(--surface-subtle);
+}
+
+details.dashboard-section--action-queue > summary {
+  margin-bottom: 12px;
+}

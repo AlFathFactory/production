@@ -41,7 +41,7 @@ export function BendingEligibleItemsTable({ isDisabled, items, onAdd, selectedIt
                 <td>{formatQuantity(item.cut_total)}</td>
                 <td>{formatQuantity(item.out_bend_total)}</td>
                 <td><strong>{formatQuantity(item.remaining_out_bend)}</strong></td>
-                <td>{item.unit_weight_kg === null ? '—' : `${formatQuantity(item.unit_weight_kg)} kg`}</td>
+                <td>{item.unit_weight_kg == null ? '—' : `${formatQuantity(item.unit_weight_kg)} kg`}</td>
                 <td>
                   <Button
                     aria-label={`${isSelected ? 'Selected' : 'Add'} ${item.article ?? 'material'} to dispatch`}

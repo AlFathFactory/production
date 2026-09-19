@@ -5,10 +5,12 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 import { useDebouncedValue } from '../production/hooks/useDebouncedValue'
 import { ActionQueueFilters } from './components/ActionQueueFilters'
 import { ActionQueueTable } from './components/ActionQueueTable'
-import { DashboardSummary, computeDashboardSummary } from './components/DashboardSummary'
 import { LotDashboardTable } from './components/LotDashboardTable'
-import { useActionQueue, useLotDashboard } from './queries/dashboardQueries'
+import { OperationalOverview } from './components/OperationalOverview'
+import { useActionQueue, useDashboardProductionItems, useLotDashboard } from './queries/dashboardQueries'
+import { ProjectLotSelector } from '../production/components/ProjectLotSelector'
 import type { DashboardFilters } from './types'
+import './DashboardPage.css'
 
 const NEXT_ACTION_OPTIONS = ['CUT', 'OUT_BEND', 'BEND', 'ROLLING', 'DISPENSE', 'COMPLETE']
 const ROUTE_OPTIONS = ['BEND', 'NO BEND', 'ROD', 'ROLLING', 'LADDER', 'OTHER']
@@ -26,6 +28,7 @@ export function DashboardPage() {
   const hasActiveFilters = Boolean(projectId || projectNumberId || lotId || nextAction || route || search.trim())
 
   const lotDashboardQuery = useLotDashboard(filters)
+  const productionItemsQuery = useDashboardProductionItems({ lotId, projectId, projectNumberId })
   const actionQueueQuery = useActionQueue(filters)
 
   const selectProject = (value: string | null) => {
@@ -48,26 +51,40 @@ export function DashboardPage() {
     setSearch('')
   }
 
+  const retryOverview = () => {
+    void lotDashboardQuery.refetch()
+    void productionItemsQuery.refetch()
+  }
+
   return (
     <>
-      <PageHeader title="Dashboard" description="Operational overview of Production lots and actionable items." />
+      <PageHeader title="Dashboard" description="How much production? How much is done? What is remaining? What is next?" />
       <div className="dashboard-workspace">
-        <LotDashboardSection
-          lotDashboardQuery={lotDashboardQuery}
-          projectId={projectId}
-          projectNumberId={projectNumberId}
-          lotId={lotId}
-          onProjectChange={selectProject}
-          onProjectNumberChange={selectProjectNumber}
-          onLotChange={setLotId}
+        <div className="dashboard-hierarchy">
+          <ProjectLotSelector
+            ariaLabel="Dashboard hierarchy filters"
+            idPrefix="dashboard"
+            lotId={lotId}
+            projectId={projectId}
+            projectNumberId={projectNumberId}
+            onLotChange={(value) => setLotId(value)}
+            onProjectChange={(value) => selectProject(value)}
+            onProjectNumberChange={(value) => selectProjectNumber(value)}
+          />
+        </div>
+        <OperationalOverview
+          lots={lotDashboardQuery.data ?? []}
+          items={productionItemsQuery.data ?? []}
+          isPending={lotDashboardQuery.isPending || productionItemsQuery.isPending}
+          isError={lotDashboardQuery.isError || productionItemsQuery.isError}
+          errorMessage={lotDashboardQuery.error?.message ?? productionItemsQuery.error?.message ?? null}
+          onRetry={retryOverview}
         />
+        <LotDetailsSection lotDashboardQuery={lotDashboardQuery} />
         <ActionQueueSection
           actionQueueQuery={actionQueueQuery}
           filters={filters}
           hasActiveFilters={hasActiveFilters}
-          onProjectChange={selectProject}
-          onProjectNumberChange={selectProjectNumber}
-          onLotChange={setLotId}
           onNextActionChange={setNextAction}
           onRouteChange={setRoute}
           onSearchChange={setSearch}
@@ -78,45 +95,17 @@ export function DashboardPage() {
   )
 }
 
-interface LotDashboardSectionProps {
+interface LotDetailsSectionProps {
   lotDashboardQuery: ReturnType<typeof useLotDashboard>
-  projectId: string | null
-  projectNumberId: string | null
-  lotId: string | null
-  onProjectChange: (value: string | null) => void
-  onProjectNumberChange: (value: string | null) => void
-  onLotChange: (value: string | null) => void
 }
 
-function LotDashboardSection({
-  lotDashboardQuery,
-  projectId,
-  projectNumberId,
-  lotId,
-  onProjectChange,
-  onProjectNumberChange,
-  onLotChange,
-}: LotDashboardSectionProps) {
+function LotDetailsSection({ lotDashboardQuery }: LotDetailsSectionProps) {
   const lots = lotDashboardQuery.data ?? []
-  const summary = computeDashboardSummary(lots)
 
   return (
     <div className="dashboard-section dashboard-section--lot-dashboard">
-      <DashboardSummary summary={summary} />
-      <div className="dashboard-hierarchy">
-        <ProjectLotSelector
-          ariaLabel="Dashboard hierarchy filters"
-          idPrefix="dashboard"
-          lotId={lotId}
-          projectId={projectId}
-          projectNumberId={projectNumberId}
-          onLotChange={(value) => onLotChange(value)}
-          onProjectChange={(value) => onProjectChange(value)}
-          onProjectNumberChange={(value) => onProjectNumberChange(value)}
-        />
-      </div>
       {lotDashboardQuery.isPending ? (
-        <section className="dashboard-state"><LoadingSpinner label="Loading lot dashboard" /> Loading lot dashboard…</section>
+        <section className="dashboard-state"><LoadingSpinner label="Loading lot dashboard" /> Loading lot details…</section>
       ) : lotDashboardQuery.isError ? (
         <section className="dashboard-state dashboard-state--error" role="alert">
           <p>{lotDashboardQuery.error.message}</p>
@@ -137,9 +126,6 @@ interface ActionQueueSectionProps {
   actionQueueQuery: ReturnType<typeof useActionQueue>
   filters: DashboardFilters
   hasActiveFilters: boolean
-  onProjectChange: (value: string | null) => void
-  onProjectNumberChange: (value: string | null) => void
-  onLotChange: (value: string | null) => void
   onNextActionChange: (value: string | null) => void
   onRouteChange: (value: string | null) => void
   onSearchChange: (value: string) => void
@@ -150,9 +136,6 @@ function ActionQueueSection({
   actionQueueQuery,
   filters,
   hasActiveFilters,
-  onProjectChange,
-  onProjectNumberChange,
-  onLotChange,
   onNextActionChange,
   onRouteChange,
   onSearchChange,
@@ -161,15 +144,13 @@ function ActionQueueSection({
   const items = actionQueueQuery.data ?? []
 
   return (
-    <div className="dashboard-section dashboard-section--action-queue">
+    <details className="dashboard-section dashboard-section--action-queue">
+      <summary className="dashboard-secondary-toggle">Detailed item filters and queue</summary>
       <ActionQueueFilters
         filters={filters}
         hasActiveFilters={hasActiveFilters}
         nextActionOptions={NEXT_ACTION_OPTIONS}
         routeOptions={ROUTE_OPTIONS}
-        onProjectChange={onProjectChange}
-        onProjectNumberChange={onProjectNumberChange}
-        onLotChange={onLotChange}
         onNextActionChange={onNextActionChange}
         onRouteChange={onRouteChange}
         onSearchChange={onSearchChange}
@@ -190,8 +171,6 @@ function ActionQueueSection({
       ) : (
         <ActionQueueTable items={items} />
       )}
-    </div>
+    </details>
   )
 }
-
-import { ProjectLotSelector } from '../production/components/ProjectLotSelector'

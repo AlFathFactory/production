@@ -14,8 +14,8 @@ export function calculateDispatchSummary(items: BendingDispatchDraftItem[]) {
   return items.reduce(
     (summary, item) => ({
       estimatedWeightKg: summary.estimatedWeightKg
-        + (item.unitWeightKg === null ? 0 : item.quantity * item.unitWeightKg),
-      itemsWithWeight: summary.itemsWithWeight + (item.unitWeightKg === null ? 0 : 1),
+        + (item.unitWeightKg == null ? 0 : item.quantity * item.unitWeightKg),
+      itemsWithWeight: summary.itemsWithWeight + (item.unitWeightKg == null ? 0 : 1),
       totalQuantity: summary.totalQuantity + item.quantity,
     }),
     { estimatedWeightKg: 0, itemsWithWeight: 0, totalQuantity: 0 },

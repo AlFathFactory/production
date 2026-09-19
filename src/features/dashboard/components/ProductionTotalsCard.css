@@ -1,0 +1,44 @@
+.opc-totals {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.opc-totals__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #edf1ef;
+  padding-bottom: 8px;
+}
+
+.opc-totals__row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.opc-totals__row dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.opc-totals__row dd {
+  margin: 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.opc-totals__row--highlight dd {
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.2rem;
+}
+
+.opc-totals__note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}

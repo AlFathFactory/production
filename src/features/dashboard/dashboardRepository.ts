@@ -21,6 +21,23 @@ type LotDashboardSelectRow = {
   not_started_items: number | null
   completion_percent: number | null
   last_activity_at: string | null
+  total_required_quantity: number | null
+  total_cut_quantity: number | null
+  remaining_cut_quantity: number | null
+  total_out_bend_quantity: number | null
+  remaining_out_bend_quantity: number | null
+  total_bend_quantity: number | null
+  remaining_bend_quantity: number | null
+  total_rolling_quantity: number | null
+  remaining_rolling_quantity: number | null
+  warehouse_stock_quantity: number | null
+  total_dispensed_quantity: number | null
+  remaining_to_dispense_quantity: number | null
+  items_waiting_cut: number | null
+  items_waiting_out_bend: number | null
+  items_waiting_bend_return: number | null
+  items_waiting_rolling: number | null
+  items_in_warehouse: number | null
 }
 
 function mapDashboardError(error: unknown, context: 'lot_dashboard' | 'action_queue'): DashboardRepositoryError {
@@ -50,6 +67,23 @@ function mapLotDashboardRow(row: LotDashboardSelectRow): LotDashboardItem {
     notStartedItems: row.not_started_items ?? 0,
     completionPercent: row.completion_percent ?? 0,
     lastActivityAt: row.last_activity_at,
+    totalRequiredQuantity: row.total_required_quantity ?? 0,
+    totalCutQuantity: row.total_cut_quantity ?? 0,
+    remainingCutQuantity: row.remaining_cut_quantity ?? 0,
+    totalOutBendQuantity: row.total_out_bend_quantity ?? 0,
+    remainingOutBendQuantity: row.remaining_out_bend_quantity ?? 0,
+    totalBendQuantity: row.total_bend_quantity ?? 0,
+    remainingBendQuantity: row.remaining_bend_quantity ?? 0,
+    totalRollingQuantity: row.total_rolling_quantity ?? 0,
+    remainingRollingQuantity: row.remaining_rolling_quantity ?? 0,
+    warehouseStockQuantity: row.warehouse_stock_quantity ?? 0,
+    totalDispensedQuantity: row.total_dispensed_quantity ?? 0,
+    remainingToDispenseQuantity: row.remaining_to_dispense_quantity ?? 0,
+    itemsWaitingCut: row.items_waiting_cut ?? 0,
+    itemsWaitingOutBend: row.items_waiting_out_bend ?? 0,
+    itemsWaitingBendReturn: row.items_waiting_bend_return ?? 0,
+    itemsWaitingRolling: row.items_waiting_rolling ?? 0,
+    itemsInWarehouse: row.items_in_warehouse ?? 0,
   }
 }
 
@@ -61,7 +95,7 @@ export const dashboardRepository = {
   async getLotDashboard(filters: DashboardFilters): Promise<LotDashboardItem[]> {
     let query = supabase
       .from('production_lot_dashboard')
-      .select('lot_id, lot_number, project_id, project_name, project_number, project_number_id, total_items, completed_items, in_progress_items, not_started_items, completion_percent, last_activity_at')
+      .select('lot_id, lot_number, project_id, project_name, project_number, project_number_id, total_items, completed_items, in_progress_items, not_started_items, completion_percent, last_activity_at, total_required_quantity, total_cut_quantity, remaining_cut_quantity, total_out_bend_quantity, remaining_out_bend_quantity, total_bend_quantity, remaining_bend_quantity, total_rolling_quantity, remaining_rolling_quantity, warehouse_stock_quantity, total_dispensed_quantity, remaining_to_dispense_quantity, items_waiting_cut, items_waiting_out_bend, items_waiting_bend_return, items_waiting_rolling, items_in_warehouse')
       .order('last_activity_at', { ascending: false })
 
     if (filters.projectId) query = query.eq('project_id', filters.projectId)

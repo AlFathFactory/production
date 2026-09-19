@@ -1,0 +1,35 @@
+.opc-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.opc-state {
+  display: flex;
+  min-height: 96px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--muted);
+  background: var(--surface);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.opc-state p {
+  margin: 0;
+}
+
+.opc-state--error {
+  color: var(--danger);
+}
+
+@media (max-width: 900px) {
+  .opc-overview {
+    grid-template-columns: 1fr;
+  }
+}

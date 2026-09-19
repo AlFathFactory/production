@@ -12,13 +12,6 @@ export interface DashboardFilters {
   search: string
 }
 
-export interface DashboardSummary {
-  totalLots: number
-  totalItems: number
-  inProgressItems: number
-  completedItems: number
-}
-
 export interface LotDashboardItem {
   lotId: string
   lotNumber: string
@@ -32,6 +25,23 @@ export interface LotDashboardItem {
   notStartedItems: number
   completionPercent: number
   lastActivityAt: string | null
+  totalRequiredQuantity: number
+  totalCutQuantity: number
+  remainingCutQuantity: number
+  totalOutBendQuantity: number
+  remainingOutBendQuantity: number
+  totalBendQuantity: number
+  remainingBendQuantity: number
+  totalRollingQuantity: number
+  remainingRollingQuantity: number
+  warehouseStockQuantity: number
+  totalDispensedQuantity: number
+  remainingToDispenseQuantity: number
+  itemsWaitingCut: number
+  itemsWaitingOutBend: number
+  itemsWaitingBendReturn: number
+  itemsWaitingRolling: number
+  itemsInWarehouse: number
 }
 
 export type ActionQueueItem = ActionQueueRow

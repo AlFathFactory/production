@@ -29,7 +29,7 @@ export function useBendingDispatchDraft() {
         productionItemId,
         profile: item.profile,
         quantity: 0,
-        unitWeightKg: item.unit_weight_kg,
+        unitWeightKg: item.unit_weight_kg ?? null,
       }])
   }
 
