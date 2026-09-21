@@ -37,6 +37,8 @@ export function UserFormDialog({ isOpen, onClose, onSubmit, onCreateSubmit, user
   })
 
   useEffect(() => {
+    if (!isOpen) return
+
     if (user) {
       setFormValues({
         email: '',
@@ -56,7 +58,7 @@ export function UserFormDialog({ isOpen, onClose, onSubmit, onCreateSubmit, user
         isActive: true,
       })
     }
-  }, [user])
+  }, [isOpen, user])
 
   function handleChange<K extends keyof (CreateUserInput & UpdateUserInput)>(field: K, value: (CreateUserInput & UpdateUserInput)[K]) {
     setFormValues((prev) => ({ ...prev, [field]: value }))

@@ -112,7 +112,7 @@ export function UsersPage() {
         )}
       </div>
       <UserFormDialog
-        isOpen={Boolean(editDialogUser)}
+        isOpen={isCreatingNew || Boolean(editDialogUser)}
         onClose={closeEditDialog}
         onSubmit={handleUpdateUser}
         onCreateSubmit={handleCreateUser}
