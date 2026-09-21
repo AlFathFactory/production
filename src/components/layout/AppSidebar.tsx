@@ -27,7 +27,7 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
     <aside className={`app-sidebar${isOpen ? ' app-sidebar--open' : ''}`} aria-label="Application sidebar">
       <div className="app-sidebar__brand">
         <span className="app-sidebar__mark" aria-hidden="true">PC</span>
-        <span>Production Control</span>
+        <span>Follow Up System</span>
       </div>
 
       <nav className="app-sidebar__navigation" aria-label="Main navigation">

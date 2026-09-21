@@ -1,39 +1,68 @@
 .opc-totals {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
   margin: 0;
 }
 
-.opc-totals__row {
+.opc-totals__priority {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid #edf1ef;
-  padding-bottom: 8px;
+  grid-column: span 2;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid #b5d9d0;
+  border-radius: 12px;
+  padding: 20px 22px;
+  background: #eaf6f1;
 }
 
-.opc-totals__row:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
+.opc-totals__priority--return {
+  border-color: #e8d5ad;
+  background: #fff6e6;
 }
 
-.opc-totals__row dt {
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 600;
+.opc-totals dt {
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
-.opc-totals__row dd {
+.opc-totals dd {
   margin: 0;
   color: var(--ink);
+  font-family: 'Manrope', sans-serif;
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
-.opc-totals__row--highlight dd {
-  font-family: 'Manrope', sans-serif;
-  font-size: 1.2rem;
+.opc-totals__priority dd {
+  margin-top: 14px;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  letter-spacing: -0.03em;
+}
+
+.opc-totals__priority p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.opc-totals__metric {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--surface-subtle);
+}
+
+.opc-totals__metric dd {
+  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
 }
 
 .opc-totals__note {
@@ -41,4 +70,20 @@
   color: var(--muted);
   font-size: 0.76rem;
   line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .opc-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .opc-totals__priority {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .opc-totals__priority {
+    grid-column: 1 / -1;
+  }
 }

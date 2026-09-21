@@ -2,7 +2,6 @@ import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
 import type { ProductionSearchRow } from '../../production/types'
 import type { LotDashboardItem } from '../types'
 import { computeOperationalSummary } from '../utils/computeOperationalSummary'
-import { NextOperationsCards } from './NextOperationsCards'
 import { ProductionTotalsCard } from './ProductionTotalsCard'
 import { StageProgressCards } from './StageProgressCards'
 import './OperationalOverview.css'
@@ -47,15 +46,15 @@ export function OperationalOverview({ lots, items, isPending, isError, errorMess
   return (
     <section className="opc-overview" aria-label="Operational overview">
       <ProductionTotalsCard
-        totalQty={summary.totalQty}
         totalWeightKg={summary.totalWeightKg}
         cutWeightKg={summary.cutWeightKg}
+        readyForBendWeightKg={summary.readyForBendWeightKg}
         outBendWeightKg={summary.outBendWeightKg}
         bendWeightKg={summary.bendWeightKg}
+        awaitingBendReturnWeightKg={summary.awaitingBendReturnWeightKg}
         weightsMissing={summary.weightsMissing}
       />
       <StageProgressCards stages={summary.stageProgress} />
-      <NextOperationsCards operations={summary.nextOperations} />
     </section>
   )
 }

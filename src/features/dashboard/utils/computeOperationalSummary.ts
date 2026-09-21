@@ -8,21 +8,15 @@ export interface StageProgress {
   remainingQty: number
 }
 
-export interface NextOperation {
-  key: 'cut' | 'out_bend' | 'bend_return' | 'rolling' | 'dispense'
-  label: string
-  itemCount: number
-}
-
 export interface OperationalSummary {
-  totalQty: number
   totalWeightKg: number
   cutWeightKg: number
+  readyForBendWeightKg: number
   outBendWeightKg: number
   bendWeightKg: number
+  awaitingBendReturnWeightKg: number
   weightsMissing: boolean
   stageProgress: StageProgress[]
-  nextOperations: NextOperation[]
 }
 
 // Weights are presentation sums only: quantity × unit_weight_kg from
@@ -40,7 +34,6 @@ export function computeOperationalSummary(
   lots: LotDashboardItem[],
   items: ProductionSearchRow[],
 ): OperationalSummary {
-  const totalQty = lots.reduce((sum, lot) => sum + lot.totalRequiredQuantity, 0)
   const cutCompletedQty = lots.reduce((sum, lot) => sum + lot.totalCutQuantity, 0)
   const cutRemainingQty = lots.reduce((sum, lot) => sum + lot.remainingCutQuantity, 0)
   const outBendCompletedQty = lots.reduce((sum, lot) => sum + lot.totalOutBendQuantity, 0)
@@ -50,8 +43,10 @@ export function computeOperationalSummary(
 
   let totalWeightKg = 0
   let cutWeightKg = 0
+  let readyForBendWeightKg = 0
   let outBendWeightKg = 0
   let bendWeightKg = 0
+  let awaitingBendReturnWeightKg = 0
   let weightsMissing = false
 
   for (const item of items) {
@@ -63,32 +58,31 @@ export function computeOperationalSummary(
     cutWeightKg += weightFor(item.cut_total, item.unit_weight_kg)
     outBendWeightKg += weightFor(item.out_bend_total, item.unit_weight_kg)
     bendWeightKg += weightFor(item.bend_total, item.unit_weight_kg)
+    if (item.routing === 'BEND') {
+      // These are outstanding stage balances, not cumulative production totals.
+      readyForBendWeightKg += weightFor(
+        Math.max(0, toFiniteNumber(item.cut_total) - toFiniteNumber(item.out_bend_total)),
+        item.unit_weight_kg,
+      )
+      awaitingBendReturnWeightKg += weightFor(
+        Math.max(0, toFiniteNumber(item.out_bend_total) - toFiniteNumber(item.bend_total)),
+        item.unit_weight_kg,
+      )
+    }
   }
 
-  const waitingCut = lots.reduce((sum, lot) => sum + lot.itemsWaitingCut, 0)
-  const waitingOutBend = lots.reduce((sum, lot) => sum + lot.itemsWaitingOutBend, 0)
-  const waitingBendReturn = lots.reduce((sum, lot) => sum + lot.itemsWaitingBendReturn, 0)
-  const waitingRolling = lots.reduce((sum, lot) => sum + lot.itemsWaitingRolling, 0)
-  const inWarehouse = lots.reduce((sum, lot) => sum + lot.itemsInWarehouse, 0)
-
   return {
-    totalQty,
     totalWeightKg,
     cutWeightKg,
+    readyForBendWeightKg,
     outBendWeightKg,
     bendWeightKg,
+    awaitingBendReturnWeightKg,
     weightsMissing,
     stageProgress: [
       { stage: 'CUT', completedQty: cutCompletedQty, remainingQty: cutRemainingQty },
       { stage: 'OUT_BEND', completedQty: outBendCompletedQty, remainingQty: outBendRemainingQty },
       { stage: 'BEND', completedQty: bendCompletedQty, remainingQty: bendRemainingQty },
-    ],
-    nextOperations: [
-      { key: 'cut', label: 'Needs Cutting', itemCount: waitingCut },
-      { key: 'out_bend', label: 'Needs Out-Bend', itemCount: waitingOutBend },
-      { key: 'bend_return', label: 'Needs Bending', itemCount: waitingBendReturn },
-      { key: 'rolling', label: 'Needs Rolling', itemCount: waitingRolling },
-      { key: 'dispense', label: 'Needs Dispense', itemCount: inWarehouse },
     ],
   }
 }

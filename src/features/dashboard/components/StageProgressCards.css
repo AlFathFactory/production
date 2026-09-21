@@ -1,5 +1,6 @@
 .opc-stages {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin: 0;
   padding: 0;
@@ -9,13 +10,13 @@
 .opc-stages__item {
   display: grid;
   gap: 6px;
-  border-bottom: 1px solid #edf1ef;
-  padding-bottom: 12px;
+  border-right: 1px solid #edf1ef;
+  padding-right: 14px;
 }
 
 .opc-stages__item:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
+  border-right: 0;
+  padding-right: 0;
 }
 
 .opc-stages__header {
@@ -54,4 +55,22 @@
   color: var(--muted);
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  .opc-stages {
+    grid-template-columns: 1fr;
+  }
+
+  .opc-stages__item {
+    border-right: 0;
+    border-bottom: 1px solid #edf1ef;
+    padding-right: 0;
+    padding-bottom: 12px;
+  }
+
+  .opc-stages__item:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
 }
