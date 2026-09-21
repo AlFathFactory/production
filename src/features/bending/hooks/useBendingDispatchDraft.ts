@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 
 import type { ProductionSearchRow } from '../../production/types'
+import { toNullableNumber } from '../../production/utils'
 import { getDispatchQuantityError } from '../dispatchValidation'
 import type { BendingDispatchDraftItem } from '../types'
 
@@ -29,7 +30,7 @@ export function useBendingDispatchDraft() {
         productionItemId,
         profile: item.profile,
         quantity: 0,
-        unitWeightKg: item.unit_weight_kg ?? null,
+        unitWeightKg: toNullableNumber(item.unit_weight_kg),
       }])
   }
 

@@ -1,6 +1,6 @@
 import { Button } from '../../../components/ui/Button'
 import type { ProductionSearchRow } from '../../production/types'
-import { formatQuantity } from '../../production/utils'
+import { formatQuantity, toNullableNumber } from '../../production/utils'
 
 interface BendingEligibleItemsTableProps {
   isDisabled: boolean
@@ -33,6 +33,7 @@ export function BendingEligibleItemsTable({ isDisabled, items, onAdd, selectedIt
           {items.map((item) => {
             const id = item.production_item_id ?? ''
             const isSelected = selectedItemIds.has(id)
+            const unitWeightKg = toNullableNumber(item.unit_weight_kg)
             return (
               <tr key={id}>
                 <td><strong>{item.article ?? '—'}</strong></td>
@@ -41,7 +42,7 @@ export function BendingEligibleItemsTable({ isDisabled, items, onAdd, selectedIt
                 <td>{formatQuantity(item.cut_total)}</td>
                 <td>{formatQuantity(item.out_bend_total)}</td>
                 <td><strong>{formatQuantity(item.remaining_out_bend)}</strong></td>
-                <td>{item.unit_weight_kg == null ? '—' : `${formatQuantity(item.unit_weight_kg)} kg`}</td>
+                <td>{unitWeightKg == null ? '—' : `${formatQuantity(unitWeightKg)} kg`}</td>
                 <td>
                   <Button
                     aria-label={`${isSelected ? 'Selected' : 'Add'} ${item.article ?? 'material'} to dispatch`}

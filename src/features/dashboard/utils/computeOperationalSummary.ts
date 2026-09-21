@@ -1,4 +1,5 @@
 import type { ProductionSearchRow } from '../../production/types'
+import { toFiniteNumber, toNullableNumber } from '../../production/utils'
 import type { LotDashboardItem } from '../types'
 
 export interface StageProgress {
@@ -24,16 +25,13 @@ export interface OperationalSummary {
   nextOperations: NextOperation[]
 }
 
-function toFinite(value: number | null | undefined): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0
-}
-
 // Weights are presentation sums only: quantity × unit_weight_kg from
 // search_production_items. Quantities/remaining/waiting counts stay on
 // production_lot_dashboard backend values. No new backend fields.
-function weightFor(quantity: number | null | undefined, unitWeightKg: number | null | undefined): number {
-  const qty = toFinite(quantity)
-  const unit = toFinite(unitWeightKg)
+// Numeric coercion matters: PostgREST can return numeric columns as strings.
+function weightFor(quantity: unknown, unitWeightKg: unknown): number {
+  const qty = toFiniteNumber(quantity)
+  const unit = toFiniteNumber(unitWeightKg)
   if (qty === 0 || unit === 0) return 0
   return qty * unit
 }
@@ -57,8 +55,8 @@ export function computeOperationalSummary(
   let weightsMissing = false
 
   for (const item of items) {
-    if (item.unit_weight_kg === null || item.unit_weight_kg === undefined) {
-      if (toFinite(item.total_quantity) > 0) weightsMissing = true
+    if (toNullableNumber(item.unit_weight_kg) === null) {
+      if (toFiniteNumber(item.total_quantity) > 0) weightsMissing = true
       continue
     }
     totalWeightKg += weightFor(item.total_quantity, item.unit_weight_kg)
