@@ -1,21 +1,20 @@
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
 import type { ProductionSearchRow } from '../../production/types'
-import type { LotDashboardItem } from '../types'
+import type { WeightRoute } from '../utils/computeOperationalSummary'
 import { computeOperationalSummary } from '../utils/computeOperationalSummary'
 import { ProductionTotalsCard } from './ProductionTotalsCard'
-import { StageProgressCards } from './StageProgressCards'
 import './OperationalOverview.css'
 
 interface OperationalOverviewProps {
-  lots: LotDashboardItem[]
   items: ProductionSearchRow[]
+  route: WeightRoute
   isPending: boolean
   isError: boolean
   errorMessage: string | null
   onRetry: () => void
 }
 
-export function OperationalOverview({ lots, items, isPending, isError, errorMessage, onRetry }: OperationalOverviewProps) {
+export function OperationalOverview({ items, route, isPending, isError, errorMessage, onRetry }: OperationalOverviewProps) {
   if (isPending) {
     return (
       <section className="opc-state" aria-label="Operational overview loading">
@@ -33,7 +32,7 @@ export function OperationalOverview({ lots, items, isPending, isError, errorMess
     )
   }
 
-  if (lots.length === 0) {
+  if (items.length === 0) {
     return (
       <section className="opc-state" aria-label="Operational overview empty">
         <p>No production data available for the selected scope.</p>
@@ -41,7 +40,7 @@ export function OperationalOverview({ lots, items, isPending, isError, errorMess
     )
   }
 
-  const summary = computeOperationalSummary(lots, items)
+  const summary = computeOperationalSummary(items, route)
 
   return (
     <section className="opc-overview" aria-label="Operational overview">
@@ -52,9 +51,13 @@ export function OperationalOverview({ lots, items, isPending, isError, errorMess
         outBendWeightKg={summary.outBendWeightKg}
         bendWeightKg={summary.bendWeightKg}
         awaitingBendReturnWeightKg={summary.awaitingBendReturnWeightKg}
+        cutPercent={summary.cutPercent}
+        outBendPercent={summary.outBendPercent}
+        bendPercent={summary.bendPercent}
+        readyForBendPercent={summary.readyForBendPercent}
+        awaitingBendReturnPercent={summary.awaitingBendReturnPercent}
         weightsMissing={summary.weightsMissing}
       />
-      <StageProgressCards stages={summary.stageProgress} />
     </section>
   )
 }

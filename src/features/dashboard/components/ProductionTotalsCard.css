@@ -49,6 +49,23 @@
   font-size: 0.8rem;
 }
 
+.opc-totals__priority dt {
+  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+}
+
+.opc-totals__percent {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.opc-totals__priority .opc-totals__percent {
+  margin-top: 12px;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
 .opc-totals__metric {
   display: flex;
   flex-direction: column;

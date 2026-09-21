@@ -1,12 +1,7 @@
 import type { ProductionSearchRow } from '../../production/types'
 import { toFiniteNumber, toNullableNumber } from '../../production/utils'
-import type { LotDashboardItem } from '../types'
 
-export interface StageProgress {
-  stage: 'CUT' | 'OUT_BEND' | 'BEND'
-  completedQty: number
-  remainingQty: number
-}
+export type WeightRoute = 'ALL' | 'BEND' | 'NO BEND'
 
 export interface OperationalSummary {
   totalWeightKg: number
@@ -16,12 +11,14 @@ export interface OperationalSummary {
   bendWeightKg: number
   awaitingBendReturnWeightKg: number
   weightsMissing: boolean
-  stageProgress: StageProgress[]
+  cutPercent: number
+  outBendPercent: number
+  bendPercent: number
+  readyForBendPercent: number
+  awaitingBendReturnPercent: number
 }
 
-// Weights are presentation sums only: quantity × unit_weight_kg from
-// search_production_items. Quantities/remaining/waiting counts stay on
-// production_lot_dashboard backend values. No new backend fields.
+// Weights are presentation sums: quantity × unit_weight_kg from search_production_items.
 // Numeric coercion matters: PostgREST can return numeric columns as strings.
 function weightFor(quantity: unknown, unitWeightKg: unknown): number {
   const qty = toFiniteNumber(quantity)
@@ -30,19 +27,14 @@ function weightFor(quantity: unknown, unitWeightKg: unknown): number {
   return qty * unit
 }
 
-export function computeOperationalSummary(
-  lots: LotDashboardItem[],
-  items: ProductionSearchRow[],
-): OperationalSummary {
-  const cutCompletedQty = lots.reduce((sum, lot) => sum + lot.totalCutQuantity, 0)
-  const cutRemainingQty = lots.reduce((sum, lot) => sum + lot.remainingCutQuantity, 0)
-  const outBendCompletedQty = lots.reduce((sum, lot) => sum + lot.totalOutBendQuantity, 0)
-  const outBendRemainingQty = lots.reduce((sum, lot) => sum + lot.remainingOutBendQuantity, 0)
-  const bendCompletedQty = lots.reduce((sum, lot) => sum + lot.totalBendQuantity, 0)
-  const bendRemainingQty = lots.reduce((sum, lot) => sum + lot.remainingBendQuantity, 0)
+function percentOf(value: number, total: number): number {
+  return total > 0 ? Math.min(100, Math.max(0, Math.round((value / total) * 100))) : 0
+}
 
+export function computeOperationalSummary(items: ProductionSearchRow[], route: WeightRoute): OperationalSummary {
   let totalWeightKg = 0
   let cutWeightKg = 0
+  let bendCutWeightKg = 0
   let readyForBendWeightKg = 0
   let outBendWeightKg = 0
   let bendWeightKg = 0
@@ -50,6 +42,7 @@ export function computeOperationalSummary(
   let weightsMissing = false
 
   for (const item of items) {
+    if (route !== 'ALL' && item.routing !== route) continue
     if (toNullableNumber(item.unit_weight_kg) === null) {
       if (toFiniteNumber(item.total_quantity) > 0) weightsMissing = true
       continue
@@ -59,6 +52,7 @@ export function computeOperationalSummary(
     outBendWeightKg += weightFor(item.out_bend_total, item.unit_weight_kg)
     bendWeightKg += weightFor(item.bend_total, item.unit_weight_kg)
     if (item.routing === 'BEND') {
+      bendCutWeightKg += weightFor(item.cut_total, item.unit_weight_kg)
       // These are outstanding stage balances, not cumulative production totals.
       readyForBendWeightKg += weightFor(
         Math.max(0, toFiniteNumber(item.cut_total) - toFiniteNumber(item.out_bend_total)),
@@ -79,10 +73,10 @@ export function computeOperationalSummary(
     bendWeightKg,
     awaitingBendReturnWeightKg,
     weightsMissing,
-    stageProgress: [
-      { stage: 'CUT', completedQty: cutCompletedQty, remainingQty: cutRemainingQty },
-      { stage: 'OUT_BEND', completedQty: outBendCompletedQty, remainingQty: outBendRemainingQty },
-      { stage: 'BEND', completedQty: bendCompletedQty, remainingQty: bendRemainingQty },
-    ],
+    cutPercent: percentOf(cutWeightKg, totalWeightKg),
+    outBendPercent: percentOf(outBendWeightKg, totalWeightKg),
+    bendPercent: percentOf(bendWeightKg, totalWeightKg),
+    readyForBendPercent: percentOf(readyForBendWeightKg, bendCutWeightKg),
+    awaitingBendReturnPercent: percentOf(awaitingBendReturnWeightKg, outBendWeightKg),
   }
 }

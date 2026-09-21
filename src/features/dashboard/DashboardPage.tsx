@@ -2,6 +2,8 @@ import { useState } from 'react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
+import { FormField } from '../../components/ui/FormField'
+import { Select } from '../../components/ui/Select'
 import { useDebouncedValue } from '../production/hooks/useDebouncedValue'
 import { ActionQueueFilters } from './components/ActionQueueFilters'
 import { ActionQueueTable } from './components/ActionQueueTable'
@@ -10,6 +12,7 @@ import { OperationalOverview } from './components/OperationalOverview'
 import { useActionQueue, useDashboardProductionItems, useLotDashboard } from './queries/dashboardQueries'
 import { ProjectLotSelector } from '../production/components/ProjectLotSelector'
 import type { DashboardFilters } from './types'
+import type { WeightRoute } from './utils/computeOperationalSummary'
 import './DashboardPage.css'
 
 const NEXT_ACTION_OPTIONS = ['CUT', 'OUT_BEND', 'BEND', 'ROLLING', 'DISPENSE', 'COMPLETE']
@@ -21,6 +24,7 @@ export function DashboardPage() {
   const [lotId, setLotId] = useState<string | null>(null)
   const [nextAction, setNextAction] = useState<string | null>(null)
   const [route, setRoute] = useState<string | null>(null)
+  const [weightRoute, setWeightRoute] = useState<WeightRoute>('ALL')
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search)
 
@@ -51,10 +55,7 @@ export function DashboardPage() {
     setSearch('')
   }
 
-  const retryOverview = () => {
-    void lotDashboardQuery.refetch()
-    void productionItemsQuery.refetch()
-  }
+  const retryOverview = () => void productionItemsQuery.refetch()
 
   return (
     <>
@@ -72,12 +73,25 @@ export function DashboardPage() {
             onProjectNumberChange={(value) => selectProjectNumber(value)}
           />
         </div>
+        <div className="dashboard-weight-filter">
+          <FormField label="Weight route" htmlFor="dashboard-weight-route">
+            <Select
+              id="dashboard-weight-route"
+              value={weightRoute}
+              onChange={(event) => setWeightRoute(event.target.value as WeightRoute)}
+            >
+              <option value="ALL">All routes</option>
+              <option value="BEND">Bend</option>
+              <option value="NO BEND">No Bend</option>
+            </Select>
+          </FormField>
+        </div>
         <OperationalOverview
-          lots={lotDashboardQuery.data ?? []}
           items={productionItemsQuery.data ?? []}
-          isPending={lotDashboardQuery.isPending || productionItemsQuery.isPending}
-          isError={lotDashboardQuery.isError || productionItemsQuery.isError}
-          errorMessage={lotDashboardQuery.error?.message ?? productionItemsQuery.error?.message ?? null}
+          route={weightRoute}
+          isPending={productionItemsQuery.isPending}
+          isError={productionItemsQuery.isError}
+          errorMessage={productionItemsQuery.error?.message ?? null}
           onRetry={retryOverview}
         />
         <LotDetailsSection lotDashboardQuery={lotDashboardQuery} />
