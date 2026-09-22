@@ -9,7 +9,7 @@ export function ProductionSummary({ items }: ProductionSummaryProps) {
   const inProgress = items.filter((item) => item.progress_state === 'in_progress').length
   const notStarted = items.filter((item) => item.progress_state === 'not_started').length
   const summary = [
-    ['Total items', items.length],
+    ['All filtered items', items.length],
     ['Completed', completed],
     ['In Progress', inProgress],
     ['Not Started', notStarted],
