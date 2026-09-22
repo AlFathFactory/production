@@ -9,10 +9,14 @@ export const primaryNavigationItems: NavigationItem[] = [
   { label: 'Projects', path: '/projects', icon: 'projects' },
   { label: 'Follow Up', path: '/production', icon: 'production' },
   {
-    label: 'Bending',
+    label: 'Packing',
     path: '/bending',
     icon: 'bending',
     isVisible: canAccessBendingDocuments,
+    children: [
+      { label: 'Issue Packing', path: '/bending/issue' },
+      { label: 'Receive Packing', path: '/bending/receive' },
+    ],
   },
   { label: 'Documents', path: '/documents', icon: 'documents' },
 ]
@@ -32,5 +36,10 @@ export const allNavigationItems = [
 ]
 
 export function getNavigationLabel(pathname: string): string | null {
-  return allNavigationItems.find((item) => item.path === pathname)?.label ?? null
+  for (const item of allNavigationItems) {
+    if (item.path === pathname) return item.label
+    const child = item.children?.find((entry) => entry.path === pathname)
+    if (child) return child.label
+  }
+  return null
 }

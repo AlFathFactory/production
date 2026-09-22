@@ -615,6 +615,54 @@ a:focus-visible {
   flex: 0 0 auto;
 }
 
+.sidebar-nav-item-group--expanded {
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 15px;
+  padding: 8px;
+  background: #0a2527;
+  box-shadow: 0 5px 14px rgb(0 0 0 / 12%);
+}
+
+.sidebar-nav-item--button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.sidebar-nav-item--button:hover,
+.sidebar-nav-item--button:focus-visible {
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+}
+
+.sidebar-nav-item--button.sidebar-nav-item--active {
+  background: #1d5555;
+}
+
+.sidebar-nav-item__chevron {
+  margin-left: auto;
+  transition: transform 160ms ease;
+}
+
+.sidebar-nav-item__chevron--open {
+  transform: rotate(180deg);
+}
+
+.sidebar-nav-item__children {
+  display: grid;
+  gap: 2px;
+  margin: 3px 0 2px 14px;
+  padding-left: 8px;
+}
+
+.sidebar-nav-item--child {
+  min-height: 36px;
+  font-size: 0.82rem;
+}
+
 .app-shell__workspace {
   display: flex;
   min-width: 0;

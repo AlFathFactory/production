@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 
 import { NotFoundPage } from '../components/shared/NotFoundPage'
 import { canAccessBendingDocuments, canAccessUserManagement } from '../features/auth/permissions'
@@ -40,9 +40,14 @@ export const router = createBrowserRouter([
             path: 'bending',
             element: (
               <RequirePermission canAccess={canAccessBendingDocuments}>
-                <BendingPage />
+                <Outlet />
               </RequirePermission>
             ),
+            children: [
+              { index: true, element: <Navigate to="issue" replace /> },
+              { path: 'issue', element: <BendingPage /> },
+              { path: 'receive', element: <BendingPage /> },
+            ],
           },
           {
             path: 'documents',

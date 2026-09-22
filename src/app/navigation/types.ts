@@ -13,4 +13,5 @@ export interface NavigationItem {
   path: string
   icon: NavigationIcon
   isVisible?: (role: AppRole) => boolean
+  children?: { label: string; path: string }[]
 }

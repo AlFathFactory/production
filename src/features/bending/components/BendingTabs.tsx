@@ -24,7 +24,7 @@ export function BendingTabs({ activeTab, onChange }: BendingTabsProps) {
   }
 
   return (
-    <div aria-label="Bending workflow" className="bending-tabs" role="tablist">
+    <div aria-label="Packing workflow" className="bending-tabs" role="tablist">
       <button
         aria-controls="bending-dispatch-panel"
         aria-selected={activeTab === 'dispatch'}
@@ -36,7 +36,7 @@ export function BendingTabs({ activeTab, onChange }: BendingTabsProps) {
         onClick={() => onChange('dispatch')}
         onKeyDown={(event) => moveFocus(event, 'dispatch')}
       >
-        Dispatch
+        Issue Packing
       </button>
       <button
         aria-controls="bending-return-panel"
@@ -49,7 +49,7 @@ export function BendingTabs({ activeTab, onChange }: BendingTabsProps) {
         onClick={() => onChange('return')}
         onKeyDown={(event) => moveFocus(event, 'return')}
       >
-        Return
+        Receive Packing
       </button>
     </div>
   )

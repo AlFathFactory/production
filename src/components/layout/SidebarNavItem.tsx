@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 import type { NavigationIcon, NavigationItem } from '../../app/navigation/types'
@@ -26,6 +27,47 @@ function NavigationIcon({ icon }: { icon: NavigationIcon }) {
 }
 
 export function SidebarNavItem({ item, onNavigate }: SidebarNavItemProps) {
+  const { pathname } = useLocation()
+  const [isExpanded, setIsExpanded] = useState(() => pathname === item.path || Boolean(item.children?.some((child) => child.path === pathname)))
+
+  useEffect(() => {
+    if (item.children?.some((child) => child.path === pathname)) {
+      setIsExpanded(true)
+    }
+  }, [item, pathname])
+
+  if (item.children) {
+    const isActive = pathname === item.path || item.children.some((child) => child.path === pathname)
+    return (
+      <div className={`sidebar-nav-item-group${isExpanded ? ' sidebar-nav-item-group--expanded' : ''}`}>
+        <button
+          aria-expanded={isExpanded}
+          className={`sidebar-nav-item sidebar-nav-item--button${isActive ? ' sidebar-nav-item--active' : ''}`}
+          onClick={() => setIsExpanded((current) => !current)}
+          type="button"
+        >
+          <NavigationIcon icon={item.icon} />
+          <span>{item.label}</span>
+          <span aria-hidden="true" className={`sidebar-nav-item__chevron${isExpanded ? ' sidebar-nav-item__chevron--open' : ''}`}>⌄</span>
+        </button>
+        {isExpanded ? (
+          <div className="sidebar-nav-item__children">
+            {item.children.map((child) => (
+              <NavLink
+                className={({ isActive: childIsActive }) => `sidebar-nav-item sidebar-nav-item--child${childIsActive ? ' sidebar-nav-item--active' : ''}`}
+                key={child.path}
+                onClick={onNavigate}
+                to={child.path}
+              >
+                {child.label}
+              </NavLink>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
   return (
     <NavLink
       className={({ isActive }) =>
