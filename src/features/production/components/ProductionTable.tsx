@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import { ProductionTableRow } from './ProductionTableRow'
 import type { DirectStageAction, ProductionSearchRow } from '../types'
 
@@ -8,6 +10,18 @@ interface ProductionTableProps {
 }
 
 export function ProductionTable({ items, onStageAction, onViewHistory }: ProductionTableProps) {
+  const [openRowKey, setOpenRowKey] = useState<string | null>(null)
+
+  const selectStageAction = (item: ProductionSearchRow, action: DirectStageAction) => {
+    setOpenRowKey(null)
+    onStageAction(item, action)
+  }
+
+  const viewHistory = (item: ProductionSearchRow) => {
+    setOpenRowKey(null)
+    onViewHistory(item)
+  }
+
   return (
     <div className="production-table-wrap" tabIndex={0} aria-label="Production items table. Scroll horizontally to view all columns.">
       <table className="production-table">
@@ -28,7 +42,19 @@ export function ProductionTable({ items, onStageAction, onViewHistory }: Product
             <th scope="col">Actions</th>
           </tr>
         </thead>
-        <tbody>{items.map((item, index) => <ProductionTableRow key={item.production_item_id ?? `production-row-${index}`} item={item} onStageAction={onStageAction} onViewHistory={onViewHistory} />)}</tbody>
+        <tbody>{items.map((item, index) => {
+          const rowKey = item.production_item_id ?? `production-row-${index}`
+          return (
+            <ProductionTableRow
+              key={rowKey}
+              item={item}
+              isActionOpen={openRowKey === rowKey}
+              onToggleAction={() => setOpenRowKey((current) => current === rowKey ? null : rowKey)}
+              onStageAction={selectStageAction}
+              onViewHistory={viewHistory}
+            />
+          )
+        })}</tbody>
       </table>
     </div>
   )

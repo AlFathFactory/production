@@ -11,11 +11,13 @@ function stageValue(value: number | null, applicable: boolean): string {
 
 interface ProductionTableRowProps {
   item: ProductionSearchRow
+  isActionOpen: boolean
+  onToggleAction: () => void
   onStageAction: (item: ProductionSearchRow, action: DirectStageAction) => void
   onViewHistory: (item: ProductionSearchRow) => void
 }
 
-export function ProductionTableRow({ item, onStageAction, onViewHistory }: ProductionTableRowProps) {
+export function ProductionTableRow({ item, isActionOpen, onToggleAction, onStageAction, onViewHistory }: ProductionTableRowProps) {
   const supportsOutBend = item.routing === 'BEND'
   const supportsBendOrRolling = item.routing === 'BEND' || item.routing === 'ROLLING'
   const finalStage = item.routing === 'BEND' ? item.bend_total : item.routing === 'ROLLING' ? item.rolling_total : null
@@ -41,7 +43,7 @@ export function ProductionTableRow({ item, onStageAction, onViewHistory }: Produ
           <ProductionProgressBadge progressState={item.progress_state} />
         </div>
       </td>
-      <td><ProductionRowActions item={item} onSelectAction={onStageAction} onViewHistory={onViewHistory} /></td>
+      <td><ProductionRowActions item={item} isOpen={isActionOpen} onToggle={onToggleAction} onSelectAction={onStageAction} onViewHistory={onViewHistory} /></td>
     </tr>
   )
 }

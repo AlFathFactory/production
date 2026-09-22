@@ -55,7 +55,7 @@
 
 .opc-totals__percent {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
 }
