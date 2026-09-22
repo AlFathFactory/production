@@ -169,6 +169,7 @@ export function ProductionPage() {
           <section className="production-results" aria-label="Production results">
             <ProductionSummary items={itemsQuery.data} />
             <ProductionTable
+              key={JSON.stringify(searchFilters)}
               items={itemsQuery.data}
               onStageAction={(item, action) => setStageSelection({ item, action })}
               onViewHistory={(item) => setHistorySelection(item)}

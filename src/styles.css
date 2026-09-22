@@ -1386,6 +1386,30 @@ button.hierarchy-list__select:hover,
   border-bottom: 0;
 }
 
+.production-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 14px 20px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.production-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.production-pagination__controls .button {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+}
+
 .production-table__designation {
   min-width: 210px;
 }
