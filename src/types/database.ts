@@ -563,7 +563,7 @@ export interface Database {
           p_lot_id?: string
           p_operations?: Database['public']['Enums']['production_stage'][]
           p_routing?: Database['public']['Enums']['production_route']
-          p_query?: string
+          p_article_query?: string
           p_performed_by?: string
         }
         Returns: Array<{

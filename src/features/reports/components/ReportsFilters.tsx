@@ -5,6 +5,7 @@ import { Select } from '../../../components/ui/Select'
 import { productionRoutes } from '../../production/constants'
 import { ProjectLotSelector } from '../../production/components/ProjectLotSelector'
 import type { ProductionRoute } from '../../production/types'
+import { useUsers } from '../../users/queries/userQueries'
 import { reportOperationLabels, reportOperations } from '../constants'
 import type { ReportFilters, ReportOperation } from '../types'
 
@@ -37,6 +38,8 @@ export function ReportsFilters({
   onPerformedByChange,
   onReset,
 }: ReportsFiltersProps) {
+  const usersQuery = useUsers({ search: '' })
+  const performers = (usersQuery.data ?? []).filter((user) => user.isActive)
   const operationsSummary = filters.operations.length === 0
     ? 'All Operations'
     : `${filters.operations.length} selected`
@@ -114,13 +117,28 @@ export function ReportsFilters({
           />
         </FormField>
         <FormField label="Performed By" htmlFor="reports-performed-by">
-          <Input
+          <Select
             id="reports-performed-by"
-            type="search"
-            placeholder="Search a person"
             value={filters.performedBy}
             onChange={(event) => onPerformedByChange(event.target.value)}
-          />
+            disabled={usersQuery.isLoading}
+          >
+            <option value="">
+              {usersQuery.isLoading
+                ? 'Loading performers…'
+                : performers.length === 0
+                  ? 'No performers available'
+                  : 'All Performers'}
+            </option>
+            {performers.map((performer) => (
+              <option key={performer.id} value={performer.id}>{performer.fullName}</option>
+            ))}
+          </Select>
+          {usersQuery.isError ? (
+            <p className="reports-filter-error" role="alert">
+              Performers could not be loaded. <button type="button" onClick={() => void usersQuery.refetch()}>Retry</button>
+            </p>
+          ) : null}
         </FormField>
       </div>
 

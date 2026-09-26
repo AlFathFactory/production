@@ -31,10 +31,10 @@ export const reportsRepository = {
       p_date_to: filters.dateTo ?? undefined,
       p_lot_id: filters.lotId ?? undefined,
       p_operations: filters.operations.length > 0 ? filters.operations : undefined,
-      p_performed_by: filters.performedBy.trim() || undefined,
+      p_performed_by: filters.performedBy || undefined,
       p_project_id: filters.projectId ?? undefined,
       p_project_number_id: filters.projectNumberId ?? undefined,
-      p_query: filters.query.trim() || undefined,
+      p_article_query: filters.query.trim() || undefined,
       p_routing: filters.routing ?? undefined,
     })
 

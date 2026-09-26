@@ -38,13 +38,13 @@ export function ProductionTotalsCard({
           <dt>Ready to send for bending</dt>
           <dd>{formatWeightKg(readyForBendWeightKg)}</dd>
           <p>Cut and not yet sent out</p>
-          {/* <span className="opc-totals__percent">{readyForBendPercent}% of cut Bend weight</span> */}
+          <span className="opc-totals__percent">{readyForBendPercent}% of cut Bend weight</span>
         </div>
         <div className="opc-totals__priority opc-totals__priority--return">
           <dt>Awaiting return from bending</dt>
           <dd>{formatWeightKg(awaitingBendReturnWeightKg)}</dd>
           <p>Sent out and not yet returned</p>
-          {/* <span className="opc-totals__percent">{awaitingBendReturnPercent}% of Out Bend weight</span> */}
+          <span className="opc-totals__percent">{awaitingBendReturnPercent}% of Out Bend weight</span>
         </div>
         <div className="opc-totals__metric">
           <dt>Total Weight</dt>
