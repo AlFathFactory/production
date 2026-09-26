@@ -18,15 +18,13 @@ const initialFilters: ProductionFilterValues = {
 
 export function useProductionFilters() {
   const [filters, setFilters] = useState<ProductionFilterValues>(initialFilters)
-  const hasActiveFilters = Boolean(filters.query.trim() || filters.route || filters.nextAction || filters.progressState)
+  const hasActiveFilters = Boolean(filters.query.trim() || filters.route)
 
   return {
     filters,
     hasActiveFilters,
     setQuery: (query: string) => setFilters((current) => ({ ...current, query })),
     setRoute: (route: ProductionRoute | null) => setFilters((current) => ({ ...current, route })),
-    setNextAction: (nextAction: ProductionNextAction | null) => setFilters((current) => ({ ...current, nextAction })),
-    setProgressState: (progressState: ProductionProgressState | null) => setFilters((current) => ({ ...current, progressState })),
     resetFilters: () => setFilters(initialFilters),
   }
 }

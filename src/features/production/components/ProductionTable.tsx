@@ -14,7 +14,6 @@ interface ProductionTableProps {
 }
 
 export function ProductionTable({ filterKey, items, onStageAction, onViewHistory }: ProductionTableProps) {
-  const [openRowKey, setOpenRowKey] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [selectedArticles, setSelectedArticles] = useState<string[]>([])
   const [articleSearch, setArticleSearch] = useState('')
@@ -32,7 +31,6 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
 
   useEffect(() => {
     setPage(1)
-    setOpenRowKey(null)
   }, [filterKey])
 
   const toggleArticle = (article: string, selected: boolean) => {
@@ -41,21 +39,17 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
       : selectedArticles.filter((current) => current !== article)
     setSelectedArticles(nextArticles)
     setPage(1)
-    setOpenRowKey(null)
   }
 
   const changePage = (nextPage: number) => {
-    setOpenRowKey(null)
     setPage(nextPage)
   }
 
   const selectStageAction = (item: ProductionSearchRow, action: DirectStageAction) => {
-    setOpenRowKey(null)
     onStageAction(item, action)
   }
 
   const viewHistory = (item: ProductionSearchRow) => {
-    setOpenRowKey(null)
     onViewHistory(item)
   }
 
@@ -86,7 +80,7 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
           </div>
         </details>
         {selectedArticles.length > 0 ? (
-          <Button type="button" variant="secondary" onClick={() => { setSelectedArticles([]); setPage(1); setOpenRowKey(null) }}>
+          <Button type="button" variant="secondary" onClick={() => { setSelectedArticles([]); setPage(1) }}>
             Show all Articles
           </Button>
         ) : null}
@@ -114,8 +108,6 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
               <th scope="col">BEND / ROLLING</th>
               <th scope="col">Warehouse</th>
               <th scope="col">Dispensed</th>
-              <th scope="col">Next Action</th>
-              <th scope="col">Progress</th>
               <th scope="col">Actions</th>
             </tr>
           </thead>
@@ -125,8 +117,6 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
               <ProductionTableRow
                 key={rowKey}
                 item={item}
-                isActionOpen={openRowKey === rowKey}
-                onToggleAction={() => setOpenRowKey((current) => current === rowKey ? null : rowKey)}
                 onStageAction={selectStageAction}
                 onViewHistory={viewHistory}
               />

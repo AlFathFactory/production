@@ -618,7 +618,7 @@ a:focus-visible {
 .sidebar-nav-item-group--expanded {
   border: 1px solid rgb(255 255 255 / 10%);
   border-radius: 15px;
-  padding: 8px;
+  padding: 10px;
   background: #0a2527;
   box-shadow: 0 5px 14px rgb(0 0 0 / 12%);
 }
@@ -643,7 +643,14 @@ a:focus-visible {
 }
 
 .sidebar-nav-item__chevron {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
   margin-left: auto;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   transition: transform 160ms ease;
 }
 
@@ -653,14 +660,16 @@ a:focus-visible {
 
 .sidebar-nav-item__children {
   display: grid;
-  gap: 2px;
-  margin: 3px 0 2px 14px;
-  padding-left: 8px;
+  gap: 6px;
+  margin: 10px 0 2px 14px;
+  padding: 4px 0 2px 10px;
+  border-left: 1px solid rgb(255 255 255 / 14%);
 }
 
 .sidebar-nav-item--child {
-  min-height: 36px;
-  font-size: 0.82rem;
+  min-height: 42px;
+  padding: 0 12px;
+  font-size: 0.84rem;
 }
 
 .app-shell__workspace {
@@ -1243,7 +1252,7 @@ button.hierarchy-list__select:hover,
 }
 
 .production-filters {
-  grid-template-columns: minmax(220px, 1.7fr) repeat(3, minmax(150px, 1fr)) auto;
+  grid-template-columns: minmax(240px, 2fr) minmax(180px, 1fr) auto;
   align-items: end;
 }
 
@@ -1849,73 +1858,58 @@ button.hierarchy-list__select:hover,
 }
 
 .production-row-actions {
-  position: relative;
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 190px;
 }
 
-.production-row-actions summary {
-  width: max-content;
-  border: 1px solid var(--line);
-  border-radius: 7px;
+.production-row-actions__stage {
+  display: grid;
+  gap: 1px;
+  min-width: 76px;
+  border: 1px solid #9ec6bc;
+  border-radius: 8px;
   padding: 6px 9px;
   color: var(--brand);
-  background: var(--surface);
-  cursor: pointer;
-  font-size: 0.74rem;
-  font-weight: 700;
-  list-style: none;
-  white-space: nowrap;
-}
-
-.production-row-actions summary::-webkit-details-marker {
-  display: none;
-}
-
-.production-row-actions summary::after {
-  content: '⌄';
-  margin-left: 6px;
-}
-
-.production-row-actions[open] summary {
-  border-color: #a8b9b4;
-  background: var(--surface-subtle);
-}
-
-.production-row-actions__menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 10;
-  display: grid;
-  gap: 2px;
-  margin-top: 4px;
-  min-width: 180px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 4px;
-  background: var(--surface);
-  box-shadow: 0 8px 18px rgb(14 44 43 / 10%);
-}
-
-.production-row-actions__menu button {
-  border: 0;
-  border-radius: 5px;
-  padding: 6px 8px;
-  color: var(--brand);
-  background: transparent;
+  background: var(--brand-soft);
   cursor: pointer;
   font-size: 0.72rem;
   font-weight: 700;
   text-align: left;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease, transform 140ms ease;
 }
 
-.production-row-actions__menu button:hover,
-.production-row-actions__menu button:focus-visible {
-  background: var(--brand-soft);
+.production-row-actions__stage small {
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 600;
+}
+
+.production-row-actions__stage:hover,
+.production-row-actions__stage:focus-visible {
+  border-color: var(--brand);
+  background: #dcefe9;
+  box-shadow: 0 3px 8px rgb(14 86 72 / 12%);
+  transform: translateY(-1px);
+}
+
+.production-row-actions__stage--rolling {
+  border-color: #b8addd;
+  color: #4f3b87;
+  background: #f1edfb;
+}
+
+.production-row-actions__stage--dispense {
+  border-color: #e1bd77;
+  color: #76510d;
+  background: #fff6e2;
 }
 
 .production-row-actions__complete,
 .production-row-actions__empty {
-  display: inline-block;
+  align-self: center;
   font-size: 0.74rem;
   font-weight: 700;
   white-space: nowrap;
@@ -3664,8 +3658,10 @@ button.hierarchy-list__select:hover,
 }
 
 .production-row-actions__history {
-  display: block;
-  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 6px 9px;

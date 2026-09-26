@@ -1,45 +1,53 @@
 import { getAvailableDirectStageActions } from '../productionActions'
 import type { DirectStageAction, ProductionSearchRow } from '../types'
+import { formatQuantity } from '../utils'
 
 interface ProductionRowActionsProps {
   item: ProductionSearchRow
-  isOpen: boolean
-  onToggle: () => void
   onSelectAction: (item: ProductionSearchRow, action: DirectStageAction) => void
   onViewHistory: (item: ProductionSearchRow) => void
 }
 
-export function ProductionRowActions({ item, isOpen, onToggle, onSelectAction, onViewHistory }: ProductionRowActionsProps) {
+const stageLabels: Record<DirectStageAction['stage'], string> = {
+  CUT: 'Cut',
+  ROLLING: 'Rolling',
+  DISPENSE: 'Dispense',
+}
+
+export function ProductionRowActions({ item, onSelectAction, onViewHistory }: ProductionRowActionsProps) {
   const actions = getAvailableDirectStageActions(item)
   const isComplete = item.next_action === 'COMPLETE' || (item.completion_percent ?? 0) >= 100
 
-  if (isComplete) {
-    return (
-      <>
-        <span className="production-row-actions__complete">Complete</span>
-        <button type="button" className="production-row-actions__history" onClick={() => onViewHistory(item)}>History</button>
-      </>
-    )
-  }
-
-  if (actions.length === 0) {
-    return (
-      <>
-        <span className="production-row-actions__empty">No direct action</span>
-        <button type="button" className="production-row-actions__history" onClick={() => onViewHistory(item)}>History</button>
-      </>
-    )
-  }
-
   return (
-    <details className="production-row-actions" open={isOpen}>
-      <summary onClick={(event) => { event.preventDefault(); onToggle() }}>Add Progress</summary>
-      <div className="production-row-actions__menu">
-        {actions.map((action) => (
-          <button key={action.stage} type="button" onClick={() => onSelectAction(item, action)}>{action.stage}</button>
-        ))}
-        <button type="button" className="production-row-actions__history" onClick={() => onViewHistory(item)}>History</button>
-      </div>
-    </details>
+    <div className="production-row-actions">
+      {isComplete ? <span className="production-row-actions__complete">Complete</span> : null}
+      {!isComplete && actions.length === 0 ? <span className="production-row-actions__empty">No action available</span> : null}
+      {actions.map((action) => {
+        const label = stageLabels[action.stage]
+        const available = formatQuantity(action.availableQuantity)
+
+        return (
+          <button
+            key={action.stage}
+            type="button"
+            className={`production-row-actions__stage production-row-actions__stage--${action.stage.toLowerCase()}`}
+            title={`${label}: ${available} available for Article ${item.article ?? ''}`.trim()}
+            aria-label={`Add ${label} progress for Article ${item.article ?? 'item'}; ${available} available`}
+            onClick={() => onSelectAction(item, action)}
+          >
+            <span>{label}</span>
+            <small>{available} available</small>
+          </button>
+        )
+      })}
+      <button
+        type="button"
+        className="production-row-actions__history"
+        aria-label={`View history for Article ${item.article ?? 'item'}`}
+        onClick={() => onViewHistory(item)}
+      >
+        History
+      </button>
+    </div>
   )
 }

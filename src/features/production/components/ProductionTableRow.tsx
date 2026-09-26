@@ -1,9 +1,7 @@
-import { ProductionActionBadge } from './ProductionActionBadge'
-import { ProductionProgressBadge } from './ProductionProgressBadge'
 import { ProductionRouteBadge } from './ProductionRouteBadge'
 import { ProductionRowActions } from './ProductionRowActions'
 import type { DirectStageAction, ProductionSearchRow } from '../types'
-import { formatPercent, formatQuantity } from '../utils'
+import { formatQuantity } from '../utils'
 
 function stageValue(value: number | null, applicable: boolean): string {
   return applicable ? formatQuantity(value) : '—'
@@ -11,17 +9,14 @@ function stageValue(value: number | null, applicable: boolean): string {
 
 interface ProductionTableRowProps {
   item: ProductionSearchRow
-  isActionOpen: boolean
-  onToggleAction: () => void
   onStageAction: (item: ProductionSearchRow, action: DirectStageAction) => void
   onViewHistory: (item: ProductionSearchRow) => void
 }
 
-export function ProductionTableRow({ item, isActionOpen, onToggleAction, onStageAction, onViewHistory }: ProductionTableRowProps) {
+export function ProductionTableRow({ item, onStageAction, onViewHistory }: ProductionTableRowProps) {
   const supportsOutBend = item.routing === 'BEND'
   const supportsBendOrRolling = item.routing === 'BEND' || item.routing === 'ROLLING'
   const finalStage = item.routing === 'BEND' ? item.bend_total : item.routing === 'ROLLING' ? item.rolling_total : null
-  const progressWidth = Math.min(100, Math.max(0, item.completion_percent ?? 0))
 
   return (
     <tr>
@@ -35,15 +30,7 @@ export function ProductionTableRow({ item, isActionOpen, onToggleAction, onStage
       <td className="production-table__number">{stageValue(finalStage, supportsBendOrRolling)}</td>
       <td className="production-table__number">{formatQuantity(item.warehouse_stock)}</td>
       <td className="production-table__number">{formatQuantity(item.dispensed_total)}</td>
-      <td><ProductionActionBadge action={item.next_action} /></td>
-      <td>
-        <div className="production-progress">
-          <span aria-hidden="true"><span style={{ width: `${progressWidth}%` }} /></span>
-          <strong>{formatPercent(item.completion_percent)}</strong>
-          <ProductionProgressBadge progressState={item.progress_state} />
-        </div>
-      </td>
-      <td><ProductionRowActions item={item} isOpen={isActionOpen} onToggle={onToggleAction} onSelectAction={onStageAction} onViewHistory={onViewHistory} /></td>
+      <td><ProductionRowActions item={item} onSelectAction={onStageAction} onViewHistory={onViewHistory} /></td>
     </tr>
   )
 }

@@ -48,7 +48,14 @@ export function SidebarNavItem({ item, onNavigate }: SidebarNavItemProps) {
         >
           <NavigationIcon icon={item.icon} />
           <span>{item.label}</span>
-          <span aria-hidden="true" className={`sidebar-nav-item__chevron${isExpanded ? ' sidebar-nav-item__chevron--open' : ''}`}>⌄</span>
+          <svg
+            aria-hidden="true"
+            className={`sidebar-nav-item__chevron${isExpanded ? ' sidebar-nav-item__chevron--open' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path d="m7 9.5 5 5 5-5" />
+          </svg>
         </button>
         {isExpanded ? (
           <div className="sidebar-nav-item__children">

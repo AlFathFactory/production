@@ -145,8 +145,6 @@ export function ProductionPage() {
           hasActiveFilters={productionFilters.hasActiveFilters}
           onQueryChange={productionFilters.setQuery}
           onRouteChange={productionFilters.setRoute}
-          onNextActionChange={productionFilters.setNextAction}
-          onProgressStateChange={productionFilters.setProgressState}
           onReset={productionFilters.resetFilters}
         />
         {!projectId ? <ProductionState>Select a project to begin.</ProductionState> : null}
