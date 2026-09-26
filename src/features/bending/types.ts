@@ -15,7 +15,6 @@ export interface BendingDispatchHeaderValues {
   destination: string
   dispatchDate: string
   dispatchName: string
-  dispatchNumber: string
   followName: string
   sheetNumber: string
 }

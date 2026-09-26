@@ -28,7 +28,6 @@ function initialHeaderValues(): BendingDispatchHeaderValues {
     destination: '',
     dispatchDate: getCurrentDateInputValue(),
     dispatchName: '',
-    dispatchNumber: '',
     followName: '',
     sheetNumber: '',
   }
@@ -58,8 +57,7 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
   ))
   const selectedItemIds = new Set(draft.items.map((item) => item.productionItemId))
   const canSubmit = Boolean(
-    headerValues.dispatchNumber.trim()
-    && headerValues.dispatchDate
+    headerValues.dispatchDate
     && draft.isValid
     && !createDispatchMutation.isPending,
   )
@@ -115,7 +113,7 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
       {success ? (
         <div className="bending-document-success">
           <p className="bending-feedback bending-feedback--success" role="status">
-            Bending dispatch created successfully. <strong>Dispatch: {success.dispatchNumber}</strong>
+            <strong>Bending Dispatch #{success.dispatchNumber} created successfully</strong>
             <span>Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}</span>
           </p>
           <BendingPdfStatus state={pdfAttachment.state} onRetry={pdfAttachment.retry} />

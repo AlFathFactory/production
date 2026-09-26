@@ -12,12 +12,11 @@ export function BendingDispatchHeaderFields({ isDisabled, onChange, values }: Be
   return (
     <fieldset className="bending-header-fields" disabled={isDisabled}>
       <legend>Dispatch Details</legend>
-      <FormField label="Dispatch Number *" htmlFor="bending-dispatch-number">
+      <FormField label="Dispatch Number" htmlFor="bending-dispatch-number">
         <Input
           id="bending-dispatch-number"
-          required
-          value={values.dispatchNumber}
-          onChange={(event) => onChange('dispatchNumber', event.target.value)}
+          readOnly
+          value="Generated automatically when dispatch is created"
         />
       </FormField>
       <FormField label="Dispatch Date *" htmlFor="bending-dispatch-date">

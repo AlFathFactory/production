@@ -202,7 +202,7 @@ export const bendingRepository = {
       p_destination: input.destination.trim() || null,
       p_dispatch_date: input.dispatchDate,
       p_dispatch_name: input.dispatchName.trim() || null,
-      p_dispatch_number: input.dispatchNumber.trim(),
+      p_dispatch_number: '',
       p_follow_name: input.followName.trim() || null,
       p_items: input.items,
       p_lot_id: input.lotId,
