@@ -1796,15 +1796,90 @@ button.hierarchy-list__select:hover,
   grid-column: 1 / -1;
 }
 
-.production-feedback {
-  margin: 0;
-  border: 1px solid #b9ddc6;
-  border-radius: 10px;
-  padding: 11px 14px;
-  color: #146c43;
-  background: #edf8f0;
+.app-notification-region {
+  position: fixed;
+  z-index: 100;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  gap: 10px;
+  width: min(440px, calc(100vw - 36px));
+  pointer-events: none;
+}
+
+.app-notification {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 16px 40px rgb(14 44 43 / 18%);
+  pointer-events: auto;
+  animation: app-notification-enter 180ms ease-out;
+}
+
+.app-notification--success {
+  border-color: #b9ddc6;
+  color: #205f3f;
+  background: #f7fbf8;
+}
+
+.app-notification--error {
+  border-color: #efc9c4;
+  color: var(--danger);
+  background: #fff7f6;
+}
+
+.app-notification__content {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+}
+
+.app-notification__title {
   font-size: 0.88rem;
-  font-weight: 600;
+  line-height: 1.4;
+}
+
+.app-notification__meta,
+.app-notification__content > span {
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.app-notification__dismiss {
+  display: grid;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  padding: 0;
+  color: currentColor;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.app-notification__dismiss:hover {
+  background: rgb(14 44 43 / 7%);
+}
+
+.app-notification__dismiss:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+@keyframes app-notification-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }
 
 .production-form {
@@ -2522,11 +2597,6 @@ button.hierarchy-list__select:hover,
   padding: 5px 10px;
 }
 
-.bending-document-success {
-  display: grid;
-  gap: 8px;
-}
-
 .bending-pdf-status {
   display: flex;
   align-items: center;
@@ -2788,6 +2858,12 @@ button.hierarchy-list__select:hover,
 }
 
 @media (max-width: 520px) {
+  .app-notification-region {
+    top: 12px;
+    right: 12px;
+    width: calc(100vw - 24px);
+  }
+
   .login-brand__content {
     margin: 42px 0;
   }
@@ -2974,6 +3050,10 @@ button.hierarchy-list__select:hover,
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .app-notification {
+    animation: none;
+  }
+
   .app-sidebar,
   .sidebar-nav-item {
     transition: none;

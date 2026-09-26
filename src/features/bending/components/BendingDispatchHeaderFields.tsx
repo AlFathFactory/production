@@ -11,7 +11,6 @@ interface BendingDispatchHeaderFieldsProps {
 export function BendingDispatchHeaderFields({ isDisabled, onChange, values }: BendingDispatchHeaderFieldsProps) {
   return (
     <fieldset className="bending-header-fields" disabled={isDisabled}>
-      <legend>Dispatch Details</legend>
       <FormField label="Dispatch Number" htmlFor="bending-dispatch-number">
         <Input
           id="bending-dispatch-number"

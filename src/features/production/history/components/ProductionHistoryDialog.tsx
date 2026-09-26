@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { AppRole } from '../../../auth/types'
 import { Dialog } from '../../../../components/ui/Dialog'
+import { AppNotification } from '../../../../components/ui/AppNotification'
 import { LoadingSpinner } from '../../../../components/ui/LoadingSpinner'
 import { useProductionHistory, useProductionAudit } from '../queries/productionHistoryQueries'
 import { useCorrectProductionStageEntry, useDeleteProductionStageEntry } from '../mutations/useProductionHistoryMutations'
@@ -30,6 +31,11 @@ export function ProductionHistoryDialog({ isOpen, onClose, productionItemId, ite
   const [correctDialogError, setCorrectDialogError] = useState<string | null>(null)
   const [deleteDialogEntry, setDeleteDialogEntry] = useState<ProductionStageEntry | null>(null)
   const [deleteDialogError, setDeleteDialogError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) setSuccessMessage(null)
+  }, [isOpen])
 
   function openCorrectDialog(entry: ProductionStageEntry) {
     if (entry.source === 'document') return
@@ -60,6 +66,7 @@ export function ProductionHistoryDialog({ isOpen, onClose, productionItemId, ite
     try {
       await correctMutation.mutateAsync({ entryId: correctDialogEntry.id, ...input })
       closeCorrectDialog()
+      setSuccessMessage('Production entry corrected successfully.')
     } catch (error) {
       setCorrectDialogError(error instanceof Error ? error.message : 'Failed to correct entry.')
     }
@@ -70,6 +77,7 @@ export function ProductionHistoryDialog({ isOpen, onClose, productionItemId, ite
     try {
       await deleteMutation.mutateAsync({ entryId: deleteDialogEntry.id, reason })
       closeDeleteDialog()
+      setSuccessMessage('Production entry deleted successfully.')
     } catch (error) {
       setDeleteDialogError(error instanceof Error ? error.message : 'Failed to delete entry.')
     }
@@ -78,13 +86,24 @@ export function ProductionHistoryDialog({ isOpen, onClose, productionItemId, ite
   if (!isOpen) return null
 
   return (
-    <Dialog
-      title="Production History"
-      onClose={onClose}
-      isOpen={isOpen}
-      isCloseDisabled={historyQuery.isPending || auditQuery.isPending || correctMutation.isPending || deleteMutation.isPending}
-      className="dialog--production-history"
-    >
+    <>
+      {successMessage ? (
+        <AppNotification
+          key={successMessage}
+          autoDismissMs={5000}
+          onDismiss={() => setSuccessMessage(null)}
+          title="Action completed"
+        >
+          <span>{successMessage}</span>
+        </AppNotification>
+      ) : null}
+      <Dialog
+        title="Production History"
+        onClose={onClose}
+        isOpen={isOpen}
+        isCloseDisabled={historyQuery.isPending || auditQuery.isPending || correctMutation.isPending || deleteMutation.isPending}
+        className="dialog--production-history"
+      >
       <div className="production-history-dialog-header">
         <strong>{itemArticle}</strong>
         {itemDesignation ? <span> — {itemDesignation}</span> : null}
@@ -130,6 +149,7 @@ export function ProductionHistoryDialog({ isOpen, onClose, productionItemId, ite
         isDeleting={deleteMutation.isPending}
         error={deleteDialogError ?? deleteMutation.error?.message ?? null}
       />
-    </Dialog>
+      </Dialog>
+    </>
   )
 }

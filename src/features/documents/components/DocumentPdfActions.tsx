@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { Button } from '../../../components/ui/Button'
+import { AppNotification } from '../../../components/ui/AppNotification'
 import { documentStorage } from '../../../services/supabase/documentStorage'
 
 interface DocumentPdfActionsProps {
@@ -47,11 +48,15 @@ export function DocumentPdfActions({ pdfPath, reference }: DocumentPdfActionsPro
 
   return (
     <div className="document-pdf-actions">
+      {error ? (
+        <AppNotification onDismiss={() => setError(null)} title="PDF action failed" tone="error">
+          <span>{error}</span>
+        </AppNotification>
+      ) : null}
       <div>
         <Button isLoading={action === 'open'} type="button" variant="secondary" onClick={() => void openPdf()}>Open PDF</Button>
         <Button isLoading={action === 'download'} type="button" variant="secondary" onClick={() => void downloadPdf()}>Download PDF</Button>
       </div>
-      {error ? <span role="alert">{error}</span> : null}
     </div>
   )
 }

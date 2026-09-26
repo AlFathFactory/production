@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
+import { AppNotification } from '../../components/ui/AppNotification'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../auth/hooks/useAuth'
 import { canManageProjects } from '../auth/permissions'
@@ -43,6 +44,7 @@ export function ProjectsPage() {
   const [projectNumberDialog, setProjectNumberDialog] = useState<ProjectNumberDialogState>(null)
   const [lotDialog, setLotDialog] = useState<LotDialogState>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const projectMutations = useProjectMutations()
   const projectNumberMutations = useProjectNumberMutations()
   const lotMutations = useLotMutations()
@@ -98,12 +100,14 @@ export function ProjectsPage() {
 
   async function saveProject(values: ProjectFormValues) {
     try {
+      const action = projectDialog === 'new' ? 'created' : 'updated'
       if (projectDialog === 'new') {
         await projectMutations.createProject.mutateAsync(values)
       } else {
         await projectMutations.updateProject.mutateAsync({ id: projectDialog!.id, ...values })
       }
       closeProjectDialog()
+      setSuccessMessage(`Project ${action} successfully.`)
     } catch {
       // Mutation state supplies a concise message to the dialog.
     }
@@ -112,12 +116,14 @@ export function ProjectsPage() {
   async function saveProjectNumber(values: ProjectNumberFormValues) {
     if (!selectedProjectId) return
     try {
+      const action = projectNumberDialog === 'new' ? 'created' : 'updated'
       if (projectNumberDialog === 'new') {
         await projectNumberMutations.createProjectNumber.mutateAsync({ projectId: selectedProjectId, ...values })
       } else {
         await projectNumberMutations.updateProjectNumber.mutateAsync({ id: projectNumberDialog!.id, projectId: selectedProjectId, ...values })
       }
       closeProjectNumberDialog()
+      setSuccessMessage(`Project number ${action} successfully.`)
     } catch {
       // Mutation state supplies a concise message to the dialog.
     }
@@ -126,12 +132,14 @@ export function ProjectsPage() {
   async function saveLot(values: LotFormValues) {
     if (!selectedProjectNumberId) return
     try {
+      const action = lotDialog === 'new' ? 'created' : 'updated'
       if (lotDialog === 'new') {
         await lotMutations.createLot.mutateAsync({ projectNumberId: selectedProjectNumberId, ...values })
       } else {
         await lotMutations.updateLot.mutateAsync({ id: lotDialog!.id, projectNumberId: selectedProjectNumberId, ...values })
       }
       closeLotDialog()
+      setSuccessMessage(`Lot ${action} successfully.`)
     } catch {
       // Mutation state supplies a concise message to the dialog.
     }
@@ -140,6 +148,7 @@ export function ProjectsPage() {
   async function confirmDelete() {
     if (!deleteTarget) return
     try {
+      const deletedEntity = deleteTarget.type === 'projectNumber' ? 'Project number' : deleteTarget.type === 'project' ? 'Project' : 'Lot'
       if (deleteTarget.type === 'project') {
         await projectMutations.deleteProject.mutateAsync(deleteTarget.entity.id)
         setSelectedProjectId(null)
@@ -153,6 +162,7 @@ export function ProjectsPage() {
         await lotMutations.deleteLot.mutateAsync({ id: deleteTarget.entity.id, projectNumberId: selectedProjectNumberId })
       }
       closeDeleteDialog()
+      setSuccessMessage(`${deletedEntity} deleted successfully.`)
     } catch {
       // Mutation state supplies a concise message to the dialog.
     }
@@ -166,6 +176,16 @@ export function ProjectsPage() {
 
   return (
     <section className="projects-page">
+      {successMessage ? (
+        <AppNotification
+          key={successMessage}
+          autoDismissMs={5000}
+          onDismiss={() => setSuccessMessage(null)}
+          title="Action completed"
+        >
+          <span>{successMessage}</span>
+        </AppNotification>
+      ) : null}
       <PageHeader
         title="Projects"
         description="Manage project, project number, and lot hierarchy."

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
+import { AppNotification } from '../../components/ui/AppNotification'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
@@ -26,6 +27,7 @@ export function UsersPage() {
   const [editDialogUser, setEditDialogUser] = useState<UserListItem | null>(null)
   const [editDialogError, setEditDialogError] = useState<string | null>(null)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   function openEditDialog(user: UserListItem | null) {
     setEditDialogError(null)
@@ -46,6 +48,7 @@ export function UsersPage() {
     try {
       await updateUserMutation.mutateAsync({ id: editDialogUser.id, input })
       closeEditDialog()
+      setSuccessMessage('User updated successfully.')
     } catch (error) {
       setEditDialogError(error instanceof Error ? error.message : 'Failed to update user.')
     }
@@ -55,6 +58,7 @@ export function UsersPage() {
     try {
       await createUserMutation.mutateAsync(input)
       closeEditDialog()
+      setSuccessMessage('User created successfully.')
     } catch (error) {
       setEditDialogError(error instanceof Error ? error.message : 'Failed to create user.')
     }
@@ -81,6 +85,16 @@ export function UsersPage() {
 
   return (
     <section className="users-page">
+      {successMessage ? (
+        <AppNotification
+          key={successMessage}
+          autoDismissMs={5000}
+          onDismiss={() => setSuccessMessage(null)}
+          title="Action completed"
+        >
+          <span>{successMessage}</span>
+        </AppNotification>
+      ) : null}
       <PageHeader
         title="Users"
         description="Manage employee accounts and roles."

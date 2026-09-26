@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { Button } from '../../../components/ui/Button'
+import { AppNotification } from '../../../components/ui/AppNotification'
 import { FormField } from '../../../components/ui/FormField'
 import { Input } from '../../../components/ui/Input'
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
@@ -121,13 +122,15 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
   return (
     <div aria-labelledby="bending-dispatch-tab" className="bending-dispatch-workflow" id="bending-dispatch-panel" role="tabpanel">
       {success ? (
-        <div className="bending-document-success">
-          <p className="bending-feedback bending-feedback--success" role="status">
-            <strong>Bending Dispatch #{success.dispatchNumber} created successfully</strong>
-            <span>Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}</span>
-          </p>
+        <AppNotification
+          onDismiss={() => setSuccess(null)}
+          title={`Bending Dispatch #${success.dispatchNumber} created successfully`}
+        >
+          <span className="app-notification__meta">
+            Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}
+          </span>
           <BendingPdfStatus state={pdfAttachment.state} onRetry={pdfAttachment.retry} />
-        </div>
+        </AppNotification>
       ) : null}
       <form className="bending-dispatch" onSubmit={(event) => void createDispatch(event)}>
         <div className="bending-dispatch__heading">

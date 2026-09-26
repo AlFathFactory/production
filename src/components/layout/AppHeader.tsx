@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { Button } from '../ui/Button'
+import { AppNotification } from '../ui/AppNotification'
 import { getRoleLabel } from '../../features/auth/permissions'
 import { useAuth } from '../../features/auth/hooks/useAuth'
 
@@ -32,6 +33,11 @@ export function AppHeader({ pageTitle, onMenuClick }: AppHeaderProps) {
 
   return (
     <header className="app-shell-header">
+      {signOutError ? (
+        <AppNotification onDismiss={() => setSignOutError(null)} title="Action failed" tone="error">
+          <span>{signOutError}</span>
+        </AppNotification>
+      ) : null}
       <div className="app-shell-header__context">
         <button className="menu-toggle" type="button" aria-label="Open navigation menu" onClick={onMenuClick}>
           <span aria-hidden="true">☰</span>
@@ -48,7 +54,6 @@ export function AppHeader({ pageTitle, onMenuClick }: AppHeaderProps) {
           Sign out
         </Button>
       </div>
-      {signOutError ? <p className="app-shell-header__error" role="alert">{signOutError}</p> : null}
     </header>
   )
 }

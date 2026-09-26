@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { Button } from '../../../components/ui/Button'
+import { AppNotification } from '../../../components/ui/AppNotification'
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
 import { formatQuantity, getCurrentDateInputValue } from '../../production/utils'
 import { calculateReturnSummary } from '../returnValidation'
@@ -113,13 +114,15 @@ export function BendingReturnWorkflow({ lotId }: BendingReturnWorkflowProps) {
   return (
     <div aria-labelledby="bending-return-tab" className="bending-return-workflow" id="bending-return-panel" role="tabpanel">
       {success ? (
-        <div className="bending-document-success">
-          <p className="bending-feedback bending-feedback--success" role="status">
-            Bending Return created successfully. <strong>Reference: {success.returnReference}</strong>
-            <span>Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}</span>
-          </p>
+        <AppNotification
+          onDismiss={() => setSuccess(null)}
+          title={`Bending Return ${success.returnReference} created successfully`}
+        >
+          <span className="app-notification__meta">
+            Items: {success.itemCount} · Total quantity: {formatQuantity(success.totalQuantity)}
+          </span>
           <BendingPdfStatus state={pdfAttachment.state} onRetry={pdfAttachment.retry} />
-        </div>
+        </AppNotification>
       ) : null}
       <section className="bending-return-selector" aria-labelledby="bending-existing-dispatches">
         <div className="bending-section__heading">

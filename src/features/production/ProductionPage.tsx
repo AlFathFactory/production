@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
+import { AppNotification } from '../../components/ui/AppNotification'
 import { Button } from '../../components/ui/Button'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 import { canCreateProductionItems, canImportProduction } from '../auth/permissions'
@@ -112,6 +113,16 @@ export function ProductionPage() {
 
   return (
     <>
+      {successMessage ? (
+        <AppNotification
+          key={successMessage}
+          autoDismissMs={5000}
+          onDismiss={() => setSuccessMessage(null)}
+          title="Action completed"
+        >
+          <span>{successMessage}</span>
+        </AppNotification>
+      ) : null}
       <PageHeader
         title="Production"
         description="View calculated production status for items in a selected lot."
@@ -131,7 +142,6 @@ export function ProductionPage() {
         ) : undefined}
       />
       <div className="production-workspace">
-        {successMessage ? <p className="production-feedback" role="status">{successMessage}</p> : null}
         <ProjectLotSelector
           projectId={projectId}
           projectNumberId={projectNumberId}
