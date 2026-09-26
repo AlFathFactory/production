@@ -1544,6 +1544,11 @@ button.hierarchy-list__select:hover,
   white-space: nowrap;
 }
 
+.production-table__actions {
+  min-width: 210px;
+  text-align: left;
+}
+
 .documents-workspace,
 .documents-filter-stack {
   display: grid;

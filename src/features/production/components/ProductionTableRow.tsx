@@ -30,7 +30,7 @@ export function ProductionTableRow({ item, onStageAction, onViewHistory }: Produ
       <td className="production-table__number">{stageValue(finalStage, supportsBendOrRolling)}</td>
       <td className="production-table__number">{formatQuantity(item.warehouse_stock)}</td>
       <td className="production-table__number">{formatQuantity(item.dispensed_total)}</td>
-      <td><ProductionRowActions item={item} onSelectAction={onStageAction} onViewHistory={onViewHistory} /></td>
+      <td className="production-table__actions"><ProductionRowActions item={item} onSelectAction={onStageAction} onViewHistory={onViewHistory} /></td>
     </tr>
   )
 }

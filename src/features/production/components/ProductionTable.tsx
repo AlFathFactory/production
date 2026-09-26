@@ -102,13 +102,13 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
               <th scope="col">Designation</th>
               <th scope="col">Profile</th>
               <th scope="col">Route</th>
-              <th scope="col">T.QTY</th>
-              <th scope="col">CUT</th>
-              <th scope="col">OUT BEND</th>
-              <th scope="col">BEND / ROLLING</th>
-              <th scope="col">Warehouse</th>
-              <th scope="col">Dispensed</th>
-              <th scope="col">Actions</th>
+              <th scope="col" className="production-table__number">T.QTY</th>
+              <th scope="col" className="production-table__number">CUT</th>
+              <th scope="col" className="production-table__number">OUT BEND</th>
+              <th scope="col" className="production-table__number">BEND / ROLLING</th>
+              <th scope="col" className="production-table__number">Warehouse</th>
+              <th scope="col" className="production-table__number">Dispensed</th>
+              <th scope="col" className="production-table__actions">Actions</th>
             </tr>
           </thead>
           <tbody>{visibleItems.map((item, index) => {
