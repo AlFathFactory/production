@@ -9,6 +9,7 @@ import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { DocumentsPage } from '../features/documents/DocumentsPage'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
 import { ProductionPage } from '../features/production/ProductionPage'
+import { ReportsPage } from '../features/reports/ReportsPage'
 import { UsersPage } from '../features/users/UsersPage'
 import { AppLayout } from './layouts/AppLayout'
 import { RequirePermission } from './navigation/RequirePermission'
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
           {
             path: 'production',
             element: <ProductionPage />,
+          },
+          {
+            path: 'reports',
+            element: <ReportsPage />,
           },
           {
             path: 'bending',

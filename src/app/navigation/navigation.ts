@@ -8,6 +8,7 @@ export const primaryNavigationItems: NavigationItem[] = [
   { label: 'Dashboard', path: '/', icon: 'dashboard' },
   { label: 'Projects', path: '/projects', icon: 'projects' },
   { label: 'Follow Up', path: '/production', icon: 'production' },
+  { label: 'Reports', path: '/reports', icon: 'reports' },
   {
     label: 'Packing',
     path: '/bending',

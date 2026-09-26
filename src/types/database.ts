@@ -435,6 +435,31 @@ export interface Database {
       }
     }
     Views: {
+      production_operations_report: {
+        Row: {
+          operation_id: string | null
+          operation_date: string | null
+          project_id: string | null
+          project_name: string | null
+          project_number_id: string | null
+          project_number: string | null
+          lot_id: string | null
+          lot_number: string | null
+          production_item_id: string | null
+          article: string | null
+          designation: string | null
+          profile: string | null
+          routing: Database['public']['Enums']['production_route'] | null
+          operation: Database['public']['Enums']['production_stage'] | null
+          quantity: number | null
+          unit_weight_kg: number | null
+          operation_weight_kg: number | null
+          performed_by: string | null
+          performed_by_name: string | null
+          reference: string | null
+        }
+        Relationships: []
+      },
       production_documents_register: {
         Row: {
           approval_name: string | null
@@ -529,6 +554,41 @@ export interface Database {
       }
     }
     Functions: {
+      search_production_operations_report: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_project_id?: string
+          p_project_number_id?: string
+          p_lot_id?: string
+          p_operations?: Database['public']['Enums']['production_stage'][]
+          p_routing?: Database['public']['Enums']['production_route']
+          p_query?: string
+          p_performed_by?: string
+        }
+        Returns: Array<{
+          operation_id: string
+          operation_date: string
+          project_id: string | null
+          project_name: string | null
+          project_number_id: string | null
+          project_number: string | null
+          lot_id: string | null
+          lot_number: string | null
+          production_item_id: string | null
+          article: string | null
+          designation: string | null
+          profile: string | null
+          routing: Database['public']['Enums']['production_route'] | null
+          operation: Database['public']['Enums']['production_stage']
+          quantity: number | string | null
+          unit_weight_kg: number | string | null
+          operation_weight_kg: number | string | null
+          performed_by: string | null
+          performed_by_name: string | null
+          reference: string | null
+        }>
+      }
       attach_bending_dispatch_pdf: {
         Args: {
           p_dispatch_id: string

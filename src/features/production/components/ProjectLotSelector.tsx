@@ -14,6 +14,11 @@ interface ProjectLotSelectorProps {
   onProjectChange: (projectId: string | null, label: string | null) => void
   onProjectNumberChange: (projectNumberId: string | null, label: string | null) => void
   onLotChange: (lotId: string | null, label: string | null) => void
+  emptyOptionLabels?: {
+    project: string
+    projectNumber: string
+    lot: string
+  }
 }
 
 function SelectorError({ message, onRetry }: { message: string; onRetry: () => void }) {
@@ -33,6 +38,7 @@ export function ProjectLotSelector({
   onProjectChange,
   onProjectNumberChange,
   onLotChange,
+  emptyOptionLabels,
 }: ProjectLotSelectorProps) {
   const projectsQuery = useProjects()
   const projectNumbersQuery = useProjectNumbers(projectId)
@@ -55,7 +61,7 @@ export function ProjectLotSelector({
     ? 'Loading projects…'
     : projects.length === 0
       ? 'No Projects available'
-      : 'Select a project'
+      : emptyOptionLabels?.project ?? 'Select a project'
   const projectNumberPlaceholder = hasNoProjects
     ? 'No Project Numbers available'
     : !projectId
@@ -64,7 +70,7 @@ export function ProjectLotSelector({
         ? 'Loading project numbers…'
         : projectNumbers.length === 0
           ? 'No Project Numbers available'
-          : 'Select a project number'
+          : emptyOptionLabels?.projectNumber ?? 'Select a project number'
   const lotPlaceholder = hasNoProjectNumbers
     ? 'No Lots available'
     : !projectNumberId
@@ -73,7 +79,7 @@ export function ProjectLotSelector({
         ? 'Loading lots…'
         : lots.length === 0
           ? 'No Lots available'
-          : 'Select a lot'
+          : emptyOptionLabels?.lot ?? 'Select a lot'
 
   return (
     <section className="production-selector" aria-label={ariaLabel}>
