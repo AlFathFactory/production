@@ -23,7 +23,6 @@ export function BendingDispatchItemsTable({ isDisabled, items, onQuantityChange,
           <tr>
             <th scope="col">Article</th>
             <th scope="col">Designation</th>
-            <th scope="col">Profile</th>
             <th scope="col">Available</th>
             <th scope="col">Dispatch Qty</th>
             <th scope="col">Estimated Weight</th>
@@ -40,7 +39,6 @@ export function BendingDispatchItemsTable({ isDisabled, items, onQuantityChange,
               <tr key={item.productionItemId}>
                 <td><strong>{item.article}</strong></td>
                 <td>{item.designation ?? '—'}</td>
-                <td>{item.profile ?? '—'}</td>
                 <td>{formatQuantity(item.availableQuantity)}</td>
                 <td className="bending-table__quantity">
                   <Input

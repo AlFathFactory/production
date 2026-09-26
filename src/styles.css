@@ -2385,6 +2385,10 @@ button.hierarchy-list__select:hover,
   text-align: right;
 }
 
+.bending-eligible-search {
+  width: min(100%, 420px);
+}
+
 .bending-table-wrap {
   max-width: 100%;
   overflow: auto;

@@ -133,6 +133,10 @@ export const bendingPdfRepository = {
   },
 
   async getReturnModel(returnId: string): Promise<BendingReturnPdfModel> {
+    if (!returnId) {
+      throw new BendingPdfRepositoryError('Internal error: the Bending Return ID is missing. PDF data was not queried.', 'load')
+    }
+
     const [returnResult, itemsResult] = await Promise.all([
       supabase.from('bending_returns').select('*').eq('id', returnId).single(),
       supabase
@@ -184,6 +188,10 @@ export const bendingPdfRepository = {
   },
 
   async saveReturnPdfPath(returnId: string, pdfPath: string): Promise<string> {
+    if (!returnId) {
+      throw new BendingPdfRepositoryError('Internal error: the Bending Return ID is missing. The PDF path was not attached.', 'update')
+    }
+
     const { data, error } = await supabase.rpc('attach_bending_return_pdf', {
       p_pdf_path: pdfPath,
       p_return_id: returnId,

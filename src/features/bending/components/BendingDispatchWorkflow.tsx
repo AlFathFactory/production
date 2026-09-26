@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 
 import { Button } from '../../../components/ui/Button'
+import { FormField } from '../../../components/ui/FormField'
+import { Input } from '../../../components/ui/Input'
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
 import { useProductionItems } from '../../production/queries/productionQueries'
 import type { ProductionFilters } from '../../production/types'
@@ -34,6 +36,7 @@ function initialHeaderValues(): BendingDispatchHeaderValues {
 }
 
 export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: BendingDispatchWorkflowProps) {
+  const [eligibleSearch, setEligibleSearch] = useState('')
   const [headerValues, setHeaderValues] = useState(initialHeaderValues)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState<BendingDispatchSuccess | null>(null)
@@ -55,6 +58,13 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
     && item.article !== null
     && (item.remaining_out_bend ?? 0) > 0
   ))
+  const normalizedEligibleSearch = eligibleSearch.trim().toLocaleLowerCase()
+  const visibleEligibleItems = normalizedEligibleSearch
+    ? eligibleItems.filter((item) => (
+        item.article?.toLocaleLowerCase().includes(normalizedEligibleSearch)
+        || item.designation?.toLocaleLowerCase().includes(normalizedEligibleSearch)
+      ))
+    : eligibleItems
   const selectedItemIds = new Set(draft.items.map((item) => item.productionItemId))
   const canSubmit = Boolean(
     headerValues.dispatchDate
@@ -127,8 +137,20 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
         <BendingDispatchHeaderFields isDisabled={createDispatchMutation.isPending} values={headerValues} onChange={updateHeader} />
         <section className="bending-section" aria-labelledby="eligible-bending-materials">
           <div className="bending-section__heading">
-            <div><span>Step 1</span><h3 id="eligible-bending-materials">Eligible BEND Materials</h3></div>
+            {/* <div><span>Step 1</span><h3 id="eligible-bending-materials">Eligible BEND Materials</h3></div> */}
             <p>Availability is calculated from Production CUT and OUT_BEND totals.</p>
+          </div>
+          <div className="bending-eligible-search">
+            <FormField label="Search in BEND Materials" htmlFor="bending-eligible-search">
+              <Input
+                id="bending-eligible-search"
+                disabled={createDispatchMutation.isPending}
+                placeholder="Article or designation"
+                type="search"
+                value={eligibleSearch}
+                onChange={(event) => setEligibleSearch(event.target.value)}
+              />
+            </FormField>
           </div>
           {eligibleQuery.isPending ? <p className="bending-loading"><LoadingSpinner label="Loading eligible BEND materials" /> Loading eligible materials…</p> : null}
           {eligibleQuery.isError ? (
@@ -137,10 +159,13 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
               <Button type="button" variant="secondary" onClick={() => void eligibleQuery.refetch()}>Retry</Button>
             </p>
           ) : null}
-          {eligibleQuery.isSuccess ? (
+          {eligibleQuery.isSuccess && normalizedEligibleSearch && visibleEligibleItems.length === 0 ? (
+            <p className="bending-empty">No eligible BEND materials match this search.</p>
+          ) : null}
+          {eligibleQuery.isSuccess && (!normalizedEligibleSearch || visibleEligibleItems.length > 0) ? (
             <BendingEligibleItemsTable
               isDisabled={createDispatchMutation.isPending}
-              items={eligibleItems}
+              items={visibleEligibleItems}
               selectedItemIds={selectedItemIds}
               onAdd={draft.addItem}
             />

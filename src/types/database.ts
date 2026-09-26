@@ -590,7 +590,7 @@ export interface Database {
           p_return_date: string
           p_return_reference: string
         }
-        Returns: Database['public']['Tables']['bending_returns']['Row']
+        Returns: string
       }
 import_production_preparation_file: {
         Args: {

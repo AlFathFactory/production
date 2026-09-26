@@ -24,6 +24,9 @@ async function throwAttachmentFailure(error: unknown, upload: DocumentUploadResu
 }
 
 export async function attachBendingPdf(target: BendingPdfTarget): Promise<string> {
+  if (target.kind === 'return' && !target.id) {
+    throw new Error('Internal error: the created Bending Return ID is missing. The PDF was not queried or uploaded.')
+  }
   if (target.pdfPath) return target.pdfPath
 
   let generator: typeof import('./pdf/bendingPdfGenerator')

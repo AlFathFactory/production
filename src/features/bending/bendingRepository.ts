@@ -220,7 +220,7 @@ export const bendingRepository = {
   },
 
   async createReturn(input: CreateBendingReturnInput): Promise<BendingReturnResult> {
-    const { data, error } = await supabase.rpc('create_bending_return', {
+    const { data: returnId, error } = await supabase.rpc('create_bending_return', {
       p_dispatch_id: input.dispatchId,
       p_items: input.items,
       p_received_by_name: input.receivedByName.trim() || null,
@@ -231,10 +231,23 @@ export const bendingRepository = {
     if (error) {
       throw mapCreateReturnError(error)
     }
-    if (!data) {
-      throw new BendingRepositoryError('The return returned an unexpected response. Please refresh and try again.', 'unknown')
+    if (!returnId) {
+      throw new BendingRepositoryError('The return was created without a valid document ID. Please refresh Documents before continuing.', 'unknown')
     }
 
-    return data
+    const { data: createdReturn, error: createdReturnError } = await supabase
+      .from('bending_returns')
+      .select('*')
+      .eq('id', returnId)
+      .single()
+
+    if (createdReturnError || !createdReturn) {
+      throw new BendingRepositoryError(
+        'The Bending Return was created, but its details could not be loaded for the PDF. Refresh Documents before continuing.',
+        'unknown',
+      )
+    }
+
+    return createdReturn
   },
 }

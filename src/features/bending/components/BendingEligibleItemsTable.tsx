@@ -21,7 +21,6 @@ export function BendingEligibleItemsTable({ isDisabled, items, onAdd, selectedIt
           <tr>
             <th scope="col">Article</th>
             <th scope="col">Designation</th>
-            <th scope="col">Profile</th>
             <th scope="col">CUT</th>
             <th scope="col">Already Out Bend</th>
             <th scope="col">Available to Send</th>
@@ -38,7 +37,6 @@ export function BendingEligibleItemsTable({ isDisabled, items, onAdd, selectedIt
               <tr key={id}>
                 <td><strong>{item.article ?? '—'}</strong></td>
                 <td>{item.designation ?? '—'}</td>
-                <td>{item.profile ?? '—'}</td>
                 <td>{formatQuantity(item.cut_total)}</td>
                 <td>{formatQuantity(item.out_bend_total)}</td>
                 <td><strong>{formatQuantity(item.remaining_out_bend)}</strong></td>
