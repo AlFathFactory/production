@@ -26,16 +26,16 @@ export function ReportsTable({ rows }: { rows: ReportRow[] }) {
           {rows.map((row, index) => (
             <tr key={row.operation_id ?? `${row.operation_date}-${row.article}-${index}`}>
               <td>{formatReportDate(row.operation_date)}</td>
-              <td>{row.article ?? '—'}</td>
-              <td className="reports-table__designation">{row.designation ?? '—'}</td>
-              <td>{row.profile ?? '—'}</td>
+              <td dir="auto">{row.article ?? '—'}</td>
+              <td className="reports-table__designation" dir="auto">{row.designation ?? '—'}</td>
+              <td dir="auto">{row.profile ?? '—'}</td>
               <td><ProductionRouteBadge route={row.routing} /></td>
               <td><span className="reports-operation-badge">{reportOperationLabels[row.operation]}</span></td>
               <td className="reports-table__number">{formatReportQuantity(row.article_total_quantity)}</td>
               <td className="reports-table__number">{formatReportQuantity(row.quantity)}</td>
               <td className="reports-table__number">{formatReportWeight(row.unit_weight_kg)}</td>
               <td className="reports-table__number">{formatReportWeight(row.operation_weight_kg)}</td>
-              <td>{row.performed_by_name ?? '—'}</td>
+              <td dir="auto">{row.performed_by_name ?? '—'}</td>
             </tr>
           ))}
         </tbody>

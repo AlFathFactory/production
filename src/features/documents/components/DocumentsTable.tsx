@@ -37,12 +37,12 @@ export function DocumentsTable({ documents }: { documents: ProductionDocument[] 
             {documents.map((document) => (
               <tr key={document.documentId}>
                 <td><DocumentTypeBadge type={document.documentType} /></td>
-                <td><strong>{document.documentReference}</strong></td>
-                <td>{document.projectName ?? '—'}</td>
-                <td>{document.projectNumber ?? '—'}</td>
-                <td>{document.lotNumber ?? '—'}</td>
+                <td dir="auto"><strong>{document.documentReference}</strong></td>
+                <td dir="auto">{document.projectName ?? '—'}</td>
+                <td dir="auto">{document.projectNumber ?? '—'}</td>
+                <td dir="auto">{document.lotNumber ?? '—'}</td>
                 <td>{formatDate(document.documentDate)}</td>
-                <td>{document.createdByName ?? '—'}</td>
+                <td dir="auto">{document.createdByName ?? '—'}</td>
                 <td><span className={`document-pdf-badge ${document.pdfPath ? 'document-pdf-badge--attached' : 'document-pdf-badge--missing'}`}>{document.pdfPath ? 'Attached' : 'Missing'}</span></td>
                 <td>{formatCreatedAt(document.createdAt)}</td>
                 <td>{document.pdfPath ? <DocumentPdfActions pdfPath={document.pdfPath} reference={document.documentReference} /> : <span className="document-no-pdf">No PDF</span>}</td>

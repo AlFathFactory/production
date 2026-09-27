@@ -35,8 +35,8 @@ export function BendingEligibleItemsTable({ isDisabled, items, onAdd, selectedIt
             const unitWeightKg = toNullableNumber(item.unit_weight_kg)
             return (
               <tr key={id}>
-                <td><strong>{item.article ?? '—'}</strong></td>
-                <td>{item.designation ?? '—'}</td>
+                <td dir="auto"><strong>{item.article ?? '—'}</strong></td>
+                <td dir="auto">{item.designation ?? '—'}</td>
                 <td>{formatQuantity(item.cut_total)}</td>
                 <td>{formatQuantity(item.out_bend_total)}</td>
                 <td><strong>{formatQuantity(item.remaining_out_bend)}</strong></td>

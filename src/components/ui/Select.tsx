@@ -4,11 +4,12 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   hasError?: boolean
 }
 
-export function Select({ className = '', hasError, ...props }: SelectProps) {
+export function Select({ className = '', dir = 'auto', hasError, ...props }: SelectProps) {
   return (
     <select
       aria-invalid={hasError || undefined}
       className={`select ${hasError ? 'select--error' : ''} ${className}`.trim()}
+      dir={dir}
       {...props}
     />
   )

@@ -47,7 +47,7 @@ export function AppNotification({
       className={`app-notification app-notification--${tone}`}
       role={tone === 'error' ? 'alert' : 'status'}
     >
-      <div className="app-notification__content">
+      <div className="app-notification__content" dir="auto">
         {title ? <strong className="app-notification__title">{title}</strong> : null}
         {children}
       </div>

@@ -40,7 +40,7 @@ export async function attachBendingPdf(target: BendingPdfTarget): Promise<string
     const model = await bendingPdfRepository.getDispatchModel(target.id)
     let pdf: Blob
     try {
-      pdf = generator.generateDispatchPdf(model)
+      pdf = await generator.generateDispatchPdf(model)
     } catch {
       throw new Error('The Dispatch PDF could not be generated. Please retry.')
     }
@@ -55,7 +55,7 @@ export async function attachBendingPdf(target: BendingPdfTarget): Promise<string
   const model = await bendingPdfRepository.getReturnModel(target.id)
   let pdf: Blob
   try {
-    pdf = generator.generateReturnPdf(model)
+    pdf = await generator.generateReturnPdf(model)
   } catch {
     throw new Error('The Return PDF could not be generated. Please retry.')
   }

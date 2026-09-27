@@ -28,7 +28,7 @@ export async function downloadProductionReport(
   filename: string,
 ): Promise<void> {
   const { generateProductionReportPdf } = await import('./productionReportPdfGenerator')
-  const pdf = generateProductionReportPdf(model)
+  const pdf = await generateProductionReportPdf(model)
   const url = URL.createObjectURL(pdf)
   const link = document.createElement('a')
 

@@ -1,7 +1,39 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700&display=swap');
 
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/NotoSansArabic-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/NotoSansArabic-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/NotoSansArabic-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  font-style: normal;
+  font-weight: 700 800;
+  font-display: swap;
+  src: url('/fonts/NotoSansArabic-Bold.ttf') format('truetype');
+}
+
 :root {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'DM Sans', 'Noto Sans Arabic', system-ui, sans-serif;
   color: #172525;
   background: #f3f6f4;
   font-synthesis: none;
@@ -19,6 +51,10 @@
   --danger-soft: #fef3f2;
   --focus: #2a7878;
   --shadow: 0 24px 70px rgb(14 44 43 / 10%);
+}
+
+:where(td, dd, input, textarea, select, option, [dir='auto']) {
+  unicode-bidi: plaintext;
 }
 
 * {

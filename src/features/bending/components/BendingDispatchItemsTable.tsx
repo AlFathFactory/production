@@ -37,8 +37,8 @@ export function BendingDispatchItemsTable({ isDisabled, items, onQuantityChange,
 
             return (
               <tr key={item.productionItemId}>
-                <td><strong>{item.article}</strong></td>
-                <td>{item.designation ?? '—'}</td>
+                <td dir="auto"><strong>{item.article}</strong></td>
+                <td dir="auto">{item.designation ?? '—'}</td>
                 <td>{formatQuantity(item.availableQuantity)}</td>
                 <td className="bending-table__quantity">
                   <Input

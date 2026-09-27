@@ -43,7 +43,7 @@ export function LotDashboardTable({ lots }: LotDashboardTableProps) {
           <tbody>
             {lots.map((lot) => (
               <tr key={lot.lotId}>
-                <td><strong>{lot.lotNumber}</strong></td>
+                <td dir="auto"><strong>{lot.lotNumber}</strong></td>
                 <td>
                   <div>{lot.projectName ?? '—'}</div>
                   <small>{lot.projectNumber ?? '—'}</small>

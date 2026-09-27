@@ -16,10 +16,10 @@ export function ProjectDetails({ canManage, onDelete, onEdit, project }: Project
   return (
     <section className="projects-panel projects-panel--details">
       <div className="project-details__header">
-        <div><p className="eyebrow">Selected project</p><h2>{project.project_name}</h2></div>
+        <div><p className="eyebrow">Selected project</p><h2 dir="auto">{project.project_name}</h2></div>
         {canManage ? <div className="project-details__actions"><Button onClick={onEdit} type="button" variant="secondary">Edit</Button><button className="danger-action" onClick={onDelete} type="button">Delete</button></div> : null}
       </div>
-      <div className="project-details__meta"><span className={project.is_active ? 'project-state' : 'project-state project-state--inactive'}>{project.is_active ? 'Active project' : 'Inactive project'}</span>{project.notes ? <p>{project.notes}</p> : <p className="project-details__empty-notes">No project notes.</p>}</div>
+      <div className="project-details__meta"><span className={project.is_active ? 'project-state' : 'project-state project-state--inactive'}>{project.is_active ? 'Active project' : 'Inactive project'}</span>{project.notes ? <p dir="auto">{project.notes}</p> : <p className="project-details__empty-notes">No project notes.</p>}</div>
     </section>
   )
 }

@@ -31,7 +31,7 @@ export function ImportPreview({ preview }: { preview: ProductionImportPreview })
 
       {preview.ignoredHeaders.length > 0 ? (
         <p className="production-import-warning" role="status">
-          Ignored extra columns: {preview.ignoredHeaders.join(', ')}
+          <span dir="auto">Ignored extra columns: {preview.ignoredHeaders.join(', ')}</span>
         </p>
       ) : null}
 
@@ -67,8 +67,8 @@ export function ImportPreview({ preview }: { preview: ProductionImportPreview })
             {visibleRows.map(({ errors, row, warnings }) => (
               <tr className={errors.length > 0 ? 'production-import-table__row--error' : ''} key={row.source_row}>
                 <td>{row.source_row}</td>
-                <td>{row.article || '—'}</td>
-                <td>{row.profile ?? '—'}</td>
+                <td dir="auto">{row.article || '—'}</td>
+                <td dir="auto">{row.profile ?? '—'}</td>
                 <td>{row.routing}</td>
                 <td>{previewQuantity(row.total_quantity)}</td>
                 <td>{previewQuantity(row.cut_qty)}</td>

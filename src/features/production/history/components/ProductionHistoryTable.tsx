@@ -109,9 +109,9 @@ export function ProductionHistoryTable({ history, audit, userRole, onCorrect, on
                     <td><span className="production-history-stage">{getStageLabel(entry.stage)}</span></td>
                     <td className="production-history-table__number">{entry.quantity}</td>
                     <td>{formatDateOnly(entry.entryDate)}</td>
-                    <td>{entry.performedByName ?? '—'}</td>
+                    <td dir="auto">{entry.performedByName ?? '—'}</td>
                     <td><span className={`production-history-source production-history-source--${entry.source}`}>{getSourceLabel(entry.source)}</span></td>
-                    <td>{entry.note ?? '—'}</td>
+                    <td dir="auto">{entry.note ?? '—'}</td>
                     <td>{formatDate(entry.createdAt)}</td>
                     <td>
                       {isAdmin && entry.source !== 'document' ? (
@@ -153,8 +153,8 @@ export function ProductionHistoryTable({ history, audit, userRole, onCorrect, on
                 {audit.map((record) => (
                   <tr key={record.id}>
                     <td><span className={`production-history-audit-action production-history-audit-action--${record.action}`}>{record.action === 'corrected' ? 'Corrected' : 'Deleted'}</span></td>
-                    <td>{record.reason}</td>
-                    <td>{record.correctedByName ?? '—'}</td>
+                    <td dir="auto">{record.reason}</td>
+                    <td dir="auto">{record.correctedByName ?? '—'}</td>
                     <td>{formatDate(record.correctedAt)}</td>
                     <td>{renderAuditChanges(record)}</td>
                   </tr>

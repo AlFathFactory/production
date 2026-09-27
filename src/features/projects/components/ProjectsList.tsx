@@ -20,7 +20,7 @@ export function ProjectsList({ canManage, error, isLoading, onRetry, onSelect, p
       {!isLoading && !error && projects.length === 0 ? <div className="panel-state">{canManage ? 'No projects yet. Create the first project.' : 'No projects are available.'}</div> : null}
       {!isLoading && !error && projects.length > 0 ? <div className="project-list">
         {projects.map((project) => <button aria-pressed={selectedProjectId === project.id} className={`project-list__item${selectedProjectId === project.id ? ' project-list__item--selected' : ''}`} key={project.id} onClick={() => onSelect(project.id)} type="button">
-          <span>{project.project_name}</span>
+          <span dir="auto">{project.project_name}</span>
           {!project.is_active ? <small>Inactive</small> : null}
         </button>)}
       </div> : null}

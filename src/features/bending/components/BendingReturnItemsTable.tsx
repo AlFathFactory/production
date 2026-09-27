@@ -32,8 +32,8 @@ export function BendingReturnItemsTable({ isDisabled, items, onQuantityChange }:
 
             return (
               <tr key={item.dispatchItemId}>
-                <td><strong>{item.article}</strong></td>
-                <td>{item.designation ?? '—'}</td>
+                <td dir="auto"><strong>{item.article}</strong></td>
+                <td dir="auto">{item.designation ?? '—'}</td>
                 <td>{formatQuantity(item.sentQuantity)}</td>
                 <td>{formatQuantity(item.previousReturnedQuantity)}</td>
                 <td><strong>{formatQuantity(item.outstandingQuantity)}</strong></td>

@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf'
 
+import { getPdfTextOptions, registerPdfFonts, setPdfUnicodeFont } from '../../../pdf/pdfFonts'
 import { reportOperationLabels } from '../constants'
 import type { ReportRow } from '../types'
 import {
@@ -47,9 +48,10 @@ function addPageHeader(doc: PdfDocument, model: ProductionReportPdfModel): void 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(15)
   doc.text('PRODUCTION OPERATIONS REPORT', PAGE_MARGIN, 13.5)
-  doc.setFont('helvetica', 'normal')
+  setPdfUnicodeFont(doc)
   doc.setFontSize(7)
-  doc.text(pdfText(model.context.period), PAGE_WIDTH - PAGE_MARGIN, 13, { align: 'right' })
+  const period = pdfText(model.context.period)
+  doc.text(period, PAGE_WIDTH - PAGE_MARGIN, 13, getPdfTextOptions(period, 'right'))
   doc.setTextColor(31, 41, 38)
 }
 
@@ -75,6 +77,7 @@ function addInfoGrid(
 
   for (let index = 0; index < details.length; index += columns) {
     const row = details.slice(index, index + columns)
+    setPdfUnicodeFont(doc)
     const values = row.map(([, value]) => (
       doc.splitTextToSize(pdfText(value), cellWidth - 6) as string[]
     ))
@@ -90,10 +93,15 @@ function addInfoGrid(
       doc.setFontSize(5.8)
       doc.setTextColor(94, 108, 102)
       doc.text(label.toUpperCase(), x + 3, y + 4.2)
-      doc.setFont('helvetica', 'normal')
+      setPdfUnicodeFont(doc)
       doc.setFontSize(7.2)
       doc.setTextColor(31, 41, 38)
-      doc.text(values[column], x + 3, y + 8.5, { lineHeightFactor: 1.15 })
+      const displayedValue = pdfText(row[column][1])
+      const options = getPdfTextOptions(displayedValue)
+      doc.text(values[column], options.align === 'right' ? x + cellWidth - 3 : x + 3, y + 8.5, {
+        ...options,
+        lineHeightFactor: 1.15,
+      })
     })
     y += rowHeight
   }
@@ -119,9 +127,12 @@ function addSummary(doc: PdfDocument, model: ProductionReportPdfModel, startY: n
     doc.setFontSize(6)
     doc.setTextColor(70, 99, 88)
     doc.text(label.toUpperCase(), x + 4, startY + 5)
+    setPdfUnicodeFont(doc, 'bold')
     doc.setFontSize(10)
     doc.setTextColor(31, 74, 59)
-    doc.text(pdfText(value), x + 4, startY + 11.5)
+    const displayedValue = pdfText(value)
+    const options = getPdfTextOptions(displayedValue)
+    doc.text(displayedValue, options.align === 'right' ? x + cardWidth - 4 : x + 4, startY + 11.5, options)
   })
 
   return startY + 19
@@ -158,13 +169,14 @@ function addBreakdown(doc: PdfDocument, model: ProductionReportPdfModel, startY:
       formatReportQuantity(item.quantity),
       formatReportWeightKg(item.weightKg),
     ]
-    doc.setFont('helvetica', index === 0 ? 'bold' : 'normal')
+    setPdfUnicodeFont(doc, index === 0 ? 'bold' : 'normal')
     doc.setFontSize(6.7)
     doc.setTextColor(31, 41, 38)
     x = PAGE_MARGIN
     values.forEach((value, valueIndex) => {
-      const align = valueIndex === 0 ? 'left' : 'right'
-      doc.text(pdfText(value), align === 'left' ? x + 2.5 : x + widths[valueIndex] - 2.5, y + 4.5, { align })
+      const displayedValue = pdfText(value)
+      const options = getPdfTextOptions(displayedValue, valueIndex === 0 ? 'left' : 'right')
+      doc.text(displayedValue, options.align === 'left' ? x + 2.5 : x + widths[valueIndex] - 2.5, y + 4.5, options)
       x += widths[valueIndex]
     })
     y += 6.5
@@ -219,8 +231,10 @@ function addOperationsTable(
   y = drawTableHeader(doc, columns, y)
 
   model.rows.forEach((row, rowIndex) => {
-    const cellLines = columns.map((column) => (
-      doc.splitTextToSize(pdfText(column.value(row)), Math.max(2, column.width - 2.4)) as string[]
+    const cellValues = columns.map((column) => pdfText(column.value(row)))
+    setPdfUnicodeFont(doc)
+    const cellLines = columns.map((column, columnIndex) => (
+      doc.splitTextToSize(cellValues[columnIndex], Math.max(2, column.width - 2.4)) as string[]
     ))
     const lineCount = Math.max(...cellLines.map((lines) => lines.length), 1)
     const rowHeight = Math.max(MIN_ROW_HEIGHT, lineCount * TABLE_LINE_HEIGHT + 2.5)
@@ -237,15 +251,16 @@ function addOperationsTable(
     }
     doc.setDrawColor(222, 228, 225)
     doc.line(PAGE_MARGIN, y + rowHeight, PAGE_WIDTH - PAGE_MARGIN, y + rowHeight)
-    doc.setFont('helvetica', 'normal')
+    setPdfUnicodeFont(doc)
     doc.setFontSize(TABLE_FONT_SIZE)
     doc.setTextColor(31, 41, 38)
 
     let x = PAGE_MARGIN
     columns.forEach((column, columnIndex) => {
-      const textX = column.align === 'right' ? x + column.width - 1.2 : x + 1.2
+      const options = getPdfTextOptions(cellValues[columnIndex], column.align ?? 'left')
+      const textX = options.align === 'right' ? x + column.width - 1.2 : x + 1.2
       doc.text(cellLines[columnIndex], textX, y + 3.5, {
-        align: column.align ?? 'left',
+        ...options,
         lineHeightFactor: 1.15,
       })
       x += column.width
@@ -268,8 +283,9 @@ function addFooters(doc: PdfDocument): void {
   }
 }
 
-export function generateProductionReportPdf(model: ProductionReportPdfModel): Blob {
+export async function generateProductionReportPdf(model: ProductionReportPdfModel): Promise<Blob> {
   const doc = new jsPDF({ format: 'a4', orientation: 'landscape', unit: 'mm', compress: true })
+  await registerPdfFonts(doc)
   addPageHeader(doc, model)
 
   let y = addSectionTitle(doc, 'Report Context', 27)

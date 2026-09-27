@@ -34,8 +34,8 @@ export function UsersTable({ users, onEdit, onToggleActive, currentUserId }: Use
           <tbody>
             {users.map((user) => (
               <tr key={user.id}>
-                <td><strong>{user.fullName}</strong></td>
-                <td>{user.employeeCode}</td>
+                <td dir="auto"><strong>{user.fullName}</strong></td>
+                <td dir="auto">{user.employeeCode}</td>
                 <td><span className="user-role-badge">{getRoleLabel(user.role)}</span></td>
                 <td><StatusBadge status={user.isActive ? 'active' : 'cancelled'} /></td>
                 <td>{formatDate(user.createdAt)}</td>

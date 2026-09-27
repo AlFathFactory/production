@@ -20,9 +20,9 @@ export function ProductionTableRow({ item, onStageAction, onViewHistory }: Produ
 
   return (
     <tr>
-      <td>{item.article ?? '—'}</td>
-      <td className="production-table__designation">{item.designation ?? '—'}</td>
-      <td>{item.profile ?? '—'}</td>
+      <td dir="auto">{item.article ?? '—'}</td>
+      <td className="production-table__designation" dir="auto">{item.designation ?? '—'}</td>
+      <td dir="auto">{item.profile ?? '—'}</td>
       <td><ProductionRouteBadge route={item.routing} /></td>
       <td className="production-table__number">{formatQuantity(item.total_quantity)}</td>
       <td className="production-table__number">{formatQuantity(item.cut_total)}</td>

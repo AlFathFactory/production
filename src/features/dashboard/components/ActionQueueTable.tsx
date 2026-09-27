@@ -32,9 +32,9 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
           <tbody>
             {items.map((item, index) => (
               <tr key={item.production_item_id ?? `action-queue-row-${index}`}>
-                <td><strong>{item.article}</strong></td>
-                <td>{item.designation ?? '—'}</td>
-                <td>{item.profile ?? '—'}</td>
+                <td dir="auto"><strong>{item.article}</strong></td>
+                <td dir="auto">{item.designation ?? '—'}</td>
+                <td dir="auto">{item.profile ?? '—'}</td>
                 <td><span className="dashboard-route-badge">{item.routing}</span></td>
                 <td><span className="dashboard-action-badge">{item.next_action}</span></td>
                 <td className="action-queue-table__number">{item.available_action_quantity}</td>

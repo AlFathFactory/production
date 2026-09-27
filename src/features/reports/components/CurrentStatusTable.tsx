@@ -108,10 +108,10 @@ export function CurrentStatusTable({ rows, statuses }: CurrentStatusTableProps) 
         <tbody>
           {rows.map((row, index) => (
             <tr key={row.production_item_id ?? `${row.article}-${index}`}>
-              <td>{row.article ?? '—'}</td>
-              <td className="reports-table__designation">{row.designation ?? '—'}</td>
-              <td>{row.profile ?? '—'}</td>
-              <td>{row.material ?? '—'}</td>
+              <td dir="auto">{row.article ?? '—'}</td>
+              <td className="reports-table__designation" dir="auto">{row.designation ?? '—'}</td>
+              <td dir="auto">{row.profile ?? '—'}</td>
+              <td dir="auto">{row.material ?? '—'}</td>
               <td><ProductionRouteBadge route={row.routing} /></td>
               {isVisible('total_quantity') ? <td className="reports-table__number">{formatReportQuantity(row.total_quantity)}</td> : null}
               {isVisible('cut_total') ? <td className="reports-table__number">{formatReportQuantity(row.cut_total)}</td> : null}

@@ -155,8 +155,8 @@ export function BendingReturnWorkflow({ lotId }: BendingReturnWorkflowProps) {
           </div>
           <dl className="bending-document-details">
             <div><dt>Dispatch Date</dt><dd>{selectedDispatch.dispatchDate}</dd></div>
-            <div><dt>Destination</dt><dd>{selectedDispatch.destination ?? '—'}</dd></div>
-            <div><dt>Sheet Number</dt><dd>{selectedDispatch.sheetNumber ?? '—'}</dd></div>
+            <div><dt>Destination</dt><dd dir="auto">{selectedDispatch.destination ?? '—'}</dd></div>
+            <div><dt>Sheet Number</dt><dd dir="auto">{selectedDispatch.sheetNumber ?? '—'}</dd></div>
             {returnLinesQuery.data ? <div><dt>Status</dt><dd>{getDispatchStatus(returnLinesQuery.data)}</dd></div> : null}
           </dl>
           {returnLinesQuery.isPending ? <p className="bending-loading"><LoadingSpinner label="Loading dispatch materials" /> Loading dispatch materials…</p> : null}
