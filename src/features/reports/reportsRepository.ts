@@ -1,4 +1,5 @@
 import { supabase } from '../../services/supabase/client'
+import type { Database } from '../../types/database'
 import type { CurrentStatusFilters, CurrentStatusRow, ReportFilters, ReportRow } from './types'
 
 export class ReportsRepositoryError extends Error {
@@ -24,6 +25,42 @@ function mapReportsError(error: unknown): ReportsRepositoryError {
   return new ReportsRepositoryError('The Production report could not be loaded. Please try again.')
 }
 
+const ARTICLE_TOTAL_BATCH_SIZE = 100
+
+async function addArticleTotalQuantities(
+  rows: Database['public']['Functions']['search_production_operations_report']['Returns'],
+): Promise<ReportRow[]> {
+  const itemIds = [...new Set(rows.flatMap((row) => row.production_item_id ? [row.production_item_id] : []))]
+  const batches: string[][] = []
+
+  for (let index = 0; index < itemIds.length; index += ARTICLE_TOTAL_BATCH_SIZE) {
+    batches.push(itemIds.slice(index, index + ARTICLE_TOTAL_BATCH_SIZE))
+  }
+
+  const results = await Promise.all(batches.map((batch) => (
+    supabase
+      .from('production_items')
+      .select('id, total_quantity')
+      .in('id', batch)
+  )))
+
+  const failedResult = results.find(({ error }) => error)
+  if (failedResult?.error) {
+    throw mapReportsError(failedResult.error)
+  }
+
+  const totalsByItemId = new Map(
+    results.flatMap(({ data }) => data ?? []).map((item) => [item.id, item.total_quantity]),
+  )
+
+  return rows.map((row) => ({
+    ...row,
+    article_total_quantity: row.production_item_id
+      ? totalsByItemId.get(row.production_item_id) ?? null
+      : null,
+  }))
+}
+
 export const reportsRepository = {
   async searchProductionOperations(filters: ReportFilters): Promise<ReportRow[]> {
     const { data, error } = await supabase.rpc('search_production_operations_report', {
@@ -42,7 +79,7 @@ export const reportsRepository = {
       throw mapReportsError(error)
     }
 
-    return data
+    return addArticleTotalQuantities(data)
   },
 
   async searchProductionStatus(filters: CurrentStatusFilters): Promise<CurrentStatusRow[]> {

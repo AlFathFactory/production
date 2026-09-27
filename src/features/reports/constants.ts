@@ -11,7 +11,7 @@ export const reportOperations: readonly ReportOperation[] = [
 export const reportOperationLabels: Record<ReportOperation, string> = {
   CUT: 'CUT',
   OUT_BEND: 'Issue Packing',
-  BEND: 'Receive Packing',
+  BEND: 'BENDED',
   ROLLING: 'ROLLING',
   DISPENSE: 'DISPENSE',
 }
@@ -29,7 +29,7 @@ export const currentStatuses: readonly CurrentStatus[] = [
 
 export const currentStatusLabels: Record<CurrentStatus, string> = {
   REMAINING_CUT: 'Remaining to Cut',
-  WAITING_ISSUE_PACKING: 'Waiting for Issue Packing',
+  WAITING_ISSUE_PACKING: 'Waiting for OUT BEND',
   WAITING_RECEIVE_PACKING: 'Waiting for Receive Packing',
   WAITING_ROLLING: 'Waiting for Rolling',
   READY_TO_DISPENSE: 'Ready to Dispense',

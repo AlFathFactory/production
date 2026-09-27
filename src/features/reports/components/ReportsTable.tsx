@@ -15,6 +15,7 @@ export function ReportsTable({ rows }: { rows: ReportRow[] }) {
             <th scope="col">Profile</th>
             <th scope="col">Routing</th>
             <th scope="col">Operation</th>
+            <th scope="col" className="reports-table__number">Total Qty</th>
             <th scope="col" className="reports-table__number">Qty</th>
             <th scope="col" className="reports-table__number">Unit Wt. kg</th>
             <th scope="col" className="reports-table__number">Operation Wt. kg</th>
@@ -30,6 +31,7 @@ export function ReportsTable({ rows }: { rows: ReportRow[] }) {
               <td>{row.profile ?? '—'}</td>
               <td><ProductionRouteBadge route={row.routing} /></td>
               <td><span className="reports-operation-badge">{reportOperationLabels[row.operation]}</span></td>
+              <td className="reports-table__number">{formatReportQuantity(row.article_total_quantity)}</td>
               <td className="reports-table__number">{formatReportQuantity(row.quantity)}</td>
               <td className="reports-table__number">{formatReportWeight(row.unit_weight_kg)}</td>
               <td className="reports-table__number">{formatReportWeight(row.operation_weight_kg)}</td>

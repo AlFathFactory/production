@@ -1,7 +1,9 @@
 import type { Database } from '../../types/database'
 
 export type ReportOperation = Database['public']['Enums']['production_stage']
-export type ReportRow = Database['public']['Functions']['search_production_operations_report']['Returns'][number]
+export type ReportRow = Database['public']['Functions']['search_production_operations_report']['Returns'][number] & {
+  article_total_quantity: number | string | null
+}
 export type CurrentStatusRow = Database['public']['Functions']['search_production_status_report']['Returns'][number]
 export type ReportsMode = 'historical-events' | 'current-status'
 export type CurrentStatus =
