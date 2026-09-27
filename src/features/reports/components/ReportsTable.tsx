@@ -1,7 +1,7 @@
 import { ProductionRouteBadge } from '../../production/components/ProductionRouteBadge'
-import { formatQuantity, toNullableNumber } from '../../production/utils'
 import { reportOperationLabels } from '../constants'
 import type { ReportRow } from '../types'
+import { formatReportQuantity, formatReportWeight } from '../utils/reportSummary'
 
 function formatDate(value: string | null): string {
   if (!value) return '—'
@@ -9,13 +9,6 @@ function formatDate(value: string | null): string {
   return Number.isNaN(date.getTime())
     ? value
     : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date)
-}
-
-function formatWeight(value: number | string | null): string {
-  const numeric = toNullableNumber(value)
-  return numeric === null
-    ? '—'
-    : new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(numeric)
 }
 
 export function ReportsTable({ rows }: { rows: ReportRow[] }) {
@@ -46,9 +39,9 @@ export function ReportsTable({ rows }: { rows: ReportRow[] }) {
               <td>{row.profile ?? '—'}</td>
               <td><ProductionRouteBadge route={row.routing} /></td>
               <td><span className="reports-operation-badge">{reportOperationLabels[row.operation]}</span></td>
-              <td className="reports-table__number">{formatQuantity(row.quantity)}</td>
-              <td className="reports-table__number">{formatWeight(row.unit_weight_kg)}</td>
-              <td className="reports-table__number">{formatWeight(row.operation_weight_kg)}</td>
+              <td className="reports-table__number">{formatReportQuantity(row.quantity)}</td>
+              <td className="reports-table__number">{formatReportWeight(row.unit_weight_kg)}</td>
+              <td className="reports-table__number">{formatReportWeight(row.operation_weight_kg)}</td>
               <td>{row.performed_by_name ?? '—'}</td>
               <td>{row.reference ?? '—'}</td>
             </tr>

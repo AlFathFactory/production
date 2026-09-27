@@ -6,6 +6,7 @@ import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 import { useDebouncedValue } from '../production/hooks/useDebouncedValue'
 import { ReportContext } from './components/ReportContext'
 import { ReportsFilters } from './components/ReportsFilters'
+import { ReportSummary } from './components/ReportSummary'
 import { ReportsTable } from './components/ReportsTable'
 import { useReportFilters } from './hooks/useReportFilters'
 import { useProductionOperationsReport } from './queries/reportQueries'
@@ -54,6 +55,9 @@ export function ReportsPage() {
             <p>{reportQuery.error.message}</p>
             <Button type="button" variant="secondary" onClick={() => void reportQuery.refetch()}>Retry</Button>
           </section>
+        ) : null}
+        {!hasInitialError && !reportQuery.isPending ? (
+          <ReportSummary rows={rows} isFetching={reportQuery.isFetching} />
         ) : null}
         {!hasInitialError && !reportQuery.isPending && rows.length === 0 ? (
           <section className="reports-state">
