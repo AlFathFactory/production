@@ -20,6 +20,7 @@ const initialLabels: ReportContextLabels = {
   project: '',
   projectNumber: '',
   lot: '',
+  performedBy: '',
 }
 
 export function useReportFilters() {
@@ -51,7 +52,7 @@ export function useReportFilters() {
     })),
     setProject: (projectId: string | null, label: string | null) => {
       setFilters((current) => ({ ...current, projectId, projectNumberId: null, lotId: null }))
-      setLabels({ project: label ?? '', projectNumber: '', lot: '' })
+      setLabels((current) => ({ ...current, project: label ?? '', projectNumber: '', lot: '' }))
     },
     setProjectNumber: (projectNumberId: string | null, label: string | null) => {
       setFilters((current) => ({ ...current, projectNumberId, lotId: null }))
@@ -69,7 +70,10 @@ export function useReportFilters() {
     })),
     setRouting: (routing: ProductionRoute | null) => setFilters((current) => ({ ...current, routing })),
     setQuery: (query: string) => setFilters((current) => ({ ...current, query })),
-    setPerformedBy: (performedBy: string) => setFilters((current) => ({ ...current, performedBy })),
+    setPerformedBy: (performedBy: string, label: string | null) => {
+      setFilters((current) => ({ ...current, performedBy }))
+      setLabels((current) => ({ ...current, performedBy: label ?? '' }))
+    },
     resetFilters: () => {
       setFilters(initialFilters)
       setLabels(initialLabels)

@@ -1,20 +1,17 @@
 import { reportOperationLabels } from '../constants'
-import type { ReportRow } from '../types'
+import type { ReportSummaryData } from '../utils/reportSummary'
 import {
-  computeReportSummary,
   formatReportCount,
   formatReportQuantity,
   formatReportWeightKg,
 } from '../utils/reportSummary'
 
 interface ReportSummaryProps {
-  rows: ReportRow[]
+  summary: ReportSummaryData
   isFetching: boolean
 }
 
-export function ReportSummary({ rows, isFetching }: ReportSummaryProps) {
-  const summary = computeReportSummary(rows)
-
+export function ReportSummary({ summary, isFetching }: ReportSummaryProps) {
   return (
     <>
       <section className="reports-summary" aria-label="Report summary" aria-busy={isFetching}>

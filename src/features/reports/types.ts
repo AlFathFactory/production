@@ -19,4 +19,16 @@ export interface ReportContextLabels {
   project: string
   projectNumber: string
   lot: string
+  performedBy: string
+}
+
+export interface ReportContextData {
+  period: string
+  project: string
+  projectNumber: string
+  lot: string
+  operations: string
+  routing: string | null
+  performedBy: string | null
+  searchText: string | null
 }

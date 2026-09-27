@@ -1,15 +1,7 @@
 import { ProductionRouteBadge } from '../../production/components/ProductionRouteBadge'
 import { reportOperationLabels } from '../constants'
 import type { ReportRow } from '../types'
-import { formatReportQuantity, formatReportWeight } from '../utils/reportSummary'
-
-function formatDate(value: string | null): string {
-  if (!value) return '—'
-  const date = new Date(`${value.slice(0, 10)}T00:00:00`)
-  return Number.isNaN(date.getTime())
-    ? value
-    : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date)
-}
+import { formatReportDate, formatReportQuantity, formatReportWeight } from '../utils/reportSummary'
 
 export function ReportsTable({ rows }: { rows: ReportRow[] }) {
   return (
@@ -27,13 +19,12 @@ export function ReportsTable({ rows }: { rows: ReportRow[] }) {
             <th scope="col" className="reports-table__number">Unit Wt. kg</th>
             <th scope="col" className="reports-table__number">Operation Wt. kg</th>
             <th scope="col">Performed By</th>
-            <th scope="col">Reference</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, index) => (
             <tr key={row.operation_id ?? `${row.operation_date}-${row.article}-${index}`}>
-              <td>{formatDate(row.operation_date)}</td>
+              <td>{formatReportDate(row.operation_date)}</td>
               <td>{row.article ?? '—'}</td>
               <td className="reports-table__designation">{row.designation ?? '—'}</td>
               <td>{row.profile ?? '—'}</td>
@@ -43,7 +34,6 @@ export function ReportsTable({ rows }: { rows: ReportRow[] }) {
               <td className="reports-table__number">{formatReportWeight(row.unit_weight_kg)}</td>
               <td className="reports-table__number">{formatReportWeight(row.operation_weight_kg)}</td>
               <td>{row.performed_by_name ?? '—'}</td>
-              <td>{row.reference ?? '—'}</td>
             </tr>
           ))}
         </tbody>

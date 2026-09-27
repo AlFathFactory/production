@@ -73,3 +73,11 @@ export function formatReportWeight(value: number | string | null): string {
 export function formatReportWeightKg(value: number): string {
   return `${weightFormatter.format(value)} kg`
 }
+
+export function formatReportDate(value: string | null): string {
+  if (!value) return '—'
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`)
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date)
+}

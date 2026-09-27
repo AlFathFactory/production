@@ -20,7 +20,7 @@ interface ReportsFiltersProps {
   onOperationChange: (operation: ReportOperation, selected: boolean) => void
   onRoutingChange: (routing: ProductionRoute | null) => void
   onQueryChange: (query: string) => void
-  onPerformedByChange: (performedBy: string) => void
+  onPerformedByChange: (performedBy: string, label: string | null) => void
   onReset: () => void
 }
 
@@ -120,7 +120,11 @@ export function ReportsFilters({
           <Select
             id="reports-performed-by"
             value={filters.performedBy}
-            onChange={(event) => onPerformedByChange(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value
+              const label = value ? event.target.selectedOptions[0]?.textContent ?? null : null
+              onPerformedByChange(value, label)
+            }}
             disabled={usersQuery.isLoading}
           >
             <option value="">

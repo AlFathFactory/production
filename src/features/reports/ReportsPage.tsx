@@ -3,15 +3,20 @@ import './Reports.css'
 import { PageHeader } from '../../components/shared/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
+import { useAuth } from '../auth/hooks/useAuth'
 import { useDebouncedValue } from '../production/hooks/useDebouncedValue'
+import { GenerateReportPdfButton } from './components/GenerateReportPdfButton'
 import { ReportContext } from './components/ReportContext'
 import { ReportsFilters } from './components/ReportsFilters'
 import { ReportSummary } from './components/ReportSummary'
 import { ReportsTable } from './components/ReportsTable'
 import { useReportFilters } from './hooks/useReportFilters'
 import { useProductionOperationsReport } from './queries/reportQueries'
+import { buildReportContext } from './utils/reportContext'
+import { computeReportSummary } from './utils/reportSummary'
 
 export function ReportsPage() {
+  const { userProfile } = useAuth()
   const reportFilters = useReportFilters()
   const debouncedQuery = useDebouncedValue(reportFilters.filters.query)
   const debouncedPerformedBy = useDebouncedValue(reportFilters.filters.performedBy)
@@ -22,13 +27,37 @@ export function ReportsPage() {
   }
   const reportQuery = useProductionOperationsReport(queryFilters)
   const rows = reportQuery.data ?? []
+  const summary = computeReportSummary(rows)
+  const context = buildReportContext(queryFilters, reportFilters.labels)
   const hasInitialError = reportQuery.isError && reportQuery.data === undefined
+  const hasPendingTextFilters = (
+    reportFilters.filters.query !== debouncedQuery
+    || reportFilters.filters.performedBy !== debouncedPerformedBy
+  )
+  const isReportChanging = reportQuery.isFetching || hasPendingTextFilters
+  const pdfDisabledReason = rows.length === 0
+    ? 'There are no report results to export.'
+    : isReportChanging
+      ? 'Wait for the current report filters to finish applying.'
+      : ''
 
   return (
     <>
       <PageHeader
         title="Reports"
         description="Review saved Production operations using the authoritative report data."
+        actions={(
+          <GenerateReportPdfButton
+            context={context}
+            dateFrom={queryFilters.dateFrom}
+            dateTo={queryFilters.dateTo}
+            disabled={rows.length === 0 || isReportChanging}
+            disabledReason={pdfDisabledReason}
+            generatedBy={userProfile?.full_name ?? 'Production Control User'}
+            rows={rows}
+            summary={summary}
+          />
+        )}
       />
       <div className="reports-workspace">
         <ReportsFilters
@@ -45,7 +74,7 @@ export function ReportsPage() {
           onPerformedByChange={reportFilters.setPerformedBy}
           onReset={reportFilters.resetFilters}
         />
-        <ReportContext filters={reportFilters.filters} labels={reportFilters.labels} />
+        <ReportContext context={context} />
 
         {reportQuery.isPending ? (
           <section className="reports-state"><LoadingSpinner label="Loading report" /> Loading report…</section>
@@ -57,7 +86,7 @@ export function ReportsPage() {
           </section>
         ) : null}
         {!hasInitialError && !reportQuery.isPending ? (
-          <ReportSummary rows={rows} isFetching={reportQuery.isFetching} />
+          <ReportSummary summary={summary} isFetching={reportQuery.isFetching} />
         ) : null}
         {!hasInitialError && !reportQuery.isPending && rows.length === 0 ? (
           <section className="reports-state">
