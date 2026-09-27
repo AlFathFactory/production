@@ -1,114 +1,64 @@
 import './Reports.css'
 
+import { useState } from 'react'
+
 import { PageHeader } from '../../components/shared/PageHeader'
-import { Button } from '../../components/ui/Button'
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
-import { useAuth } from '../auth/hooks/useAuth'
-import { useDebouncedValue } from '../production/hooks/useDebouncedValue'
-import { GenerateReportPdfButton } from './components/GenerateReportPdfButton'
-import { ReportContext } from './components/ReportContext'
-import { ReportsFilters } from './components/ReportsFilters'
-import { ReportSummary } from './components/ReportSummary'
-import { ReportsTable } from './components/ReportsTable'
-import { useReportFilters } from './hooks/useReportFilters'
-import { useProductionOperationsReport } from './queries/reportQueries'
-import { buildReportContext } from './utils/reportContext'
-import { computeReportSummary } from './utils/reportSummary'
+import { CurrentStatusReport } from './components/CurrentStatusReport'
+import { HistoricalEventsReport } from './components/HistoricalEventsReport'
+import type { ReportsMode } from './types'
 
 export function ReportsPage() {
-  const { userProfile } = useAuth()
-  const reportFilters = useReportFilters()
-  const debouncedQuery = useDebouncedValue(reportFilters.filters.query)
-  const debouncedPerformedBy = useDebouncedValue(reportFilters.filters.performedBy)
-  const queryFilters = {
-    ...reportFilters.filters,
-    query: debouncedQuery,
-    performedBy: debouncedPerformedBy,
-  }
-  const reportQuery = useProductionOperationsReport(queryFilters)
-  const rows = reportQuery.data ?? []
-  const summary = computeReportSummary(rows)
-  const context = buildReportContext(queryFilters, reportFilters.labels)
-  const hasInitialError = reportQuery.isError && reportQuery.data === undefined
-  const hasPendingTextFilters = (
-    reportFilters.filters.query !== debouncedQuery
-    || reportFilters.filters.performedBy !== debouncedPerformedBy
-  )
-  const isReportChanging = reportQuery.isFetching || hasPendingTextFilters
-  const pdfDisabledReason = rows.length === 0
-    ? 'There are no report results to export.'
-    : isReportChanging
-      ? 'Wait for the current report filters to finish applying.'
-      : ''
+  const [mode, setMode] = useState<ReportsMode>('historical-events')
 
   return (
     <>
       <PageHeader
         title="Reports"
-        description="Review saved Production operations using the authoritative report data."
-        actions={(
-          <GenerateReportPdfButton
-            context={context}
-            dateFrom={queryFilters.dateFrom}
-            dateTo={queryFilters.dateTo}
-            disabled={rows.length === 0 || isReportChanging}
-            disabledReason={pdfDisabledReason}
-            generatedBy={userProfile?.full_name ?? 'Production Control User'}
-            rows={rows}
-            summary={summary}
-          />
-        )}
+        description={mode === 'historical-events'
+          ? 'Review saved Production operations using the authoritative report data.'
+          : 'Review the current production position and pending operational quantities.'}
       />
       <div className="reports-workspace">
-        <ReportsFilters
-          filters={reportFilters.filters}
-          hasActiveFilters={reportFilters.hasActiveFilters}
-          onDateFromChange={reportFilters.setDateFrom}
-          onDateToChange={reportFilters.setDateTo}
-          onProjectChange={reportFilters.setProject}
-          onProjectNumberChange={reportFilters.setProjectNumber}
-          onLotChange={reportFilters.setLot}
-          onOperationChange={reportFilters.toggleOperation}
-          onRoutingChange={reportFilters.setRouting}
-          onQueryChange={reportFilters.setQuery}
-          onPerformedByChange={reportFilters.setPerformedBy}
-          onReset={reportFilters.resetFilters}
-        />
-        <ReportContext context={context} />
-
-        {reportQuery.isPending ? (
-          <section className="reports-state"><LoadingSpinner label="Loading report" /> Loading report…</section>
-        ) : null}
-        {hasInitialError ? (
-          <section className="reports-state reports-state--error">
-            <p>{reportQuery.error.message}</p>
-            <Button type="button" variant="secondary" onClick={() => void reportQuery.refetch()}>Retry</Button>
-          </section>
-        ) : null}
-        {!hasInitialError && !reportQuery.isPending ? (
-          <ReportSummary summary={summary} isFetching={reportQuery.isFetching} />
-        ) : null}
-        {!hasInitialError && !reportQuery.isPending && rows.length === 0 ? (
-          <section className="reports-state">
-            <p>No saved operations match the current report filters.</p>
-            {reportFilters.hasActiveFilters ? <Button type="button" variant="secondary" onClick={reportFilters.resetFilters}>Reset Filters</Button> : null}
-          </section>
-        ) : null}
-        {rows.length > 0 ? (
-          <section className="reports-results" aria-label="Report results" aria-busy={reportQuery.isFetching}>
-            <div className="reports-results__heading">
-              <h2>Operations</h2>
-              <span>{reportQuery.isFetching ? 'Updating report…' : `${rows.length} operation${rows.length === 1 ? '' : 's'}`}</span>
-            </div>
-            {reportQuery.isError ? (
-              <div className="reports-refetch-error" role="alert">
-                The latest filters could not be loaded. Showing the previous report.
-                <button type="button" onClick={() => void reportQuery.refetch()}>Retry</button>
-              </div>
-            ) : null}
-            <ReportsTable rows={rows} />
-          </section>
-        ) : null}
+        <div className="reports-mode-switch" role="tablist" aria-label="Report mode">
+          <button
+            id="reports-mode-historical"
+            type="button"
+            role="tab"
+            aria-controls="reports-panel-historical"
+            aria-selected={mode === 'historical-events'}
+            onClick={() => setMode('historical-events')}
+          >
+            Historical Events
+          </button>
+          <button
+            id="reports-mode-current"
+            type="button"
+            role="tab"
+            aria-controls="reports-panel-current"
+            aria-selected={mode === 'current-status'}
+            onClick={() => setMode('current-status')}
+          >
+            Current Status
+          </button>
+        </div>
+        <div
+          id="reports-panel-historical"
+          className="reports-mode-panel"
+          role="tabpanel"
+          aria-labelledby="reports-mode-historical"
+          hidden={mode !== 'historical-events'}
+        >
+          <HistoricalEventsReport active={mode === 'historical-events'} />
+        </div>
+        <div
+          id="reports-panel-current"
+          className="reports-mode-panel"
+          role="tabpanel"
+          aria-labelledby="reports-mode-current"
+          hidden={mode !== 'current-status'}
+        >
+          <CurrentStatusReport active={mode === 'current-status'} />
+        </div>
       </div>
     </>
   )

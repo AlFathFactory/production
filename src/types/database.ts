@@ -460,6 +460,55 @@ export interface Database {
         }
         Relationships: []
       },
+      production_status_report: {
+        Row: {
+          project_id: string | null
+          project_name: string | null
+          project_number_id: string | null
+          project_number: string | null
+          lot_id: string | null
+          lot_number: string | null
+          production_item_id: string | null
+          article: string | null
+          designation: string | null
+          profile: string | null
+          material: string | null
+          routing: Database['public']['Enums']['production_route'] | null
+          unit_weight_kg: number | null
+          total_quantity: number | null
+          cut_total: number | null
+          remaining_cut: number | null
+          remaining_cut_weight_kg: number | null
+          out_bend_total: number | null
+          waiting_issue_packing_qty: number | null
+          waiting_issue_packing_weight_kg: number | null
+          bend_total: number | null
+          waiting_receive_packing_qty: number | null
+          waiting_receive_packing_weight_kg: number | null
+          rolling_total: number | null
+          waiting_rolling_qty: number | null
+          waiting_rolling_weight_kg: number | null
+          ready_to_dispense_qty: number | null
+          ready_to_dispense_weight_kg: number | null
+          dispensed_total: number | null
+          remaining_to_dispense: number | null
+          remaining_to_dispense_weight_kg: number | null
+          next_action: string | null
+          available_action_quantity: number | null
+          progress_state: string | null
+          completion_percent: number | null
+          last_activity_at: string | null
+          has_remaining_cut: boolean | null
+          is_waiting_issue_packing: boolean | null
+          is_waiting_receive_packing: boolean | null
+          is_waiting_rolling: boolean | null
+          is_ready_to_dispense: boolean | null
+          is_partially_dispensed: boolean | null
+          is_completed: boolean | null
+          is_not_started: boolean | null
+        }
+        Relationships: []
+      },
       production_documents_register: {
         Row: {
           approval_name: string | null
@@ -587,6 +636,63 @@ export interface Database {
           performed_by: string | null
           performed_by_name: string | null
           reference: string | null
+        }>
+      }
+      search_production_status_report: {
+        Args: {
+          p_project_id?: string
+          p_project_number_id?: string
+          p_lot_id?: string
+          p_statuses?: string[]
+          p_routing?: Database['public']['Enums']['production_route']
+          p_query?: string
+          p_progress_state?: string
+        }
+        Returns: Array<{
+          project_id: string | null
+          project_name: string | null
+          project_number_id: string | null
+          project_number: string | null
+          lot_id: string | null
+          lot_number: string | null
+          production_item_id: string | null
+          article: string | null
+          designation: string | null
+          profile: string | null
+          material: string | null
+          routing: Database['public']['Enums']['production_route'] | null
+          unit_weight_kg: number | string | null
+          total_quantity: number | string | null
+          cut_total: number | string | null
+          remaining_cut: number | string | null
+          remaining_cut_weight_kg: number | string | null
+          out_bend_total: number | string | null
+          waiting_issue_packing_qty: number | string | null
+          waiting_issue_packing_weight_kg: number | string | null
+          bend_total: number | string | null
+          waiting_receive_packing_qty: number | string | null
+          waiting_receive_packing_weight_kg: number | string | null
+          rolling_total: number | string | null
+          waiting_rolling_qty: number | string | null
+          waiting_rolling_weight_kg: number | string | null
+          ready_to_dispense_qty: number | string | null
+          ready_to_dispense_weight_kg: number | string | null
+          dispensed_total: number | string | null
+          remaining_to_dispense: number | string | null
+          remaining_to_dispense_weight_kg: number | string | null
+          next_action: string | null
+          available_action_quantity: number | string | null
+          progress_state: string | null
+          completion_percent: number | string | null
+          last_activity_at: string | null
+          has_remaining_cut: boolean | null
+          is_waiting_issue_packing: boolean | null
+          is_waiting_receive_packing: boolean | null
+          is_waiting_rolling: boolean | null
+          is_ready_to_dispense: boolean | null
+          is_partially_dispensed: boolean | null
+          is_completed: boolean | null
+          is_not_started: boolean | null
         }>
       }
       attach_bending_dispatch_pdf: {

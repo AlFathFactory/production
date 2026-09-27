@@ -1,4 +1,4 @@
-import type { ReportOperation } from './types'
+import type { CurrentStatus, ReportOperation } from './types'
 
 export const reportOperations: readonly ReportOperation[] = [
   'CUT',
@@ -14,4 +14,26 @@ export const reportOperationLabels: Record<ReportOperation, string> = {
   BEND: 'Receive Packing',
   ROLLING: 'ROLLING',
   DISPENSE: 'DISPENSE',
+}
+
+export const currentStatuses: readonly CurrentStatus[] = [
+  'REMAINING_CUT',
+  'WAITING_ISSUE_PACKING',
+  'WAITING_RECEIVE_PACKING',
+  'WAITING_ROLLING',
+  'READY_TO_DISPENSE',
+  'PARTIALLY_DISPENSED',
+  'COMPLETED',
+  'NOT_STARTED',
+]
+
+export const currentStatusLabels: Record<CurrentStatus, string> = {
+  REMAINING_CUT: 'Remaining to Cut',
+  WAITING_ISSUE_PACKING: 'Waiting for Issue Packing',
+  WAITING_RECEIVE_PACKING: 'Waiting for Receive Packing',
+  WAITING_ROLLING: 'Waiting for Rolling',
+  READY_TO_DISPENSE: 'Ready to Dispense',
+  PARTIALLY_DISPENSED: 'Partially Dispensed',
+  COMPLETED: 'Completed',
+  NOT_STARTED: 'Not Started',
 }

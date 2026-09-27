@@ -1,5 +1,5 @@
 import { supabase } from '../../services/supabase/client'
-import type { ReportFilters, ReportRow } from './types'
+import type { CurrentStatusFilters, CurrentStatusRow, ReportFilters, ReportRow } from './types'
 
 export class ReportsRepositoryError extends Error {
   constructor(message: string) {
@@ -36,6 +36,24 @@ export const reportsRepository = {
       p_project_number_id: filters.projectNumberId ?? undefined,
       p_article_query: filters.query.trim() || undefined,
       p_routing: filters.routing ?? undefined,
+    })
+
+    if (error) {
+      throw mapReportsError(error)
+    }
+
+    return data
+  },
+
+  async searchProductionStatus(filters: CurrentStatusFilters): Promise<CurrentStatusRow[]> {
+    const { data, error } = await supabase.rpc('search_production_status_report', {
+      p_lot_id: filters.lotId ?? undefined,
+      p_progress_state: filters.progressState ?? undefined,
+      p_project_id: filters.projectId ?? undefined,
+      p_project_number_id: filters.projectNumberId ?? undefined,
+      p_query: filters.query.trim() || undefined,
+      p_routing: filters.routing ?? undefined,
+      p_statuses: filters.statuses.length > 0 ? filters.statuses : undefined,
     })
 
     if (error) {
