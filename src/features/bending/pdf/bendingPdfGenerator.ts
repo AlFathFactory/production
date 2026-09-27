@@ -258,13 +258,12 @@ export async function generateDispatchPdf(model: BendingDispatchPdfModel): Promi
   ])
   const columns: TableColumn[] = [
     { label: '#', value: (_, index) => String(index + 1), width: 9 },
-    { label: 'Article', value: (item) => item.article, width: 27 },
-    { label: 'Designation', value: (item) => displayValue(item.designation), width: 48 },
-    { label: 'Profile', value: (item) => displayValue(item.profile), width: 35 },
-    { align: 'right', label: 'Quantity', value: (item) => formatNumber(item.quantity), width: 24 },
-    { align: 'right', label: 'Unit Weight', value: (item) => item.unitWeightKg === null ? '-' : formatNumber(item.unitWeightKg), width: 28 },
-    { align: 'right', label: 'Total Weight', value: formatWeight, width: 30 },
-    { label: 'Remark', value: (item) => displayValue(item.remark ?? null), width: 68 },
+    { label: 'Article', value: (item) => item.article, width: 35 },
+    { label: 'Designation', value: (item) => displayValue(item.designation), width: 76 },
+    { label: 'Profile', value: (item) => displayValue(item.profile), width: 52 },
+    { align: 'right', label: 'Quantity', value: (item) => formatNumber(item.quantity), width: 27 },
+    { align: 'right', label: 'Unit Weight', value: (item) => item.unitWeightKg === null ? '-' : formatNumber(item.unitWeightKg), width: 32 },
+    { align: 'right', label: 'Total Weight', value: formatWeight, width: 38 },
   ]
   const endY = addItemsTable(doc, 'BENDING DISPATCH', 'Dispatch Number', model.dispatchNumber, model.items, columns, tableY, logoData)
   const summaryEndY = addSummary(doc, 'BENDING DISPATCH', 'Dispatch Number', model.dispatchNumber, model.items, endY, 'Total quantity', logoData)
