@@ -21,12 +21,14 @@ const TABLE_LINE_HEIGHT = 3.6
 const MIN_ROW_HEIGHT = 8
 const LOGO_SIZE = 18
 
+const numberFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 })
+
 function displayValue(value: string | null): string {
   return value?.trim() || '-'
 }
 
 function formatNumber(value: number): string {
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 }).format(value)
+  return numberFormatter.format(value)
 }
 
 function formatWeight(item: BendingPdfItem): string {
@@ -111,10 +113,11 @@ function addItemsTable(
   logoData?: Uint8Array,
 ): number {
   let y = drawTableHeader(doc, columns, startY)
+  setPdfUnicodeFont(doc)
+  doc.setFontSize(TABLE_FONT_SIZE)
 
   items.forEach((item, index) => {
     const cellValues = columns.map((column) => column.value(item, index))
-    setPdfUnicodeFont(doc)
     const cellLines = columns.map((column, columnIndex) => (
       doc.splitTextToSize(cellValues[columnIndex], Math.max(2, column.width - 4)) as string[]
     ))
@@ -125,6 +128,8 @@ function addItemsTable(
       doc.addPage()
       addPageHeader(doc, title, referenceLabel, reference, logoData)
       y = drawTableHeader(doc, columns, 30)
+      setPdfUnicodeFont(doc)
+      doc.setFontSize(TABLE_FONT_SIZE)
     }
 
     if (index % 2 === 1) {
@@ -133,8 +138,6 @@ function addItemsTable(
     }
     doc.setDrawColor(222, 228, 225)
     doc.line(PAGE_MARGIN, y + rowHeight, PAGE_WIDTH - PAGE_MARGIN, y + rowHeight)
-    setPdfUnicodeFont(doc)
-    doc.setFontSize(TABLE_FONT_SIZE)
 
     let x = PAGE_MARGIN
     columns.forEach((column, columnIndex) => {
@@ -236,13 +239,23 @@ function createDocument(): PdfDocument {
   return new jsPDF({ format: 'a4', orientation: 'landscape', unit: 'mm', compress: true })
 }
 
-async function loadDispatchLogo(): Promise<Uint8Array> {
-  const response = await fetch('/logo.png')
-  if (!response.ok) {
-    throw new Error(`The PDF logo could not be loaded (${response.status}).`)
-  }
+let logoRequest: Promise<Uint8Array> | null = null
 
-  return new Uint8Array(await response.arrayBuffer())
+function loadDispatchLogo(): Promise<Uint8Array> {
+  if (!logoRequest) {
+    logoRequest = fetch('/logo.png')
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`The PDF logo could not be loaded (${response.status}).`)
+        }
+        return new Uint8Array(await response.arrayBuffer())
+      })
+      .catch((error: unknown) => {
+        logoRequest = null
+        throw error
+      })
+  }
+  return logoRequest
 }
 
 export async function generateDispatchPdf(model: BendingDispatchPdfModel): Promise<Blob> {

@@ -29,15 +29,17 @@ export async function attachBendingPdf(target: BendingPdfTarget): Promise<string
   }
   if (target.pdfPath) return target.pdfPath
 
-  let generator: typeof import('./pdf/bendingPdfGenerator')
-  try {
-    generator = await import('./pdf/bendingPdfGenerator')
-  } catch {
+  // Load the (heavy) generator chunk concurrently with the model queries
+  // instead of waiting for the import before touching the network.
+  const generatorRequest = import('./pdf/bendingPdfGenerator').catch((): never => {
     throw new Error('The PDF generator could not be loaded. Check your connection and retry.')
-  }
+  })
 
   if (target.kind === 'dispatch') {
-    const model = await bendingPdfRepository.getDispatchModel(target.id)
+    const [generator, model] = await Promise.all([
+      generatorRequest,
+      bendingPdfRepository.getDispatchModel(target.id),
+    ])
     let pdf: Blob
     try {
       pdf = await generator.generateDispatchPdf(model)
@@ -52,7 +54,10 @@ export async function attachBendingPdf(target: BendingPdfTarget): Promise<string
     }
   }
 
-  const model = await bendingPdfRepository.getReturnModel(target.id)
+  const [generator, model] = await Promise.all([
+    generatorRequest,
+    bendingPdfRepository.getReturnModel(target.id),
+  ])
   let pdf: Blob
   try {
     pdf = await generator.generateReturnPdf(model)

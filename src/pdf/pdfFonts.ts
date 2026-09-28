@@ -10,6 +10,7 @@ const fontFiles = [
 ] as const
 
 const fontRequests = new Map<string, Promise<Uint8Array>>()
+const fontBase64Cache = new Map<string, string>()
 
 function loadFont(url: string): Promise<Uint8Array> {
   const currentRequest = fontRequests.get(url)
@@ -45,7 +46,12 @@ export async function registerPdfFonts(doc: PdfDocument): Promise<void> {
   })))
 
   loadedFonts.forEach((font) => {
-    doc.addFileToVFS(font.fileName, toBase64(font.data))
+    let base64 = fontBase64Cache.get(font.fileName)
+    if (!base64) {
+      base64 = toBase64(font.data)
+      fontBase64Cache.set(font.fileName, base64)
+    }
+    doc.addFileToVFS(font.fileName, base64)
     doc.addFont(font.fileName, PDF_UNICODE_FONT, font.style)
   })
 }
