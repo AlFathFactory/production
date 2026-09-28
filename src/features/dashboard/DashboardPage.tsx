@@ -15,7 +15,6 @@ import type { DashboardFilters } from './types'
 import type { WeightRoute } from './utils/computeOperationalSummary'
 import './DashboardPage.css'
 
-const NEXT_ACTION_OPTIONS = ['CUT', 'OUT_BEND', 'BEND', 'ROLLING', 'DISPENSE', 'COMPLETE']
 const ROUTE_OPTIONS = ['BEND', 'NO BEND', 'ROD', 'ROLLING', 'LADDER', 'OTHER']
 
 export function DashboardPage() {
@@ -99,7 +98,6 @@ export function DashboardPage() {
           actionQueueQuery={actionQueueQuery}
           filters={filters}
           hasActiveFilters={hasActiveFilters}
-          onNextActionChange={setNextAction}
           onRouteChange={setRoute}
           onSearchChange={setSearch}
           onReset={resetFilters}
@@ -140,7 +138,6 @@ interface ActionQueueSectionProps {
   actionQueueQuery: ReturnType<typeof useActionQueue>
   filters: DashboardFilters
   hasActiveFilters: boolean
-  onNextActionChange: (value: string | null) => void
   onRouteChange: (value: string | null) => void
   onSearchChange: (value: string) => void
   onReset: () => void
@@ -150,7 +147,6 @@ function ActionQueueSection({
   actionQueueQuery,
   filters,
   hasActiveFilters,
-  onNextActionChange,
   onRouteChange,
   onSearchChange,
   onReset,
@@ -163,9 +159,7 @@ function ActionQueueSection({
       <ActionQueueFilters
         filters={filters}
         hasActiveFilters={hasActiveFilters}
-        nextActionOptions={NEXT_ACTION_OPTIONS}
         routeOptions={ROUTE_OPTIONS}
-        onNextActionChange={onNextActionChange}
         onRouteChange={onRouteChange}
         onSearchChange={onSearchChange}
         onReset={onReset}

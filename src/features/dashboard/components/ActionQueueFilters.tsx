@@ -7,9 +7,7 @@ import type { DashboardFilters } from '../types'
 interface ActionQueueFiltersProps {
   filters: DashboardFilters
   hasActiveFilters: boolean
-  nextActionOptions: string[]
   routeOptions: string[]
-  onNextActionChange: (value: string | null) => void
   onRouteChange: (value: string | null) => void
   onSearchChange: (value: string) => void
   onReset: () => void
@@ -18,9 +16,7 @@ interface ActionQueueFiltersProps {
 export function ActionQueueFilters({
   filters,
   hasActiveFilters,
-  nextActionOptions,
   routeOptions,
-  onNextActionChange,
   onRouteChange,
   onSearchChange,
   onReset,

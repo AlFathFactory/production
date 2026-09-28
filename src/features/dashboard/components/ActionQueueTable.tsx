@@ -1,9 +1,84 @@
 import { useEffect, useState } from 'react'
 
 import { Button } from '../../../components/ui/Button'
+import { formatQuantity, toFiniteNumber } from '../../production/utils'
 import type { ActionQueueRow } from '../types'
+import './ActionQueueTable.css'
 
 const PAGE_SIZE = 25
+
+type ActionQueueColumn =
+  | 'article'
+  | 'designation'
+  | 'profile'
+  | 'routing'
+  | 'total_quantity'
+  | 'next_action'
+  | 'available_action_quantity'
+  | 'project'
+  | 'last_activity_at'
+  | 'cut_total'
+  | 'remaining_to_cut'
+  | 'out_bend_total'
+  | 'waiting_out_bend'
+  | 'bend_total'
+  | 'waiting_receive_packing'
+  | 'rolling_total'
+  | 'waiting_rolling'
+  | 'ready_to_dispense'
+  | 'dispensed_total'
+  | 'remaining_to_dispense'
+
+interface GridOption {
+  key: string
+  label: string
+  columns: readonly ActionQueueColumn[]
+}
+
+const GRID_OPTIONS: readonly GridOption[] = [
+  { key: 'article', label: 'Article', columns: ['article'] },
+  { key: 'designation', label: 'Designation', columns: ['designation'] },
+  { key: 'profile', label: 'Profile', columns: ['profile'] },
+  { key: 'routing', label: 'Route', columns: ['routing'] },
+  { key: 'total_quantity', label: 'Total Quantity', columns: ['total_quantity'] },
+  { key: 'cut', label: 'CUT', columns: ['total_quantity', 'cut_total', 'remaining_to_cut'] },
+  { key: 'issue_packing', label: 'Issue Packing', columns: ['total_quantity', 'out_bend_total', 'waiting_out_bend'] },
+  { key: 'bended', label: 'Receive Packing', columns: ['total_quantity', 'bend_total', 'waiting_receive_packing'] },
+  { key: 'rolling', label: 'ROLLING', columns: ['total_quantity', 'rolling_total', 'waiting_rolling'] },
+  {
+    key: 'dispense',
+    label: 'DISPENSE',
+    columns: ['total_quantity', 'ready_to_dispense', 'dispensed_total', 'remaining_to_dispense'],
+  },
+  { key: 'next_action', label: 'Next Action', columns: ['next_action'] },
+  { key: 'available_action_quantity', label: 'Available Qty', columns: ['available_action_quantity'] },
+  { key: 'project', label: 'Project / Number / Lot', columns: ['project'] },
+  { key: 'last_activity_at', label: 'Last Activity', columns: ['last_activity_at'] },
+]
+
+const ALL_COLUMNS: readonly ActionQueueColumn[] = [
+  ...new Set(GRID_OPTIONS.flatMap((option) => option.columns)),
+]
+
+const DEFAULT_COLUMNS: readonly ActionQueueColumn[] = [
+  'article',
+  'designation',
+  'profile',
+  'routing',
+  'total_quantity',
+]
+
+function formatDate(value: string | null): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
+
+function remainingQuantity(available: number | null, completed: number | null): string {
+  return formatQuantity(Math.max(0, toFiniteNumber(available) - toFiniteNumber(completed)))
+}
 
 interface ActionQueueTableProps {
   items: ActionQueueRow[]
@@ -11,14 +86,31 @@ interface ActionQueueTableProps {
 
 export function ActionQueueTable({ items }: ActionQueueTableProps) {
   const [page, setPage] = useState(1)
+  const [selectedColumns, setSelectedColumns] = useState<ActionQueueColumn[]>([...DEFAULT_COLUMNS])
   const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
   const firstIndex = (currentPage - 1) * PAGE_SIZE
   const visibleItems = items.slice(firstIndex, firstIndex + PAGE_SIZE)
+  const visibleColumns = new Set(selectedColumns)
+  const isVisible = (column: ActionQueueColumn) => visibleColumns.has(column)
+  const usesDefaultColumns = DEFAULT_COLUMNS.length === selectedColumns.length
+    && DEFAULT_COLUMNS.every((column) => visibleColumns.has(column))
 
   useEffect(() => {
     setPage(1)
   }, [items])
+
+  const toggleGridOption = (option: GridOption) => {
+    const optionIsVisible = option.columns.every((column) => visibleColumns.has(column))
+    const removableColumns = option.columns.length > 1
+      ? option.columns.filter((column) => column !== 'total_quantity')
+      : option.columns
+    const nextColumns = optionIsVisible
+      ? selectedColumns.filter((candidate) => !removableColumns.includes(candidate))
+      : [...new Set([...selectedColumns, ...option.columns])]
+
+    if (nextColumns.length > 0) setSelectedColumns(nextColumns)
+  }
 
   if (items.length === 0) return null
 
@@ -28,21 +120,73 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
         <table className="action-queue-table">
           <thead>
             <tr>
-              <th scope="col">Article</th>
-              <th scope="col">Designation</th>
-              <th scope="col">Profile</th>
-              <th scope="col">Route</th>
-              <th scope="col">Total Quantity</th>
+              {isVisible('article') ? <th scope="col">Article</th> : null}
+              {isVisible('designation') ? <th scope="col">Designation</th> : null}
+              {isVisible('profile') ? <th scope="col">Profile</th> : null}
+              {isVisible('routing') ? <th scope="col">Route</th> : null}
+              {isVisible('total_quantity') ? <th scope="col">Total Qty</th> : null}
+              {isVisible('cut_total') ? <th scope="col">CUT Total</th> : null}
+              {isVisible('remaining_to_cut') ? <th scope="col">Remaining CUT</th> : null}
+              {isVisible('out_bend_total') ? <th scope="col">Issue Packing Total</th> : null}
+              {isVisible('waiting_out_bend') ? <th scope="col">Waiting Issue Packing</th> : null}
+              {isVisible('bend_total') ? <th scope="col">Receive Packing Total</th> : null}
+              {isVisible('waiting_receive_packing') ? <th scope="col">Waiting Receive Packing</th> : null}
+              {isVisible('rolling_total') ? <th scope="col">ROLLING Total</th> : null}
+              {isVisible('waiting_rolling') ? <th scope="col">Waiting Rolling</th> : null}
+              {isVisible('ready_to_dispense') ? <th scope="col">Ready to Dispense</th> : null}
+              {isVisible('dispensed_total') ? <th scope="col">Dispensed Total</th> : null}
+              {isVisible('remaining_to_dispense') ? <th scope="col">Remaining to Dispense</th> : null}
+              {isVisible('next_action') ? <th scope="col">Next Action</th> : null}
+              {isVisible('project') ? <th scope="col">Project / Number / Lot</th> : null}
+              {isVisible('last_activity_at') ? <th scope="col">Last Activity</th> : null}
             </tr>
           </thead>
           <tbody>
             {visibleItems.map((item, index) => (
               <tr key={item.production_item_id ?? `action-queue-row-${firstIndex + index}`}>
-                <td dir="auto"><strong>{item.article}</strong></td>
-                <td dir="auto">{item.designation ?? '—'}</td>
-                <td dir="auto">{item.profile ?? '—'}</td>
-                <td><span className="dashboard-route-badge">{item.routing}</span></td>
-                <td className="action-queue-table__number">{item.total_quantity ?? 0}</td>
+                {isVisible('article') ? <td dir="auto"><strong>{item.article}</strong></td> : null}
+                {isVisible('designation') ? <td dir="auto">{item.designation ?? '—'}</td> : null}
+                {isVisible('profile') ? <td dir="auto">{item.profile ?? '—'}</td> : null}
+                {isVisible('routing') ? <td><span className="dashboard-route-badge">{item.routing}</span></td> : null}
+                {isVisible('total_quantity') ? <td className="action-queue-table__number">{formatQuantity(item.total_quantity)}</td> : null}
+                {isVisible('cut_total') ? <td className="action-queue-table__number">{formatQuantity(item.cut_total)}</td> : null}
+                {isVisible('remaining_to_cut') ? (
+                  <td className="action-queue-table__number">{remainingQuantity(item.total_quantity, item.cut_total)}</td>
+                ) : null}
+                {isVisible('out_bend_total') ? <td className="action-queue-table__number">{formatQuantity(item.out_bend_total)}</td> : null}
+                {isVisible('waiting_out_bend') ? (
+                  <td className="action-queue-table__number">
+                    {item.routing === 'BEND' ? remainingQuantity(item.cut_total, item.out_bend_total) : '—'}
+                  </td>
+                ) : null}
+                {isVisible('bend_total') ? <td className="action-queue-table__number">{formatQuantity(item.bend_total)}</td> : null}
+                {isVisible('waiting_receive_packing') ? (
+                  <td className="action-queue-table__number">
+                    {item.routing === 'BEND' ? remainingQuantity(item.out_bend_total, item.bend_total) : '—'}
+                  </td>
+                ) : null}
+                {isVisible('rolling_total') ? <td className="action-queue-table__number">{formatQuantity(item.rolling_total)}</td> : null}
+                {isVisible('waiting_rolling') ? (
+                  <td className="action-queue-table__number">
+                    {item.routing === 'ROLLING' ? remainingQuantity(item.cut_total, item.rolling_total) : '—'}
+                  </td>
+                ) : null}
+                {isVisible('ready_to_dispense') ? (
+                  <td className="action-queue-table__number">{formatQuantity(item.warehouse_stock)}</td>
+                ) : null}
+                {isVisible('dispensed_total') ? <td className="action-queue-table__number">{formatQuantity(item.dispensed_total)}</td> : null}
+                {isVisible('remaining_to_dispense') ? (
+                  <td className="action-queue-table__number">{remainingQuantity(item.total_quantity, item.dispensed_total)}</td>
+                ) : null}
+                {isVisible('next_action') ? <td><span className="dashboard-action-badge">{item.next_action}</span></td> : null}
+                {isVisible('available_action_quantity') ? <td className="action-queue-table__number">{item.available_action_quantity ?? 0}</td> : null}
+                {isVisible('project') ? (
+                  <td>
+                    <div>{item.project_name ?? '—'}</div>
+                    <small>{item.project_number ?? '—'} / {item.lot_number ?? '—'}</small>
+                  </td>
+                ) : null}
+                {isVisible('last_activity_at') ? <td>{formatDate(item.last_activity_at)}</td> : null}
               </tr>
             ))}
           </tbody>
@@ -62,6 +206,42 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
           </Button>
         </div>
       </nav>
+      <details className="dashboard-grid-options">
+        <summary>Grid Options</summary>
+        <div className="dashboard-grid-options__card">
+          <div className="dashboard-grid-options__header">
+            <div>
+              <h3>Visible columns</h3>
+              <p>{visibleColumns.size} of {ALL_COLUMNS.length} columns visible</p>
+            </div>
+            <div className="dashboard-grid-options__actions">
+              <button type="button" onClick={() => setSelectedColumns([...ALL_COLUMNS])}>
+                Show all
+              </button>
+              <button type="button" disabled={usesDefaultColumns} onClick={() => setSelectedColumns([...DEFAULT_COLUMNS])}>
+                Reset defaults
+              </button>
+            </div>
+          </div>
+          <fieldset className="dashboard-grid-options__list">
+            <legend className="sr-only">Choose columns for the dashboard table</legend>
+            {GRID_OPTIONS.map((option) => {
+              const checked = option.columns.every((column) => visibleColumns.has(column))
+              return (
+                <label key={option.key}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={checked && option.columns.length === 1 && visibleColumns.size === 1}
+                    onChange={() => toggleGridOption(option)}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              )
+            })}
+          </fieldset>
+        </div>
+      </details>
     </section>
   )
 }
