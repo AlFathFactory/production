@@ -14,7 +14,6 @@ type ActionQueueColumn =
   | 'routing'
   | 'total_quantity'
   | 'next_action'
-  | 'available_action_quantity'
   | 'project'
   | 'last_activity_at'
   | 'cut_total'
@@ -25,9 +24,8 @@ type ActionQueueColumn =
   | 'waiting_receive_packing'
   | 'rolling_total'
   | 'waiting_rolling'
-  | 'ready_to_dispense'
+  | 'warehouse_stock'
   | 'dispensed_total'
-  | 'remaining_to_dispense'
 
 interface GridOption {
   key: string
@@ -48,10 +46,9 @@ const GRID_OPTIONS: readonly GridOption[] = [
   {
     key: 'dispense',
     label: 'DISPENSE',
-    columns: ['total_quantity', 'ready_to_dispense', 'dispensed_total', 'remaining_to_dispense'],
+    columns: ['total_quantity', 'warehouse_stock', 'dispensed_total'],
   },
   { key: 'next_action', label: 'Next Action', columns: ['next_action'] },
-  { key: 'available_action_quantity', label: 'Available Qty', columns: ['available_action_quantity'] },
   { key: 'project', label: 'Project / Number / Lot', columns: ['project'] },
   { key: 'last_activity_at', label: 'Last Activity', columns: ['last_activity_at'] },
 ]
@@ -68,6 +65,14 @@ const DEFAULT_COLUMNS: readonly ActionQueueColumn[] = [
   'total_quantity',
 ]
 
+const PENDING_COLUMNS: readonly ActionQueueColumn[] = [
+  'remaining_to_cut',
+  'waiting_out_bend',
+  'waiting_receive_packing',
+  'waiting_rolling',
+  'warehouse_stock',
+]
+
 function formatDate(value: string | null): string {
   if (!value) return '—'
   const date = new Date(value)
@@ -76,8 +81,31 @@ function formatDate(value: string | null): string {
     : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
-function remainingQuantity(available: number | null, completed: number | null): string {
-  return formatQuantity(Math.max(0, toFiniteNumber(available) - toFiniteNumber(completed)))
+function remainingQuantityValue(available: number | null, completed: number | null): number {
+  return Math.max(0, toFiniteNumber(available) - toFiniteNumber(completed))
+}
+
+function pendingQuantity(item: ActionQueueRow, column: ActionQueueColumn): number {
+  switch (column) {
+    case 'remaining_to_cut':
+      return remainingQuantityValue(item.total_quantity, item.cut_total)
+    case 'waiting_out_bend':
+      return item.routing === 'BEND' ? remainingQuantityValue(item.cut_total, item.out_bend_total) : 0
+    case 'waiting_receive_packing':
+      return item.routing === 'BEND' ? remainingQuantityValue(item.out_bend_total, item.bend_total) : 0
+    case 'waiting_rolling':
+      return item.routing === 'ROLLING' ? remainingQuantityValue(item.cut_total, item.rolling_total) : 0
+    case 'warehouse_stock':
+      return Math.max(0, toFiniteNumber(item.warehouse_stock))
+    default:
+      return 0
+  }
+}
+
+function pendingCellClass(value: number): string {
+  return value > 0
+    ? 'action-queue-table__number action-queue-table__pending'
+    : 'action-queue-table__number'
 }
 
 interface ActionQueueTableProps {
@@ -87,18 +115,29 @@ interface ActionQueueTableProps {
 export function ActionQueueTable({ items }: ActionQueueTableProps) {
   const [page, setPage] = useState(1)
   const [selectedColumns, setSelectedColumns] = useState<ActionQueueColumn[]>([...DEFAULT_COLUMNS])
+  const visibleColumns = new Set(selectedColumns)
+  const isVisible = (column: ActionQueueColumn) => visibleColumns.has(column)
+  const visiblePendingColumns = PENDING_COLUMNS.filter(isVisible)
+  const orderedItems = visiblePendingColumns.length === 0
+    ? items
+    : items
+        .map((item, index) => ({ item, index }))
+        .sort((first, second) => {
+          const firstHasPending = visiblePendingColumns.some((column) => pendingQuantity(first.item, column) > 0)
+          const secondHasPending = visiblePendingColumns.some((column) => pendingQuantity(second.item, column) > 0)
+          return Number(secondHasPending) - Number(firstHasPending) || first.index - second.index
+        })
+        .map(({ item }) => item)
   const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
   const firstIndex = (currentPage - 1) * PAGE_SIZE
-  const visibleItems = items.slice(firstIndex, firstIndex + PAGE_SIZE)
-  const visibleColumns = new Set(selectedColumns)
-  const isVisible = (column: ActionQueueColumn) => visibleColumns.has(column)
+  const visibleItems = orderedItems.slice(firstIndex, firstIndex + PAGE_SIZE)
   const usesDefaultColumns = DEFAULT_COLUMNS.length === selectedColumns.length
     && DEFAULT_COLUMNS.every((column) => visibleColumns.has(column))
 
   useEffect(() => {
     setPage(1)
-  }, [items])
+  }, [items, selectedColumns])
 
   const toggleGridOption = (option: GridOption) => {
     const optionIsVisible = option.columns.every((column) => visibleColumns.has(column))
@@ -133,9 +172,8 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
               {isVisible('waiting_receive_packing') ? <th scope="col">Waiting Receive Packing</th> : null}
               {isVisible('rolling_total') ? <th scope="col">ROLLING Total</th> : null}
               {isVisible('waiting_rolling') ? <th scope="col">Waiting Rolling</th> : null}
-              {isVisible('ready_to_dispense') ? <th scope="col">Ready to Dispense</th> : null}
+              {isVisible('warehouse_stock') ? <th scope="col">Warehouse Stock</th> : null}
               {isVisible('dispensed_total') ? <th scope="col">Dispensed Total</th> : null}
-              {isVisible('remaining_to_dispense') ? <th scope="col">Remaining to Dispense</th> : null}
               {isVisible('next_action') ? <th scope="col">Next Action</th> : null}
               {isVisible('project') ? <th scope="col">Project / Number / Lot</th> : null}
               {isVisible('last_activity_at') ? <th scope="col">Last Activity</th> : null}
@@ -151,35 +189,35 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
                 {isVisible('total_quantity') ? <td className="action-queue-table__number">{formatQuantity(item.total_quantity)}</td> : null}
                 {isVisible('cut_total') ? <td className="action-queue-table__number">{formatQuantity(item.cut_total)}</td> : null}
                 {isVisible('remaining_to_cut') ? (
-                  <td className="action-queue-table__number">{remainingQuantity(item.total_quantity, item.cut_total)}</td>
+                  <td className={pendingCellClass(pendingQuantity(item, 'remaining_to_cut'))}>
+                    {formatQuantity(pendingQuantity(item, 'remaining_to_cut'))}
+                  </td>
                 ) : null}
                 {isVisible('out_bend_total') ? <td className="action-queue-table__number">{formatQuantity(item.out_bend_total)}</td> : null}
                 {isVisible('waiting_out_bend') ? (
-                  <td className="action-queue-table__number">
-                    {item.routing === 'BEND' ? remainingQuantity(item.cut_total, item.out_bend_total) : '—'}
+                  <td className={pendingCellClass(pendingQuantity(item, 'waiting_out_bend'))}>
+                    {item.routing === 'BEND' ? formatQuantity(pendingQuantity(item, 'waiting_out_bend')) : '—'}
                   </td>
                 ) : null}
                 {isVisible('bend_total') ? <td className="action-queue-table__number">{formatQuantity(item.bend_total)}</td> : null}
                 {isVisible('waiting_receive_packing') ? (
-                  <td className="action-queue-table__number">
-                    {item.routing === 'BEND' ? remainingQuantity(item.out_bend_total, item.bend_total) : '—'}
+                  <td className={pendingCellClass(pendingQuantity(item, 'waiting_receive_packing'))}>
+                    {item.routing === 'BEND' ? formatQuantity(pendingQuantity(item, 'waiting_receive_packing')) : '—'}
                   </td>
                 ) : null}
                 {isVisible('rolling_total') ? <td className="action-queue-table__number">{formatQuantity(item.rolling_total)}</td> : null}
                 {isVisible('waiting_rolling') ? (
-                  <td className="action-queue-table__number">
-                    {item.routing === 'ROLLING' ? remainingQuantity(item.cut_total, item.rolling_total) : '—'}
+                  <td className={pendingCellClass(pendingQuantity(item, 'waiting_rolling'))}>
+                    {item.routing === 'ROLLING' ? formatQuantity(pendingQuantity(item, 'waiting_rolling')) : '—'}
                   </td>
                 ) : null}
-                {isVisible('ready_to_dispense') ? (
-                  <td className="action-queue-table__number">{formatQuantity(item.warehouse_stock)}</td>
+                {isVisible('warehouse_stock') ? (
+                  <td className={pendingCellClass(pendingQuantity(item, 'warehouse_stock'))}>
+                    {formatQuantity(pendingQuantity(item, 'warehouse_stock'))}
+                  </td>
                 ) : null}
                 {isVisible('dispensed_total') ? <td className="action-queue-table__number">{formatQuantity(item.dispensed_total)}</td> : null}
-                {isVisible('remaining_to_dispense') ? (
-                  <td className="action-queue-table__number">{remainingQuantity(item.total_quantity, item.dispensed_total)}</td>
-                ) : null}
                 {isVisible('next_action') ? <td><span className="dashboard-action-badge">{item.next_action}</span></td> : null}
-                {isVisible('available_action_quantity') ? <td className="action-queue-table__number">{item.available_action_quantity ?? 0}</td> : null}
                 {isVisible('project') ? (
                   <td>
                     <div>{item.project_name ?? '—'}</div>

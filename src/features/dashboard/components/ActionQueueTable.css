@@ -97,6 +97,12 @@
   white-space: nowrap;
 }
 
+.action-queue-table__pending {
+  color: var(--brand);
+  background: #eef7f3;
+  font-weight: 800;
+}
+
 .action-queue-pagination {
   display: flex;
   align-items: center;
