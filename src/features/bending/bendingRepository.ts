@@ -28,6 +28,15 @@ function errorDetails(error: unknown): { code: string; message: string } {
   }
 }
 
+function logBendingError(action: string, error: unknown): void {
+  const { code, message } = errorDetails(error)
+  console.error(`[bending] ${action} failed`, { code: code || undefined, message: message || undefined, error })
+}
+
+function sanitizedServerDetail(message: string): string {
+  return message.replace(/\s+/g, ' ').trim().slice(0, 220)
+}
+
 function mapCreateDispatchError(error: unknown): BendingRepositoryError {
   const { code, message } = errorDetails(error)
 
@@ -56,6 +65,7 @@ function mapCreateDispatchError(error: unknown): BendingRepositoryError {
     return new BendingRepositoryError('Unable to reach Production Control. Check your connection and try again.', 'network')
   }
 
+  logBendingError('create bending dispatch', error)
   return new BendingRepositoryError('The Bending Dispatch could not be created. Please try again.', 'unknown')
 }
 
@@ -97,7 +107,14 @@ function mapCreateReturnError(error: unknown): BendingRepositoryError {
     return new BendingRepositoryError('Unable to reach Production Control. Check your connection and try again.', 'network')
   }
 
-  return new BendingRepositoryError('The Bending Return could not be created. Please try again.', 'unknown')
+  logBendingError('create bending return', error)
+  const detail = sanitizedServerDetail(message)
+  return new BendingRepositoryError(
+    detail
+      ? `The Bending Return could not be created. Server said: ${detail}`
+      : 'The Bending Return could not be created. Please try again.',
+    'unknown',
+  )
 }
 
 export function shouldRefreshBendingAvailability(error: unknown): boolean {

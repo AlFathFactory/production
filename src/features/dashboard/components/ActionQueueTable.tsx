@@ -477,7 +477,7 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
         setPdfUnicodeFont(doc, 'bold')
         doc.setFontSize(14)
         const reportTitle = 'مصنع الفتح FOLLOW UP'
-        doc.text(reportTitle, margin, 12, getPdfTextOptions(reportTitle))
+        doc.text(reportTitle, pageWidth / 2, 12.5, { align: 'center' })
         setPdfUnicodeFont(doc, 'bold')
         doc.setFontSize(6.5)
         doc.text(`Generated ${generatedAt} - ${orderedItems.length} items`, pageWidth - margin, 11.5, { align: 'right' })
@@ -527,7 +527,8 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
         let x = margin
         cellLines.forEach((entry, index) => {
           const options = getPdfTextOptions(values[index])
-          doc.text(entry, x + 1, y + 3.4, { ...options, lineHeightFactor: 1.12 })
+          const textX = options.align === 'right' ? x + scaledWidths[index] - 1 : x + 1
+          doc.text(entry, textX, y + 3.4, { ...options, lineHeightFactor: 1.12 })
           x += scaledWidths[index]
         })
         y += rowHeight
