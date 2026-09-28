@@ -27,15 +27,7 @@ export function ActionQueueFilters({
 }: ActionQueueFiltersProps) {
   return (
     <div className="dashboard-filter-stack">
-      <section className="action-queue-filters" aria-label="Action queue filters">
-        <FormField label="Next Action" htmlFor="action-queue-next-action-filter">
-          <Select id="action-queue-next-action-filter" value={filters.nextAction ?? ''} onChange={(event) => onNextActionChange(event.target.value || null)}>
-            <option value="">All next actions</option>
-            {nextActionOptions.map((action) => (
-              <option key={action} value={action}>{action}</option>
-            ))}
-          </Select>
-        </FormField>
+      <section className="action-queue-filters" aria-label="Action queue filters">     
         <FormField label="Route" htmlFor="action-queue-route-filter">
           <Select id="action-queue-route-filter" value={filters.route ?? ''} onChange={(event) => onRouteChange(event.target.value || null)}>
             <option value="">All routes</option>

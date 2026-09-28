@@ -3204,6 +3204,10 @@ button.hierarchy-list__select:hover,
   font-size: 0.82rem;
 }
 
+.action-queue-table {
+  min-width: 720px;
+}
+
 .dashboard-table th,
 .dashboard-table td,
 .action-queue-table th,
@@ -3243,6 +3247,30 @@ button.hierarchy-list__select:hover,
   font-variant-numeric: tabular-nums;
   text-align: right !important;
   white-space: nowrap;
+}
+
+.action-queue-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 14px 20px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.action-queue-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-queue-pagination__controls .button {
+  min-height: 36px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
 }
 
 .dashboard-progress {

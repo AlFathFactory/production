@@ -1,16 +1,25 @@
+import { useEffect, useState } from 'react'
+
+import { Button } from '../../../components/ui/Button'
 import type { ActionQueueRow } from '../types'
 
-function formatDate(value: string | null): string {
-  if (!value) return '—'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
-}
+const PAGE_SIZE = 25
 
 interface ActionQueueTableProps {
   items: ActionQueueRow[]
 }
 
 export function ActionQueueTable({ items }: ActionQueueTableProps) {
+  const [page, setPage] = useState(1)
+  const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount)
+  const firstIndex = (currentPage - 1) * PAGE_SIZE
+  const visibleItems = items.slice(firstIndex, firstIndex + PAGE_SIZE)
+
+  useEffect(() => {
+    setPage(1)
+  }, [items])
+
   if (items.length === 0) return null
 
   return (
@@ -23,31 +32,36 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
               <th scope="col">Designation</th>
               <th scope="col">Profile</th>
               <th scope="col">Route</th>
-              <th scope="col">Next Action</th>
-              <th scope="col">Available Qty</th>
-              <th scope="col">Project / Number / Lot</th>
-              <th scope="col">Last Activity</th>
+              <th scope="col">Total Quantity</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((item, index) => (
-              <tr key={item.production_item_id ?? `action-queue-row-${index}`}>
+            {visibleItems.map((item, index) => (
+              <tr key={item.production_item_id ?? `action-queue-row-${firstIndex + index}`}>
                 <td dir="auto"><strong>{item.article}</strong></td>
                 <td dir="auto">{item.designation ?? '—'}</td>
                 <td dir="auto">{item.profile ?? '—'}</td>
                 <td><span className="dashboard-route-badge">{item.routing}</span></td>
-                <td><span className="dashboard-action-badge">{item.next_action}</span></td>
-                <td className="action-queue-table__number">{item.available_action_quantity}</td>
-                <td>
-                  <div>{item.project_name ?? '—'}</div>
-                  <small>{item.project_number ?? '—'} / {item.lot_number ?? '—'}</small>
-                </td>
-                <td>{formatDate(item.last_activity_at)}</td>
+                <td className="action-queue-table__number">{item.total_quantity ?? 0}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <nav className="action-queue-pagination" aria-label="Action queue table pages">
+        <span className="action-queue-pagination__count">
+          Showing {firstIndex + 1}–{Math.min(firstIndex + PAGE_SIZE, items.length)} of {items.length} items
+        </span>
+        <div className="action-queue-pagination__controls">
+          <Button type="button" variant="secondary" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>
+            Previous
+          </Button>
+          <span aria-live="polite">Page {currentPage} of {pageCount}</span>
+          <Button type="button" variant="secondary" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>
+            Next
+          </Button>
+        </div>
+      </nav>
     </section>
   )
 }
