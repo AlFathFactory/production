@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { Button } from '../../../components/ui/Button'
 import { getPdfTextOptions, registerPdfFonts, setPdfUnicodeFont } from '../../../pdf/pdfFonts'
 import { formatQuantity, toFiniteNumber } from '../../production/utils'
-import type { ActionQueueRow } from '../types'
+import type { ActionQueueItem } from '../types'
 import './ActionQueueTable.css'
 
 const PAGE_SIZE = 25
@@ -29,6 +30,7 @@ type ActionQueueColumn =
   | 'waiting_out_bend'
   | 'bend_total'
   | 'waiting_receive_packing'
+  | 'outstanding_dispatches'
   | 'rolling_total'
   | 'waiting_rolling'
   | 'warehouse_stock'
@@ -50,7 +52,11 @@ const GRID_OPTIONS: readonly GridOption[] = [
   { key: 'total_quantity', label: 'Total Quantity', columns: ['total_quantity'] },
   { key: 'cut', label: 'CUT', columns: ['total_quantity', 'cut_total', 'remaining_to_cut'] },
   { key: 'issue_packing', label: 'Issue Packing', columns: ['total_quantity', 'out_bend_total', 'waiting_out_bend'] },
-  { key: 'bended', label: 'Receive Packing', columns: ['total_quantity', 'bend_total', 'waiting_receive_packing'] },
+  {
+    key: 'bended',
+    label: 'Receive Packing',
+    columns: ['total_quantity', 'bend_total', 'waiting_receive_packing', 'outstanding_dispatches'],
+  },
   { key: 'rolling', label: 'ROLLING', columns: ['total_quantity', 'rolling_total', 'waiting_rolling'] },
   {
     key: 'dispense',
@@ -81,6 +87,7 @@ const COLUMN_LABELS: Record<ActionQueueColumn, string> = {
   waiting_out_bend: 'Waiting Issue Packing',
   bend_total: 'Receive Packing Total',
   waiting_receive_packing: 'Waiting Receive Packing',
+  outstanding_dispatches: 'Destination / Dispatch No.',
   rolling_total: 'ROLLING Total',
   waiting_rolling: 'Waiting Rolling',
   warehouse_stock: 'Warehouse Stock',
@@ -115,7 +122,7 @@ function remainingQuantityValue(available: number | null, completed: number | nu
   return Math.max(0, toFiniteNumber(available) - toFiniteNumber(completed))
 }
 
-function pendingQuantity(item: ActionQueueRow, column: ActionQueueColumn): number {
+function pendingQuantity(item: ActionQueueItem, column: ActionQueueColumn): number {
   switch (column) {
     case 'remaining_to_cut':
       return remainingQuantityValue(item.total_quantity, item.cut_total)
@@ -153,6 +160,7 @@ const EXPORT_COLUMN_WEIGHTS: Record<ActionQueueColumn, number> = {
   waiting_out_bend: 1.3,
   bend_total: 1.2,
   waiting_receive_packing: 1.4,
+  outstanding_dispatches: 2,
   rolling_total: 1.1,
   waiting_rolling: 1.2,
   warehouse_stock: 1.2,
@@ -164,7 +172,7 @@ function pdfSafeText(value: string): string {
   return trimmed.replace(/[–—→]/g, '-').replace(/[×]/g, 'x') || '-'
 }
 
-function columnValue(item: ActionQueueRow, column: ActionQueueColumn): string {
+function columnValue(item: ActionQueueItem, column: ActionQueueColumn): string {
   switch (column) {
     case 'article':
       return item.article ?? '—'
@@ -198,6 +206,12 @@ function columnValue(item: ActionQueueRow, column: ActionQueueColumn): string {
       return formatQuantity(item.out_bend_total)
     case 'bend_total':
       return formatQuantity(item.bend_total)
+    case 'outstanding_dispatches':
+      return item.outstandingDispatches.length > 0
+        ? item.outstandingDispatches
+          .map((reference) => `${reference.destination} / ${reference.dispatchNumber}`)
+          .join(' | ')
+        : '—'
     case 'rolling_total':
       return formatQuantity(item.rolling_total)
     case 'dispensed_total':
@@ -206,7 +220,7 @@ function columnValue(item: ActionQueueRow, column: ActionQueueColumn): string {
 }
 
 interface ActionQueueTableProps {
-  items: ActionQueueRow[]
+  items: ActionQueueItem[]
 }
 
 export function ActionQueueTable({ items }: ActionQueueTableProps) {
@@ -729,6 +743,7 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
               {isVisible('waiting_out_bend') ? renderColumnHeader('waiting_out_bend') : null}
               {isVisible('bend_total') ? renderColumnHeader('bend_total') : null}
               {isVisible('waiting_receive_packing') ? renderColumnHeader('waiting_receive_packing') : null}
+              {isVisible('outstanding_dispatches') ? renderColumnHeader('outstanding_dispatches') : null}
               {isVisible('rolling_total') ? renderColumnHeader('rolling_total') : null}
               {isVisible('waiting_rolling') ? renderColumnHeader('waiting_rolling') : null}
               {isVisible('warehouse_stock') ? renderColumnHeader('warehouse_stock') : null}
@@ -762,6 +777,28 @@ export function ActionQueueTable({ items }: ActionQueueTableProps) {
                 {isVisible('waiting_receive_packing') ? (
                   <td className={pendingCellClass(pendingQuantity(item, 'waiting_receive_packing'))}>
                     {item.routing === 'BEND' ? formatQuantity(pendingQuantity(item, 'waiting_receive_packing')) : '—'}
+                  </td>
+                ) : null}
+                {isVisible('outstanding_dispatches') ? (
+                  <td className="action-queue-table__dispatches">
+                    {item.outstandingDispatches.length > 0 ? item.outstandingDispatches.map((reference) => (
+                      <div key={reference.dispatchItemId}>
+                        <Link
+                          aria-label={`Receive ${item.article ?? 'item'} from ${reference.destination}, dispatch ${reference.dispatchNumber}`}
+                          className="action-queue-table__dispatch-link"
+                          to={{
+                            pathname: '/bending/receive',
+                            search: new URLSearchParams({
+                              destinationId: reference.destinationId,
+                              dispatchItemId: reference.dispatchItemId,
+                            }).toString(),
+                          }}
+                        >
+                          <span dir="auto">{reference.destination}</span>
+                          <small>Dispatch {reference.dispatchNumber}</small>
+                        </Link>
+                      </div>
+                    )) : '—'}
                   </td>
                 ) : null}
                 {isVisible('rolling_total') ? <td className="action-queue-table__number">{formatQuantity(item.rolling_total)}</td> : null}

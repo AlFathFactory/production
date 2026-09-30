@@ -3,6 +3,17 @@ import type { Database } from '../../types/database'
 export type LotDashboardRow = Database['public']['Views']['production_lot_dashboard']['Row']
 export type ActionQueueRow = Database['public']['Views']['production_action_queue']['Row']
 
+export interface OutstandingDispatchReference {
+  destination: string
+  destinationId: string
+  dispatchItemId: string
+  dispatchNumber: string
+}
+
+export type ActionQueueItem = ActionQueueRow & {
+  outstandingDispatches: OutstandingDispatchReference[]
+}
+
 export interface DashboardFilters {
   lotId: string | null
   projectId: string | null
@@ -43,5 +54,3 @@ export interface LotDashboardItem {
   itemsWaitingRolling: number
   itemsInWarehouse: number
 }
-
-export type ActionQueueItem = ActionQueueRow

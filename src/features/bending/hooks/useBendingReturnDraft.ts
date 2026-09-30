@@ -6,12 +6,13 @@ import type { BendingDestinationInventoryLine, BendingReturnDraftItem } from '..
 export function useBendingReturnDraft() {
   const [items, setItems] = useState<BendingReturnDraftItem[]>([])
 
-  const syncLines = useCallback((lines: BendingDestinationInventoryLine[]) => {
+  const syncLines = useCallback((lines: BendingDestinationInventoryLine[], targetedDispatchItemId: string | null = null) => {
     setItems((current) => {
       const existingItems = new Map(current.map((item) => [item.dispatchItemId, item]))
       return lines.map((line) => ({
         ...line,
-        isSelected: existingItems.get(line.dispatchItemId)?.isSelected ?? false,
+        isSelected: line.dispatchItemId === targetedDispatchItemId
+          || (existingItems.get(line.dispatchItemId)?.isSelected ?? false),
         quantity: existingItems.get(line.dispatchItemId)?.quantity ?? 0,
       }))
     })
@@ -39,7 +40,7 @@ export function useBendingReturnDraft() {
       : item))
   }
 
-  const clear = () => setItems([])
+  const clear = useCallback(() => setItems([]), [])
   const selectedItems = items.filter((item) => item.isSelected)
   const isValid = selectedItems.length > 0
     && selectedItems.every((item) => item.quantity > 0 && getReturnQuantityError(item.quantity, item.outstandingQuantity) === null)

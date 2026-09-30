@@ -1,5 +1,5 @@
 import { supabase } from '../../services/supabase/client'
-import type { ActionQueueRow, DashboardFilters, LotDashboardItem } from './types'
+import type { ActionQueueItem, ActionQueueRow, DashboardFilters, LotDashboardItem, OutstandingDispatchReference } from './types'
 
 export class DashboardRepositoryError extends Error {
   constructor(message: string) {
@@ -109,11 +109,15 @@ export const dashboardRepository = {
     return (data ?? []).map(mapLotDashboardRow)
   },
 
-  async getActionQueue(filters: DashboardFilters): Promise<ActionQueueRow[]> {
+  async getActionQueue(filters: DashboardFilters): Promise<ActionQueueItem[]> {
     let query = supabase
       .from('production_action_queue')
-      .select('lot_id, lot_number, project_id, project_name, project_number, project_number_id, production_item_id, article, designation, profile, routing, next_action, available_action_quantity, progress_state, total_quantity, cut_total, out_bend_total, bend_total, rolling_total, warehouse_stock, dispensed_total, last_activity_at')
+      .select('lot_id, lot_number, project_id, project_name, project_number, project_number_id, production_item_id, article, designation, profile, routing, next_action, available_action_quantity, progress_state, completion_percent, total_quantity, cut_total, out_bend_total, bend_total, rolling_total, warehouse_stock, dispensed_total, last_activity_at')
       .order('last_activity_at', { ascending: true })
+
+    let outstandingDispatchesQuery = supabase.rpc('search_bending_destination_inventory', {
+      p_outstanding_only: true,
+    })
 
     if (filters.projectId) query = query.eq('project_id', filters.projectId)
     if (filters.projectNumberId) query = query.eq('project_number_id', filters.projectNumberId)
@@ -122,10 +126,41 @@ export const dashboardRepository = {
     if (filters.route) query = query.eq('routing', filters.route as NonNullable<ActionQueueRow['routing']>)
     if (filters.search.trim()) query = query.ilike('article', `%${escapeIlike(filters.search.trim())}%`)
 
-    const { data, error } = await query
+    if (filters.projectId) outstandingDispatchesQuery = outstandingDispatchesQuery.eq('project_id', filters.projectId)
+    if (filters.lotId) outstandingDispatchesQuery = outstandingDispatchesQuery.eq('lot_id', filters.lotId)
 
-    if (error) throw mapDashboardError(error, 'action_queue')
+    const [actionQueueResult, outstandingDispatchesResult] = await Promise.all([
+      query,
+      outstandingDispatchesQuery,
+    ])
 
-    return (data ?? []) as ActionQueueRow[]
+    if (actionQueueResult.error) throw mapDashboardError(actionQueueResult.error, 'action_queue')
+    if (outstandingDispatchesResult.error) throw mapDashboardError(outstandingDispatchesResult.error, 'action_queue')
+
+    const referencesByItem = new Map<string, Map<string, OutstandingDispatchReference>>()
+    for (const row of outstandingDispatchesResult.data ?? []) {
+      if (
+        !row.production_item_id
+        || !row.destination_id
+        || !row.destination_name
+        || !row.dispatch_item_id
+        || !row.dispatch_number
+      ) continue
+      const references = referencesByItem.get(row.production_item_id) ?? new Map<string, OutstandingDispatchReference>()
+      references.set(row.dispatch_item_id, {
+        destination: row.destination_name,
+        destinationId: row.destination_id,
+        dispatchItemId: row.dispatch_item_id,
+        dispatchNumber: row.dispatch_number,
+      })
+      referencesByItem.set(row.production_item_id, references)
+    }
+
+    return (actionQueueResult.data ?? []).map((item) => ({
+      ...item,
+      outstandingDispatches: item.production_item_id
+        ? [...(referencesByItem.get(item.production_item_id)?.values() ?? [])]
+        : [],
+    }))
   },
 }

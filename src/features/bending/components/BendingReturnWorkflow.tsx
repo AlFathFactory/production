@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { AppNotification } from '../../../components/ui/AppNotification'
 import { Button } from '../../../components/ui/Button'
@@ -22,7 +23,10 @@ function initialHeaderValues(): BendingReturnHeaderValues {
 }
 
 export function BendingReturnWorkflow() {
-  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const targetedDestinationId = searchParams.get('destinationId')
+  const targetedDispatchItemId = searchParams.get('dispatchItemId')
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(targetedDestinationId)
   const [headerValues, setHeaderValues] = useState(initialHeaderValues)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState<BendingReturnSuccess | null>(null)
@@ -34,6 +38,15 @@ export function BendingReturnWorkflow() {
   const selectedSummary = summariesQuery.data?.find((summary) => summary.destinationId === selectedDestinationId) ?? null
   const selectedDispatchId = draft.selectedItems[0]?.dispatchId ?? null
   const selectedDispatchNumber = draft.selectedItems[0]?.dispatchNumber ?? null
+  const targetedInventoryLine = targetedDispatchItemId
+    ? inventoryQuery.data?.find((item) => item.dispatchItemId === targetedDispatchItemId) ?? null
+    : null
+  const displayedItems = targetedDispatchItemId
+    ? draft.items.filter((item) => item.dispatchItemId === targetedDispatchItemId)
+    : draft.items
+  const hasDisplayableInventory = targetedDispatchItemId
+    ? Boolean(targetedInventoryLine)
+    : Boolean(inventoryQuery.data?.length)
   const canSubmit = Boolean(
     selectedDispatchId
     && headerValues.returnDate
@@ -43,11 +56,21 @@ export function BendingReturnWorkflow() {
 
   useEffect(() => {
     if (inventoryQuery.data) {
-      draft.syncLines(inventoryQuery.data)
+      draft.syncLines(inventoryQuery.data, targetedDispatchItemId)
     }
-  }, [draft.syncLines, inventoryQuery.data])
+  }, [draft.syncLines, inventoryQuery.data, targetedDispatchItemId])
+
+  useEffect(() => {
+    if (!targetedDestinationId || targetedDestinationId === selectedDestinationId) return
+    setSelectedDestinationId(targetedDestinationId)
+    draft.clear()
+    setHeaderValues(initialHeaderValues())
+    setSubmitError(null)
+    setSuccess(null)
+  }, [draft.clear, selectedDestinationId, targetedDestinationId])
 
   const selectDestination = (destinationId: string | null) => {
+    setSearchParams({}, { replace: true })
     setSelectedDestinationId(destinationId)
     draft.clear()
     setHeaderValues(initialHeaderValues())
@@ -149,8 +172,21 @@ export function BendingReturnWorkflow() {
               <Button type="button" variant="secondary" onClick={() => void inventoryQuery.refetch()}>Retry</Button>
             </p>
           ) : null}
-          {inventoryQuery.isSuccess && inventoryQuery.data.length === 0 ? <p className="bending-empty bending-empty--page">No outstanding issued items match this Destination filter.</p> : null}
-          {inventoryQuery.isSuccess && inventoryQuery.data.length > 0 ? (
+          {inventoryQuery.isSuccess && !hasDisplayableInventory ? (
+            <div className="bending-empty bending-empty--page">
+              <p>
+                {targetedDispatchItemId
+                  ? 'This item is no longer outstanding at this Destination.'
+                  : 'No outstanding issued items match this Destination filter.'}
+              </p>
+              {targetedDispatchItemId ? (
+                <Button type="button" variant="secondary" onClick={() => setSearchParams({}, { replace: true })}>
+                  Show Destination Items
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+          {inventoryQuery.isSuccess && hasDisplayableInventory ? (
             <>
               <BendingReturnHeaderFields isDisabled={createReturnMutation.isPending} values={headerValues} onChange={updateHeader} />
               <section className="bending-section" aria-labelledby="bending-outstanding-materials">
@@ -161,7 +197,7 @@ export function BendingReturnWorkflow() {
                 {selectedDispatchNumber ? <p className="bending-dispatch-lock">Current Issue Packing dispatch: <strong>{selectedDispatchNumber}</strong></p> : null}
                 <BendingReturnItemsTable
                   isDisabled={createReturnMutation.isPending}
-                  items={draft.items}
+                  items={displayedItems}
                   onQuantityChange={draft.updateQuantity}
                   onToggle={draft.toggleItem}
                 />
