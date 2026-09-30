@@ -30,8 +30,7 @@ export function useBendingDestinationSummaries() {
 
 export function useBendingDestinationInventory(destinationId: string | null) {
   return useQuery({
-    enabled: Boolean(destinationId),
-    queryFn: () => bendingRepository.searchDestinationInventory(destinationId as string),
+    queryFn: () => bendingRepository.searchDestinationInventory(destinationId),
     queryKey: bendingKeys.destinationInventory(destinationId),
   })
 }

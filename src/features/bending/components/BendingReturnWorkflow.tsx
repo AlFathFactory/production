@@ -113,8 +113,8 @@ export function BendingReturnWorkflow() {
 
       <section className="bending-return-selector" aria-labelledby="bending-destination-selector-heading">
         <div className="bending-section__heading">
-          <div><span>Step 1</span><h2 id="bending-destination-selector-heading">Destination</h2></div>
-          <p>Select the saved Destination receiving outstanding material back from bending.</p>
+          <div><span>Filter</span><h2 id="bending-destination-selector-heading">Destination</h2></div>
+          <p>All outstanding issued items are shown by default. Select a Destination to narrow the list.</p>
         </div>
         {summariesQuery.isPending ? <p className="bending-loading"><LoadingSpinner label="Loading Destinations" /> Loading Destinations…</p> : null}
         {summariesQuery.isError ? (
@@ -123,12 +123,11 @@ export function BendingReturnWorkflow() {
             <Button type="button" variant="secondary" onClick={() => void summariesQuery.refetch()}>Retry</Button>
           </p>
         ) : null}
-        {summariesQuery.isSuccess && destinationOptions.length === 0 ? <p className="bending-empty">No Destinations currently have outstanding materials.</p> : null}
-        {summariesQuery.isSuccess && destinationOptions.length > 0 ? (
+        {summariesQuery.isSuccess ? (
           <BendingDestinationSelect
             id="bending-return-destination"
             isDisabled={createReturnMutation.isPending}
-            label="Destination"
+            label="Destination filter"
             onChange={selectDestination}
             options={destinationOptions}
             selectedDestinationId={selectedDestinationId}
@@ -137,27 +136,26 @@ export function BendingReturnWorkflow() {
         {summariesQuery.isFetching && !summariesQuery.isPending ? <span className="bending-refreshing">Refreshing Destinations…</span> : null}
       </section>
 
-      {selectedDestinationId ? (
-        <form className="bending-dispatch bending-return" onSubmit={(event) => void createReturn(event)}>
+      <form className="bending-dispatch bending-return" onSubmit={(event) => void createReturn(event)}>
           <div className="bending-dispatch__heading">
-            <div><span className="bending-eyebrow">Destination Inventory</span><h2>{selectedSummary?.destinationName ?? 'Selected Destination'}</h2></div>
+            <div><span className="bending-eyebrow">Outstanding Issued Items</span><h2>{selectedSummary?.destinationName ?? 'All Destinations'}</h2></div>
             {inventoryQuery.isFetching && !inventoryQuery.isPending ? <span className="bending-refreshing">Refreshing inventory…</span> : null}
           </div>
           {selectedSummary ? <BendingDestinationSummary summary={selectedSummary} /> : null}
-          {inventoryQuery.isPending ? <p className="bending-loading bending-loading--section"><LoadingSpinner label="Loading Destination inventory" /> Loading Destination inventory…</p> : null}
+          {inventoryQuery.isPending ? <p className="bending-loading bending-loading--section"><LoadingSpinner label="Loading issued items" /> Loading issued items…</p> : null}
           {inventoryQuery.isError ? (
             <p className="bending-feedback bending-feedback--error bending-feedback--section" role="alert">
-              Destination inventory could not be loaded.
+              Issued items could not be loaded.
               <Button type="button" variant="secondary" onClick={() => void inventoryQuery.refetch()}>Retry</Button>
             </p>
           ) : null}
-          {inventoryQuery.isSuccess && inventoryQuery.data.length === 0 ? <p className="bending-empty bending-empty--page">No outstanding materials in this destination.</p> : null}
+          {inventoryQuery.isSuccess && inventoryQuery.data.length === 0 ? <p className="bending-empty bending-empty--page">No outstanding issued items match this Destination filter.</p> : null}
           {inventoryQuery.isSuccess && inventoryQuery.data.length > 0 ? (
             <>
               <BendingReturnHeaderFields isDisabled={createReturnMutation.isPending} values={headerValues} onChange={updateHeader} />
               <section className="bending-section" aria-labelledby="bending-outstanding-materials">
                 <div className="bending-section__heading">
-                  <div><span>Step 2</span><h3 id="bending-outstanding-materials">Outstanding Materials</h3></div>
+                  <div><span>Step 1</span><h3 id="bending-outstanding-materials">Outstanding Materials</h3></div>
                   <p>One Receive Packing document can contain items from one Issue Packing dispatch.</p>
                 </div>
                 {selectedDispatchNumber ? <p className="bending-dispatch-lock">Current Issue Packing dispatch: <strong>{selectedDispatchNumber}</strong></p> : null}
@@ -179,8 +177,7 @@ export function BendingReturnWorkflow() {
               </div>
             </>
           ) : null}
-        </form>
-      ) : null}
+      </form>
     </div>
   )
 }

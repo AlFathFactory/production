@@ -18,7 +18,7 @@ interface BendingDestinationSelectProps {
 export function BendingDestinationSelect({
   id,
   isDisabled,
-  label = 'Destination *',
+  label = 'Destination filter',
   onChange,
   options,
   selectedDestinationId,
@@ -28,11 +28,10 @@ export function BendingDestinationSelect({
       <Select
         disabled={isDisabled}
         id={id}
-        required
         value={selectedDestinationId ?? ''}
         onChange={(event) => onChange(event.target.value || null)}
       >
-        <option value="">Select Destination</option>
+        <option value="">All Destinations</option>
         {options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
       </Select>
     </FormField>

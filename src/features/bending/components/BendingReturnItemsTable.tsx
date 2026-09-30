@@ -14,13 +14,14 @@ export function BendingReturnItemsTable({ isDisabled, items, onQuantityChange, o
   const selectedDispatchId = items.find((item) => item.isSelected)?.dispatchId ?? null
 
   return (
-    <div className="bending-table-wrap" tabIndex={0} aria-label="Outstanding Destination materials. Scroll horizontally to see all columns.">
+    <div className="bending-table-wrap" tabIndex={0} aria-label="Outstanding issued materials. Scroll horizontally to see all columns.">
       <table className="bending-table bending-table--destination-inventory">
         <thead>
           <tr>
             <th scope="col"><span className="sr-only">Select</span></th>
             <th scope="col">Dispatch Number</th>
             <th scope="col">Dispatch Date</th>
+            <th scope="col">Destination</th>
             <th scope="col">Project</th>
             <th scope="col">Project Number</th>
             <th scope="col">Lot</th>
@@ -60,6 +61,7 @@ export function BendingReturnItemsTable({ isDisabled, items, onQuantityChange, o
                 </td>
                 <td><strong>{item.dispatchNumber}</strong></td>
                 <td>{item.dispatchDate}</td>
+                <td dir="auto">{item.destinationName}</td>
                 <td dir="auto">{item.projectName}</td>
                 <td dir="auto">{item.projectNumber}</td>
                 <td dir="auto">{item.lotNumber}</td>

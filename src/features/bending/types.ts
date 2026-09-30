@@ -39,6 +39,7 @@ export interface BendingDestinationInventoryLine {
   article: string
   designation: string | null
   destinationId: string
+  destinationName: string
   dispatchDate: string
   dispatchId: string
   dispatchItemId: string

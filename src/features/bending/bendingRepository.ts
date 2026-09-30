@@ -206,11 +206,11 @@ export const bendingRepository = {
       : [])
   },
 
-  async searchDestinationInventory(destinationId: string): Promise<BendingDestinationInventoryLine[]> {
-    const { data, error } = await supabase.rpc('search_bending_destination_inventory', {
-      p_destination_id: destinationId,
-      p_outstanding_only: true,
-    })
+  async searchDestinationInventory(destinationId: string | null): Promise<BendingDestinationInventoryLine[]> {
+    const filters = destinationId
+      ? { p_destination_id: destinationId, p_outstanding_only: true }
+      : { p_outstanding_only: true }
+    const { data, error } = await supabase.rpc('search_bending_destination_inventory', filters)
 
     if (error) {
       throw mapBendingReadError(error)
@@ -219,6 +219,7 @@ export const bendingRepository = {
     return data.flatMap((row) => (
       row.article
       && row.destination_id
+      && row.destination_name
       && row.dispatch_date
       && row.dispatch_id
       && row.dispatch_item_id
@@ -232,6 +233,7 @@ export const bendingRepository = {
         article: row.article,
         designation: row.designation,
         destinationId: row.destination_id,
+        destinationName: row.destination_name,
         dispatchDate: row.dispatch_date,
         dispatchId: row.dispatch_id,
         dispatchItemId: row.dispatch_item_id,
