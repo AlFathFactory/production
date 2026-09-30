@@ -90,7 +90,7 @@ function mapCreateReturnError(error: unknown): BendingRepositoryError {
   const { code, message } = errorDetails(error)
 
   if (code === '23505' && /return_reference|bending_returns_return_reference/i.test(message)) {
-    return new BendingRepositoryError('A Bending Return with this reference already exists.', 'duplicate')
+    return new BendingRepositoryError('The automatic Return Reference conflicted with an existing document. Please try again.', 'duplicate')
   }
   if (/exceed.*outstanding|BEND quantity would exceed OUT_BEND quantity/i.test(message)) {
     return new BendingRepositoryError(
@@ -101,7 +101,7 @@ function mapCreateReturnError(error: unknown): BendingRepositoryError {
   if (/Bending dispatch not found|Dispatch item not found|does not belong to.*dispatch/i.test(message)) {
     return new BendingRepositoryError('The selected dispatch changed or is no longer available. The dispatch has been refreshed.', 'not_found')
   }
-  if (/quantity must be greater than zero|At least one return item|Return reference is required|invalid input syntax/i.test(message)) {
+  if (/quantity must be greater than zero|At least one return item|invalid input syntax/i.test(message)) {
     return new BendingRepositoryError('The return contains invalid or incomplete information. Please review it and try again.', 'invalid')
   }
   if (code === '42501' || /Supervisor or admin role required|Authentication required|permission denied/i.test(message)) {
@@ -370,7 +370,6 @@ export const bendingRepository = {
       p_items: input.items,
       p_received_by_name: input.receivedByName.trim() || null,
       p_return_date: input.returnDate,
-      p_return_reference: input.returnReference.trim(),
     })
 
     if (error) {

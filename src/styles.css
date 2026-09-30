@@ -2556,7 +2556,7 @@ button.hierarchy-list__select:hover,
 
 .bending-return-header-fields {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px 18px;
   margin: 0;
   padding: 20px;

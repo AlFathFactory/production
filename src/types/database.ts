@@ -223,7 +223,7 @@ export interface Database {
           pdf_path?: string | null
           received_by_name?: string | null
           return_date?: string
-          return_reference: string
+          return_reference?: string
         }
         Update: {
           created_at?: string
@@ -873,7 +873,6 @@ export interface Database {
           p_items: Json
           p_received_by_name: string | null
           p_return_date: string
-          p_return_reference: string
         }
         Returns: string
       }

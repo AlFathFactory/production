@@ -18,7 +18,7 @@ import { BendingReturnItemsTable } from './BendingReturnItemsTable'
 import { BendingReturnSummary } from './BendingReturnSummary'
 
 function initialHeaderValues(): BendingReturnHeaderValues {
-  return { receivedByName: '', returnDate: getCurrentDateInputValue(), returnReference: '' }
+  return { receivedByName: '', returnDate: getCurrentDateInputValue() }
 }
 
 export function BendingReturnWorkflow() {
@@ -36,7 +36,6 @@ export function BendingReturnWorkflow() {
   const selectedDispatchNumber = draft.selectedItems[0]?.dispatchNumber ?? null
   const canSubmit = Boolean(
     selectedDispatchId
-    && headerValues.returnReference.trim()
     && headerValues.returnDate
     && draft.isValid
     && !createReturnMutation.isPending,

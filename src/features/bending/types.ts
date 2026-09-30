@@ -105,7 +105,6 @@ export interface BendingReturnDraftItem extends BendingDestinationInventoryLine 
 export interface BendingReturnHeaderValues {
   receivedByName: string
   returnDate: string
-  returnReference: string
 }
 
 export interface CreateBendingReturnInput extends BendingReturnHeaderValues {

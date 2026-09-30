@@ -12,14 +12,6 @@ export function BendingReturnHeaderFields({ isDisabled, onChange, values }: Bend
   return (
     <fieldset className="bending-return-header-fields" disabled={isDisabled}>
       <legend>Return Details</legend>
-      <FormField label="Return Reference *" htmlFor="bending-return-reference">
-        <Input
-          id="bending-return-reference"
-          required
-          value={values.returnReference}
-          onChange={(event) => onChange('returnReference', event.target.value)}
-        />
-      </FormField>
       <FormField label="Return Date *" htmlFor="bending-return-date">
         <Input
           id="bending-return-date"
