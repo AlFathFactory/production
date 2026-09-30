@@ -295,6 +295,7 @@ export async function generateReturnPdf(model: BendingReturnPdfModel): Promise<B
   const tableY = addDetails(doc, [
     ['Return Date', model.returnDate],
     ['Original Dispatch Number', model.originalDispatchNumber],
+    ['Destination', model.destination],
     ['Project', model.project],
     ['Project Number', model.projectNumber],
     ['Lot', model.lot],

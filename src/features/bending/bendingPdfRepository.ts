@@ -153,7 +153,7 @@ export const bendingPdfRepository = {
       getArticles(itemsResult.data.map((item) => item.production_item_id)),
       supabase
         .from('bending_dispatches')
-        .select('dispatch_number')
+        .select('dispatch_number, destination')
         .eq('id', returnResult.data.dispatch_id)
         .single(),
     ])
@@ -161,6 +161,7 @@ export const bendingPdfRepository = {
 
     return {
       ...hierarchy,
+      destination: dispatchResult.data.destination,
       items: itemsResult.data.map((item) => ({
         article: articles.get(item.production_item_id) ?? 'Unknown article',
         designation: item.designation_snapshot,

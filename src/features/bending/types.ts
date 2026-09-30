@@ -150,6 +150,7 @@ export interface BendingDispatchPdfModel extends BendingPdfHierarchy {
 }
 
 export interface BendingReturnPdfModel extends BendingPdfHierarchy {
+  destination: string | null
   items: BendingPdfItem[]
   originalDispatchNumber: string
   receivedByName: string | null
