@@ -19,6 +19,47 @@ export interface BendingDispatchHeaderValues {
   sheetNumber: string
 }
 
+export type BendingDestination = Database['public']['Tables']['bending_destinations']['Row']
+
+export interface BendingDestinationSummary {
+  destinationId: string
+  destinationIsActive: boolean
+  destinationName: string
+  dispatchCount: number
+  latestDispatchDate: string | null
+  lotCount: number
+  oldestOpenDispatchDate: string | null
+  outstandingItemCount: number
+  outstandingQuantity: number
+  outstandingWeightKg: number
+  projectCount: number
+}
+
+export interface BendingDestinationInventoryLine {
+  article: string
+  designation: string | null
+  destinationId: string
+  dispatchDate: string
+  dispatchId: string
+  dispatchItemId: string
+  dispatchNumber: string
+  issuedQuantity: number
+  lastReturnDate: string | null
+  lotId: string
+  lotNumber: string
+  material: string | null
+  outstandingQuantity: number
+  outstandingWeightKg: number
+  productionItemId: string
+  profile: string | null
+  projectName: string
+  projectNumber: string
+  returnStatus: string
+  returnedQuantity: number
+  routing: string | null
+  unitWeightKg: number | null
+}
+
 export interface CreateBendingDispatchInput extends BendingDispatchHeaderValues {
   items: Array<{
     production_item_id: string
@@ -56,7 +97,8 @@ export interface BendingReturnLine {
   unitWeightKg: number | null
 }
 
-export interface BendingReturnDraftItem extends BendingReturnLine {
+export interface BendingReturnDraftItem extends BendingDestinationInventoryLine {
+  isSelected: boolean
   quantity: number
 }
 
@@ -72,7 +114,6 @@ export interface CreateBendingReturnInput extends BendingReturnHeaderValues {
     dispatch_item_id: string
     quantity: number
   }>
-  lotId: string
 }
 
 export type BendingReturnResult = Database['public']['Tables']['bending_returns']['Row']

@@ -1,5 +1,9 @@
 import { supabase } from '../../services/supabase/client'
+import { toFiniteNumber, toNullableNumber } from '../production/utils'
 import type {
+  BendingDestination,
+  BendingDestinationInventoryLine,
+  BendingDestinationSummary,
   BendingDispatchListItem,
   BendingDispatchResult,
   BendingReturnLine,
@@ -117,6 +121,23 @@ function mapCreateReturnError(error: unknown): BendingRepositoryError {
   )
 }
 
+function mapCreateDestinationError(error: unknown): BendingRepositoryError {
+  const { code, message } = errorDetails(error)
+
+  if (code === '23505' || /already exists|duplicate|unique/i.test(message)) {
+    return new BendingRepositoryError('A Destination with this name already exists.', 'duplicate')
+  }
+  if (code === '42501' || /Authentication required|permission denied/i.test(message)) {
+    return new BendingRepositoryError('You do not have permission to create Destinations.', 'permission')
+  }
+  if (error instanceof TypeError || /fetch|network|connection|offline/i.test(message)) {
+    return new BendingRepositoryError('Unable to reach Production Control. Check your connection and try again.', 'network')
+  }
+
+  logBendingError('create bending destination', error)
+  return new BendingRepositoryError('The Destination could not be created. Please try again.', 'unknown')
+}
+
 export function shouldRefreshBendingAvailability(error: unknown): boolean {
   return error instanceof BendingRepositoryError
     && (error.kind === 'availability' || error.kind === 'not_found' || error.kind === 'route')
@@ -128,6 +149,113 @@ export function shouldRefreshBendingReturn(error: unknown): boolean {
 }
 
 export const bendingRepository = {
+  async listDestinations(): Promise<BendingDestination[]> {
+    const { data, error } = await supabase
+      .from('bending_destinations')
+      .select('*')
+      .eq('is_active', true)
+      .order('name', { ascending: true })
+
+    if (error) {
+      throw mapBendingReadError(error)
+    }
+
+    return data
+  },
+
+  async createDestination(name: string, createdBy: string): Promise<BendingDestination> {
+    const { data, error } = await supabase
+      .from('bending_destinations')
+      .insert({ created_by: createdBy, name: name.trim() })
+      .select('*')
+      .single()
+
+    if (error) {
+      throw mapCreateDestinationError(error)
+    }
+
+    return data
+  },
+
+  async listDestinationSummaries(): Promise<BendingDestinationSummary[]> {
+    const { data, error } = await supabase
+      .from('bending_destination_summary')
+      .select('*')
+      .eq('destination_is_active', true)
+      .order('outstanding_item_count', { ascending: false })
+      .order('destination_name', { ascending: true })
+
+    if (error) {
+      throw mapBendingReadError(error)
+    }
+
+    return data.flatMap((row) => row.destination_id && row.destination_name
+      ? [{
+        destinationId: row.destination_id,
+        destinationIsActive: row.destination_is_active ?? false,
+        destinationName: row.destination_name,
+        dispatchCount: toFiniteNumber(row.dispatch_count),
+        latestDispatchDate: row.latest_dispatch_date,
+        lotCount: toFiniteNumber(row.lot_count),
+        oldestOpenDispatchDate: row.oldest_open_dispatch_date,
+        outstandingItemCount: toFiniteNumber(row.outstanding_item_count),
+        outstandingQuantity: toFiniteNumber(row.outstanding_quantity),
+        outstandingWeightKg: toFiniteNumber(row.outstanding_weight_kg),
+        projectCount: toFiniteNumber(row.project_count),
+      }]
+      : [])
+  },
+
+  async searchDestinationInventory(destinationId: string): Promise<BendingDestinationInventoryLine[]> {
+    const { data, error } = await supabase.rpc('search_bending_destination_inventory', {
+      p_destination_id: destinationId,
+      p_outstanding_only: true,
+    })
+
+    if (error) {
+      throw mapBendingReadError(error)
+    }
+
+    return data.flatMap((row) => (
+      row.article
+      && row.destination_id
+      && row.dispatch_date
+      && row.dispatch_id
+      && row.dispatch_item_id
+      && row.dispatch_number
+      && row.lot_id
+      && row.lot_number
+      && row.production_item_id
+      && row.project_name
+      && row.project_number
+      ? [{
+        article: row.article,
+        designation: row.designation,
+        destinationId: row.destination_id,
+        dispatchDate: row.dispatch_date,
+        dispatchId: row.dispatch_id,
+        dispatchItemId: row.dispatch_item_id,
+        dispatchNumber: row.dispatch_number,
+        issuedQuantity: toFiniteNumber(row.issued_quantity),
+        lastReturnDate: row.last_return_date,
+        lotId: row.lot_id,
+        lotNumber: row.lot_number,
+        material: row.material,
+        outstandingQuantity: toFiniteNumber(row.outstanding_quantity),
+        outstandingWeightKg: toFiniteNumber(row.outstanding_weight_kg),
+        productionItemId: row.production_item_id,
+        profile: row.profile,
+        projectName: row.project_name,
+        projectNumber: row.project_number,
+        returnStatus: row.return_status ?? 'Not Returned',
+        returnedQuantity: toFiniteNumber(row.returned_quantity),
+        routing: row.routing,
+        unitWeightKg: toNullableNumber(row.unit_weight_kg),
+      }]
+      : []
+    ))
+  },
+
   async listDispatchesByLot(lotId: string): Promise<BendingDispatchListItem[]> {
     const { data, error } = await supabase
       .from('bending_dispatches')

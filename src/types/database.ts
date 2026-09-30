@@ -55,6 +55,7 @@ export interface Database {
           created_at: string
           created_by: string | null
           destination: string | null
+          destination_id: string | null
           dispatch_date: string
           dispatch_name: string | null
           dispatch_number: string
@@ -69,6 +70,7 @@ export interface Database {
           created_at?: string
           created_by?: string | null
           destination?: string | null
+          destination_id?: string | null
           dispatch_date?: string
           dispatch_name?: string | null
           dispatch_number: string
@@ -83,6 +85,7 @@ export interface Database {
           created_at?: string
           created_by?: string | null
           destination?: string | null
+          destination_id?: string | null
           dispatch_date?: string
           dispatch_name?: string | null
           dispatch_number?: string
@@ -91,6 +94,33 @@ export interface Database {
           lot_id?: string
           pdf_path?: string | null
           sheet_number?: string | null
+        }
+        Relationships: []
+      }
+      bending_destinations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -435,6 +465,57 @@ export interface Database {
       }
     }
     Views: {
+      bending_destination_inventory: {
+        Row: {
+          article: string | null
+          designation: string | null
+          destination_id: string | null
+          destination_is_active: boolean | null
+          destination_name: string | null
+          dispatch_created_at: string | null
+          dispatch_date: string | null
+          dispatch_id: string | null
+          dispatch_item_id: string | null
+          dispatch_number: string | null
+          issued_quantity: number | null
+          issued_weight_kg: number | null
+          last_return_date: string | null
+          lot_id: string | null
+          lot_number: string | null
+          material: string | null
+          outstanding_quantity: number | null
+          outstanding_weight_kg: number | null
+          production_item_id: string | null
+          profile: string | null
+          project_id: string | null
+          project_name: string | null
+          project_number: string | null
+          project_number_id: string | null
+          remark: string | null
+          return_status: string | null
+          returned_quantity: number | null
+          returned_weight_kg: number | null
+          routing: Database['public']['Enums']['production_route'] | null
+          unit_weight_kg: number | null
+        }
+        Relationships: []
+      },
+      bending_destination_summary: {
+        Row: {
+          destination_id: string | null
+          destination_is_active: boolean | null
+          destination_name: string | null
+          dispatch_count: number | null
+          latest_dispatch_date: string | null
+          lot_count: number | null
+          oldest_open_dispatch_date: string | null
+          outstanding_item_count: number | null
+          outstanding_quantity: number | null
+          outstanding_weight_kg: number | null
+          project_count: number | null
+        }
+        Relationships: []
+      },
       production_operations_report: {
         Row: {
           operation_id: string | null
@@ -603,6 +684,44 @@ export interface Database {
       }
     }
     Functions: {
+      search_bending_destination_inventory: {
+        Args: {
+          p_destination_id?: string
+          p_outstanding_only?: boolean
+        }
+        Returns: Array<{
+          article: string | null
+          designation: string | null
+          destination_id: string | null
+          destination_is_active: boolean | null
+          destination_name: string | null
+          dispatch_created_at: string | null
+          dispatch_date: string | null
+          dispatch_id: string | null
+          dispatch_item_id: string | null
+          dispatch_number: string | null
+          issued_quantity: number | string | null
+          issued_weight_kg: number | string | null
+          last_return_date: string | null
+          lot_id: string | null
+          lot_number: string | null
+          material: string | null
+          outstanding_quantity: number | string | null
+          outstanding_weight_kg: number | string | null
+          production_item_id: string | null
+          profile: string | null
+          project_id: string | null
+          project_name: string | null
+          project_number: string | null
+          project_number_id: string | null
+          remark: string | null
+          return_status: string | null
+          returned_quantity: number | string | null
+          returned_weight_kg: number | string | null
+          routing: Database['public']['Enums']['production_route'] | null
+          unit_weight_kg: number | string | null
+        }>
+      }
       search_production_operations_report: {
         Args: {
           p_date_from?: string

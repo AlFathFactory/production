@@ -34,26 +34,24 @@ export function BendingPage() {
     <>
       <PageHeader title="Packing" description="Create dispatch and return records for BEND materials." />
       <div className="bending-workspace">
-        <ProjectLotSelector
-          ariaLabel="Packing hierarchy selection"
-          idPrefix="bending"
-          lotId={lotId}
-          projectId={projectId}
-          projectNumberId={projectNumberId}
-          onLotChange={selectLot}
-          onProjectChange={selectProject}
-          onProjectNumberChange={selectProjectNumber}
-        />
-        <BendingTabs activeTab={activeTab} onChange={(tab) => navigate(tab === 'dispatch' ? '/bending/issue' : '/bending/receive')} />
-        {!lotId ? (
-          <p className="bending-empty bending-empty--page">
-            {activeTab === 'dispatch' ? 'Select a Lot to issue packing.' : 'Select a Lot to receive packing.'}
-          </p>
+        {activeTab === 'dispatch' ? (
+          <ProjectLotSelector
+            ariaLabel="Packing hierarchy selection"
+            idPrefix="bending"
+            lotId={lotId}
+            projectId={projectId}
+            projectNumberId={projectNumberId}
+            onLotChange={selectLot}
+            onProjectChange={selectProject}
+            onProjectNumberChange={selectProjectNumber}
+          />
         ) : null}
+        <BendingTabs activeTab={activeTab} onChange={(tab) => navigate(tab === 'dispatch' ? '/bending/issue' : '/bending/receive')} />
+        {!lotId && activeTab === 'dispatch' ? <p className="bending-empty bending-empty--page">Select a Lot to issue packing.</p> : null}
         {lotId && activeTab === 'dispatch' ? (
           <BendingDispatchWorkflow key={lotId} lotId={lotId} projectId={projectId} projectNumberId={projectNumberId} />
         ) : null}
-        {lotId && activeTab === 'return' ? <BendingReturnWorkflow key={lotId} lotId={lotId} /> : null}
+        {activeTab === 'return' ? <BendingReturnWorkflow /> : null}
       </div>
     </>
   )

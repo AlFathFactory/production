@@ -12,7 +12,7 @@ export function getReturnQuantityError(quantity: number, outstandingQuantity: nu
 
 export function calculateReturnSummary(items: BendingReturnDraftItem[]) {
   return items.reduce(
-    (summary, item) => item.quantity > 0
+    (summary, item) => item.isSelected && item.quantity > 0
       ? {
         estimatedWeightKg: summary.estimatedWeightKg
           + (item.unitWeightKg === null ? 0 : item.quantity * item.unitWeightKg),

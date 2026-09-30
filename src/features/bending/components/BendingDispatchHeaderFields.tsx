@@ -1,14 +1,18 @@
 import { FormField } from '../../../components/ui/FormField'
 import { Input } from '../../../components/ui/Input'
-import type { BendingDispatchHeaderValues } from '../types'
+import type { BendingDestination, BendingDispatchHeaderValues } from '../types'
+import { BendingDestinationCombobox } from './BendingDestinationCombobox'
 
 interface BendingDispatchHeaderFieldsProps {
+  destinations: BendingDestination[]
   isDisabled: boolean
+  onAddDestination: () => void
   onChange: (field: keyof BendingDispatchHeaderValues, value: string) => void
+  onDestinationChange: (destinationName: string) => void
   values: BendingDispatchHeaderValues
 }
 
-export function BendingDispatchHeaderFields({ isDisabled, onChange, values }: BendingDispatchHeaderFieldsProps) {
+export function BendingDispatchHeaderFields({ destinations, isDisabled, onAddDestination, onChange, onDestinationChange, values }: BendingDispatchHeaderFieldsProps) {
   return (
     <fieldset className="bending-header-fields" disabled={isDisabled}>
       <FormField label="Dispatch Number" htmlFor="bending-dispatch-number">
@@ -27,9 +31,13 @@ export function BendingDispatchHeaderFields({ isDisabled, onChange, values }: Be
           onChange={(event) => onChange('dispatchDate', event.target.value)}
         />
       </FormField>
-      <FormField label="Destination" htmlFor="bending-destination">
-        <Input id="bending-destination" value={values.destination} onChange={(event) => onChange('destination', event.target.value)} />
-      </FormField>
+      <BendingDestinationCombobox
+        destinations={destinations}
+        isDisabled={isDisabled}
+        onAdd={onAddDestination}
+        onChange={onDestinationChange}
+        value={values.destination}
+      />
       <FormField label="Dispatch Name" htmlFor="bending-dispatch-name">
         <Input id="bending-dispatch-name" value={values.dispatchName} onChange={(event) => onChange('dispatchName', event.target.value)} />
       </FormField>

@@ -8,7 +8,7 @@ import type { CreateBendingReturnInput } from '../types'
 export function useCreateBendingReturn() {
   const queryClient = useQueryClient()
   const refreshAuthoritativeData = (input: CreateBendingReturnInput) => Promise.all([
-    queryClient.invalidateQueries({ queryKey: bendingKeys.dispatches(input.lotId) }),
+    queryClient.invalidateQueries({ queryKey: bendingKeys.destinationData }),
     queryClient.invalidateQueries({ queryKey: bendingKeys.returnLines(input.dispatchId) }),
     queryClient.invalidateQueries({ queryKey: productionKeys.all }),
   ])

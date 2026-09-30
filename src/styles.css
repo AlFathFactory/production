@@ -2452,6 +2452,108 @@ button.hierarchy-list__select:hover,
   grid-column: span 2;
 }
 
+.bending-destination-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px 20px;
+}
+
+.bending-destination-action .button {
+  min-height: 34px;
+  padding: 6px 12px;
+}
+
+.bending-inline-error {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--danger);
+  font-size: 0.76rem;
+}
+
+.bending-inline-error .button {
+  min-height: 30px;
+  padding: 4px 9px;
+}
+
+.bending-destination-match {
+  color: #276749;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.bending-destination-combobox {
+  position: relative;
+}
+
+.bending-destination-combobox__menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 7px);
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  border: 1px solid #d9e2df;
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: 0 14px 30px rgb(14 44 43 / 16%);
+}
+
+.bending-destination-combobox__options {
+  display: grid;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.bending-destination-combobox__option,
+.bending-destination-combobox__add {
+  width: 100%;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.bending-destination-combobox__option:hover,
+.bending-destination-combobox__option:focus-visible,
+.bending-destination-combobox__option--selected {
+  color: var(--brand);
+  background: #edf3f0;
+  outline: none;
+}
+
+.bending-destination-combobox__add {
+  margin: 8px;
+  width: calc(100% - 16px);
+  color: #175cd3;
+  background: #eef5ff;
+  text-align: center;
+}
+
+.bending-destination-combobox__add:hover,
+.bending-destination-combobox__add:focus-visible {
+  background: #e1edff;
+  outline: 2px solid #84adff;
+  outline-offset: -2px;
+}
+
+.bending-destination-combobox__empty {
+  margin: 0;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
 .bending-return-header-fields {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2528,6 +2630,10 @@ button.hierarchy-list__select:hover,
   min-width: 1050px;
 }
 
+.bending-table--destination-inventory {
+  min-width: 2300px;
+}
+
 .bending-table th,
 .bending-table td {
   border-bottom: 1px solid #e7edeb;
@@ -2587,6 +2693,11 @@ button.hierarchy-list__select:hover,
   background: #fafcfb;
   font-size: 0.84rem;
   text-align: center;
+}
+
+.bending-loading--section,
+.bending-feedback--section {
+  margin: 20px;
 }
 
 .bending-empty--page {
@@ -2703,6 +2814,52 @@ button.hierarchy-list__select:hover,
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.bending-destination-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfb;
+}
+
+.bending-destination-summary div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border-right: 1px solid var(--line);
+  padding: 13px 20px;
+}
+
+.bending-destination-summary div:last-child {
+  border-right: 0;
+}
+
+.bending-destination-summary dt {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.bending-destination-summary dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.bending-dispatch-lock {
+  margin: 0;
+  border: 1px solid #cbded7;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #315e50;
+  background: #f2f8f5;
+  font-size: 0.76rem;
 }
 
 .bending-dispatch__footer {
@@ -2862,6 +3019,14 @@ button.hierarchy-list__select:hover,
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .bending-destination-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bending-destination-summary div:nth-child(2n) {
+    border-right: 0;
+  }
+
   .bending-document-details div:nth-child(2n) {
     border-right: 0;
   }
@@ -3015,6 +3180,25 @@ button.hierarchy-list__select:hover,
   }
 
   .production-import-summary > div:last-child {
+    border-bottom: 0;
+  }
+
+  .bending-destination-action {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bending-destination-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .bending-destination-summary div,
+  .bending-destination-summary div:nth-child(2n) {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bending-destination-summary div:last-child {
     border-bottom: 0;
   }
 

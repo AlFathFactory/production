@@ -13,7 +13,7 @@ export function LoginPage({ accessError }: LoginPageProps) {
         </div>
         <div className="login-brand__content">
           <p className="eyebrow">Operations workspace</p>
-          <h1>Production Control</h1>
+          <h1>Follow Up</h1>
           <p>
             A focused workspace for managing shop-floor production safely and
             consistently.

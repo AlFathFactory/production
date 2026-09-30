@@ -5,6 +5,7 @@ import { AppNotification } from '../../../components/ui/AppNotification'
 import { FormField } from '../../../components/ui/FormField'
 import { Input } from '../../../components/ui/Input'
 import { LoadingSpinner } from '../../../components/ui/LoadingSpinner'
+import { useAuth } from '../../auth/hooks/useAuth'
 import { useProductionItems } from '../../production/queries/productionQueries'
 import type { ProductionFilters } from '../../production/types'
 import { formatQuantity, getCurrentDateInputValue } from '../../production/utils'
@@ -12,12 +13,16 @@ import { calculateDispatchSummary } from '../dispatchValidation'
 import { useBendingDispatchDraft } from '../hooks/useBendingDispatchDraft'
 import { useBendingPdfAttachment } from '../hooks/useBendingPdfAttachment'
 import { useCreateBendingDispatch } from '../mutations/useCreateBendingDispatch'
+import { useCreateBendingDestination } from '../mutations/useCreateBendingDestination'
+import { useBendingDestinations } from '../queries/bendingQueries'
+import { BendingRepositoryError } from '../bendingRepository'
 import type { BendingDispatchHeaderValues, BendingDispatchSuccess } from '../types'
 import { BendingDispatchHeaderFields } from './BendingDispatchHeaderFields'
 import { BendingDispatchItemsTable } from './BendingDispatchItemsTable'
 import { BendingDispatchSummary } from './BendingDispatchSummary'
 import { BendingEligibleItemsTable } from './BendingEligibleItemsTable'
 import { BendingPdfStatus } from './BendingPdfStatus'
+import { AddBendingDestinationDialog } from './AddBendingDestinationDialog'
 
 interface BendingDispatchWorkflowProps {
   lotId: string
@@ -39,11 +44,17 @@ function initialHeaderValues(): BendingDispatchHeaderValues {
 export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: BendingDispatchWorkflowProps) {
   const [eligibleSearch, setEligibleSearch] = useState('')
   const [headerValues, setHeaderValues] = useState(initialHeaderValues)
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null)
+  const [isDestinationDialogOpen, setIsDestinationDialogOpen] = useState(false)
+  const [destinationError, setDestinationError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [success, setSuccess] = useState<BendingDispatchSuccess | null>(null)
   const draft = useBendingDispatchDraft()
+  const { session } = useAuth()
   const pdfAttachment = useBendingPdfAttachment()
   const createDispatchMutation = useCreateBendingDispatch()
+  const createDestinationMutation = useCreateBendingDestination()
+  const destinationsQuery = useBendingDestinations()
   const searchFilters: ProductionFilters = {
     lotId,
     nextAction: null,
@@ -67,8 +78,14 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
       ))
     : eligibleItems
   const selectedItemIds = new Set(draft.items.map((item) => item.productionItemId))
+  const destinationSearch = headerValues.destination.trim()
+  const matchingDestination = (destinationsQuery.data ?? []).find((destination) => (
+    destination.name.trim().toLocaleLowerCase() === destinationSearch.toLocaleLowerCase()
+  ))
   const canSubmit = Boolean(
     headerValues.dispatchDate
+    && selectedDestinationId
+    && headerValues.destination.trim()
     && draft.isValid
     && !createDispatchMutation.isPending,
   )
@@ -83,6 +100,40 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
     setHeaderValues((current) => ({ ...current, [field]: value }))
     setSubmitError(null)
     setSuccess(null)
+  }
+
+  const searchDestination = (destinationName: string) => {
+    const normalizedName = destinationName.trim().toLocaleLowerCase()
+    const destination = destinationsQuery.data?.find((item) => item.name.trim().toLocaleLowerCase() === normalizedName)
+    setSelectedDestinationId(destination?.id ?? null)
+    updateHeader('destination', destination?.name ?? destinationName)
+  }
+
+  const createDestination = async (name: string) => {
+    if (!session?.user.id) {
+      setDestinationError('Your authenticated user could not be resolved. Please sign in again.')
+      return
+    }
+
+    setDestinationError(null)
+    try {
+      const destination = await createDestinationMutation.mutateAsync({ createdBy: session.user.id, name })
+      setSelectedDestinationId(destination.id)
+      updateHeader('destination', destination.name)
+      setIsDestinationDialogOpen(false)
+    } catch (error) {
+      if (error instanceof BendingRepositoryError && error.kind === 'duplicate') {
+        const refreshed = await destinationsQuery.refetch()
+        const existing = refreshed.data?.find((destination) => destination.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase())
+        if (existing) {
+          setSelectedDestinationId(existing.id)
+          updateHeader('destination', existing.name)
+          setIsDestinationDialogOpen(false)
+          return
+        }
+      }
+      setDestinationError(error instanceof Error ? error.message : 'The Destination could not be created.')
+    }
   }
 
   const createDispatch = async (event: FormEvent<HTMLFormElement>) => {
@@ -114,6 +165,7 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
       })
       draft.clear()
       setHeaderValues(initialHeaderValues())
+      setSelectedDestinationId(null)
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'The Bending Dispatch could not be created. Please try again.')
     }
@@ -137,7 +189,28 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
           <div><span className="bending-eyebrow">Packing List</span><h2>Create Bending Dispatch</h2></div>
           {eligibleQuery.isFetching && !eligibleQuery.isPending ? <span className="bending-refreshing">Refreshing availability…</span> : null}
         </div>
-        <BendingDispatchHeaderFields isDisabled={createDispatchMutation.isPending} values={headerValues} onChange={updateHeader} />
+        <BendingDispatchHeaderFields
+          destinations={destinationsQuery.data ?? []}
+          isDisabled={createDispatchMutation.isPending || destinationsQuery.isPending || destinationsQuery.isError}
+          onAddDestination={() => {
+            setDestinationError(null)
+            setIsDestinationDialogOpen(true)
+          }}
+          onChange={updateHeader}
+          onDestinationChange={searchDestination}
+          values={headerValues}
+        />
+        <div className="bending-destination-action">
+          {destinationSearch && matchingDestination ? <span className="bending-destination-match">Saved Destination selected</span> : null}
+          {destinationsQuery.isPending ? <span className="bending-refreshing">Loading Destinations…</span> : null}
+          {destinationsQuery.isFetching && !destinationsQuery.isPending ? <span className="bending-refreshing">Refreshing Destinations…</span> : null}
+          {destinationsQuery.isError ? (
+            <span className="bending-inline-error" role="alert">
+              Destinations could not be loaded.
+              <Button type="button" variant="secondary" onClick={() => void destinationsQuery.refetch()}>Retry</Button>
+            </span>
+          ) : null}
+        </div>
         <section className="bending-section" aria-labelledby="eligible-bending-materials">
           <div className="bending-section__heading">
             {/* <div><span>Step 1</span><h3 id="eligible-bending-materials">Eligible BEND Materials</h3></div> */}
@@ -196,6 +269,19 @@ export function BendingDispatchWorkflow({ lotId, projectId, projectNumberId }: B
           </div>
         </div>
       </form>
+      <AddBendingDestinationDialog
+        error={destinationError}
+        initialName={destinationSearch}
+        isOpen={isDestinationDialogOpen}
+        isSaving={createDestinationMutation.isPending}
+        onClose={() => {
+          if (!createDestinationMutation.isPending) {
+            setIsDestinationDialogOpen(false)
+            setDestinationError(null)
+          }
+        }}
+        onSubmit={createDestination}
+      />
     </div>
   )
 }
