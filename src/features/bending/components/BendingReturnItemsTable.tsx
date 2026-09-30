@@ -10,6 +10,10 @@ interface BendingReturnItemsTableProps {
   onToggle: (dispatchItemId: string) => void
 }
 
+function isInteractiveTarget(target: EventTarget): boolean {
+  return target instanceof Element && Boolean(target.closest('input, button, a, select, textarea, label'))
+}
+
 export function BendingReturnItemsTable({ isDisabled, items, onQuantityChange, onToggle }: BendingReturnItemsTableProps) {
   const selectedDispatchId = items.find((item) => item.isSelected)?.dispatchId ?? null
 
@@ -47,14 +51,29 @@ export function BendingReturnItemsTable({ isDisabled, items, onQuantityChange, o
               : null
             const errorId = `bending-return-quantity-error-${item.dispatchItemId}`
             const isOtherDispatch = Boolean(selectedDispatchId && selectedDispatchId !== item.dispatchId)
+            const canSelectRow = !isDisabled && !isOtherDispatch
 
             return (
-              <tr key={item.dispatchItemId}>
+              <tr
+                aria-selected={item.isSelected}
+                className={`${canSelectRow ? 'bending-table__selectable-row' : ''} ${item.isSelected ? 'bending-table__selectable-row--selected' : ''}`.trim()}
+                key={item.dispatchItemId}
+                tabIndex={canSelectRow ? 0 : -1}
+                onClick={(event) => {
+                  if (!canSelectRow || isInteractiveTarget(event.target)) return
+                  onToggle(item.dispatchItemId)
+                }}
+                onKeyDown={(event) => {
+                  if (!canSelectRow || event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return
+                  event.preventDefault()
+                  onToggle(item.dispatchItemId)
+                }}
+              >
                 <td>
                   <input
                     aria-label={`Select ${item.article} from dispatch ${item.dispatchNumber}`}
                     checked={item.isSelected}
-                    disabled={isDisabled || isOtherDispatch}
+                    disabled={!canSelectRow}
                     type="checkbox"
                     onChange={() => onToggle(item.dispatchItemId)}
                   />

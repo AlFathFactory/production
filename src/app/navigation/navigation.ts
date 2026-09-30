@@ -5,7 +5,7 @@ import {
 import type { NavigationItem } from './types'
 
 export const primaryNavigationItems: NavigationItem[] = [
-  { label: 'Dashboard', path: '/', icon: 'dashboard' },
+  { label: 'Home Page', path: '/', icon: 'dashboard' },
   { label: 'Projects', path: '/projects', icon: 'projects' },
   { label: 'Follow Up', path: '/production', icon: 'production' },
   { label: 'Reports', path: '/reports', icon: 'reports' },

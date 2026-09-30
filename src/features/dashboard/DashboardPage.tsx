@@ -58,7 +58,7 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Dashboard" description="How much production? How much is done? What is remaining? What is next?" />
+      <PageHeader title="Home Page" description="How much production? How much is done? What is remaining? What is next?" />
       <div className="dashboard-workspace">
         <div className="dashboard-hierarchy">
           <ProjectLotSelector

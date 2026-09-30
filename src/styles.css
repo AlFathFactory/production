@@ -2646,6 +2646,21 @@ button.hierarchy-list__select:hover,
   border-bottom: 0;
 }
 
+.bending-table__selectable-row {
+  cursor: pointer;
+}
+
+.bending-table__selectable-row:hover td,
+.bending-table__selectable-row:focus-visible td,
+.bending-table__selectable-row--selected td {
+  background: #edf6f2;
+}
+
+.bending-table__selectable-row:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
 .bending-table th {
   color: #56706c;
   background: #f6f9f7;
