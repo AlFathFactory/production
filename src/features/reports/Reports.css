@@ -403,6 +403,10 @@
   font-size: 0.82rem;
 }
 
+.dispense-history-table {
+  min-width: 1900px;
+}
+
 .reports-table th,
 .reports-table td {
   border-bottom: 1px solid #e7edeb;
@@ -520,7 +524,7 @@
   .reports-mode-switch {
     display: grid;
     width: 100%;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .reports-mode-switch button {

@@ -16,6 +16,8 @@ export interface Database {
           source_reference: string | null
           created_at: string
           created_by: string | null
+          dispensed_to_id: string | null
+          dispensed_to_name_snapshot: string | null
           performed_by: string | null
           performed_by_name_snapshot: string | null
         }
@@ -30,6 +32,8 @@ export interface Database {
           source_reference?: string | null
           created_at?: string
           created_by?: string | null
+          dispensed_to_id?: string | null
+          dispensed_to_name_snapshot?: string | null
           performed_by?: string | null
           performed_by_name_snapshot?: string | null
         }
@@ -44,8 +48,37 @@ export interface Database {
           source_reference?: string | null
           created_at?: string
           created_by?: string | null
+          dispensed_to_id?: string | null
+          dispensed_to_name_snapshot?: string | null
           performed_by?: string | null
           performed_by_name_snapshot?: string | null
+        }
+        Relationships: []
+      },
+      dispense_recipients: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       },
@@ -518,8 +551,10 @@ export interface Database {
       },
       production_operations_report: {
         Row: {
-          operation_id: string | null
+          stage_entry_id: string | null
           operation_date: string | null
+          operation: Database['public']['Enums']['production_stage'] | null
+          quantity: number | string | null
           project_id: string | null
           project_name: string | null
           project_number_id: string | null
@@ -531,13 +566,44 @@ export interface Database {
           designation: string | null
           profile: string | null
           routing: Database['public']['Enums']['production_route'] | null
-          operation: Database['public']['Enums']['production_stage'] | null
-          quantity: number | null
-          unit_weight_kg: number | null
-          operation_weight_kg: number | null
+          unit_weight_kg: number | string | null
+          operation_weight_kg: number | string | null
           performed_by: string | null
           performed_by_name: string | null
-          reference: string | null
+          source: string | null
+          source_reference: string | null
+          note: string | null
+          created_at: string | null
+          dispensed_to_id: string | null
+          dispensed_to_name: string | null
+        }
+        Relationships: []
+      },
+      production_dispense_history: {
+        Row: {
+          stage_entry_id: string | null
+          dispense_date: string | null
+          created_at: string | null
+          dispensed_to_id: string | null
+          dispensed_to_name: string | null
+          project_id: string | null
+          project_name: string | null
+          project_number_id: string | null
+          project_number: string | null
+          lot_id: string | null
+          lot_number: string | null
+          production_item_id: string | null
+          article: string | null
+          designation: string | null
+          profile: string | null
+          material: string | null
+          routing: Database['public']['Enums']['production_route'] | null
+          quantity: number | string | null
+          unit_weight_kg: number | string | null
+          dispense_weight_kg: number | string | null
+          performed_by: string | null
+          performed_by_name: string | null
+          note: string | null
         }
         Relationships: []
       },
@@ -735,8 +801,10 @@ export interface Database {
           p_performed_by?: string
         }
         Returns: Array<{
-          operation_id: string
+          stage_entry_id: string
           operation_date: string
+          operation: Database['public']['Enums']['production_stage']
+          quantity: number | string | null
           project_id: string | null
           project_name: string | null
           project_number_id: string | null
@@ -748,13 +816,53 @@ export interface Database {
           designation: string | null
           profile: string | null
           routing: Database['public']['Enums']['production_route'] | null
-          operation: Database['public']['Enums']['production_stage']
-          quantity: number | string | null
           unit_weight_kg: number | string | null
           operation_weight_kg: number | string | null
           performed_by: string | null
           performed_by_name: string | null
-          reference: string | null
+          source: string | null
+          source_reference: string | null
+          note: string | null
+          created_at: string | null
+          dispensed_to_id: string | null
+          dispensed_to_name: string | null
+        }>
+      }
+      search_production_dispense_history: {
+        Args: {
+          p_recipient_id?: string
+          p_recipient_name?: string
+          p_date_from?: string
+          p_date_to?: string
+          p_project_id?: string
+          p_project_number_id?: string
+          p_lot_id?: string
+          p_query?: string
+        }
+        Returns: Array<{
+          stage_entry_id: string
+          dispense_date: string
+          created_at: string | null
+          dispensed_to_id: string | null
+          dispensed_to_name: string | null
+          project_id: string | null
+          project_name: string | null
+          project_number_id: string | null
+          project_number: string | null
+          lot_id: string | null
+          lot_number: string | null
+          production_item_id: string | null
+          article: string | null
+          designation: string | null
+          profile: string | null
+          material: string | null
+          routing: Database['public']['Enums']['production_route'] | null
+          quantity: number | string | null
+          unit_weight_kg: number | string | null
+          dispense_weight_kg: number | string | null
+          performed_by: string | null
+          performed_by_name: string | null
+          note: string | null
         }>
       }
       search_production_status_report: {
@@ -852,6 +960,15 @@ export interface Database {
           source_reference: string | null
           stage: Database['public']['Enums']['production_stage']
         }
+      }
+      create_production_dispense: {
+        Args: {
+          p_recipient_name: string
+          p_entry_date?: string
+          p_note?: string
+          p_items?: Json
+        }
+        Returns: Array<Database['public']['Tables']['production_stage_entries']['Row']>
       }
       create_bending_dispatch: {
         Args: {

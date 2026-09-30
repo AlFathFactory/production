@@ -1176,6 +1176,147 @@ button.hierarchy-list__select:hover,
   box-shadow: var(--shadow);
 }
 
+.dialog--wide {
+  width: min(100%, 760px);
+}
+
+.searchable-name-combobox {
+  position: relative;
+}
+
+.searchable-name-combobox__menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 7px);
+  right: 0;
+  left: 0;
+  overflow: hidden;
+  border: 1px solid #d9e2df;
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: 0 14px 30px rgb(14 44 43 / 16%);
+}
+
+.searchable-name-combobox__options {
+  display: grid;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.searchable-name-combobox__option,
+.searchable-name-combobox__add {
+  width: 100%;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.searchable-name-combobox__option:hover,
+.searchable-name-combobox__option:focus-visible,
+.searchable-name-combobox__option--selected {
+  color: var(--brand);
+  background: #edf3f0;
+  outline: none;
+}
+
+.searchable-name-combobox__add {
+  margin: 8px;
+  width: calc(100% - 16px);
+  color: #175cd3;
+  background: #eef5ff;
+  text-align: center;
+}
+
+.searchable-name-combobox__add:hover,
+.searchable-name-combobox__add:focus-visible {
+  background: #e1edff;
+  outline: 2px solid #84adff;
+  outline-offset: -2px;
+}
+
+.searchable-name-combobox__empty {
+  margin: 0;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.dispense-recipient-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.dispense-items-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.dispense-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.dispense-items-table th,
+.dispense-items-table td {
+  border-bottom: 1px solid #e7edeb;
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.dispense-items-table thead th {
+  color: #56706c;
+  background: #f6f9f7;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dispense-items-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.dispense-items-table__remove {
+  border: 0;
+  padding: 4px 6px;
+  color: var(--danger);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.dispense-items-table__remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dispense-empty-items {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
 .dialog__header {
   display: flex;
   align-items: center;

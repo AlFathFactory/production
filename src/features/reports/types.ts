@@ -5,7 +5,7 @@ export type ReportRow = Database['public']['Functions']['search_production_opera
   article_total_quantity: number | string | null
 }
 export type CurrentStatusRow = Database['public']['Functions']['search_production_status_report']['Returns'][number]
-export type ReportsMode = 'historical-events' | 'current-status'
+export type ReportsMode = 'historical-events' | 'current-status' | 'dispense-history'
 export type CurrentStatus =
   | 'REMAINING_CUT'
   | 'WAITING_ISSUE_PACKING'

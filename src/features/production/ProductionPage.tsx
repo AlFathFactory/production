@@ -7,6 +7,9 @@ import { Button } from '../../components/ui/Button'
 import { LoadingSpinner } from '../../components/ui/LoadingSpinner'
 import { canCreateProductionItems, canImportProduction } from '../auth/permissions'
 import { useAuth } from '../auth/hooks/useAuth'
+import { DispenseDialog } from '../dispense/components/DispenseDialog'
+import { useCreateProductionDispense } from '../dispense/mutations/useCreateProductionDispense'
+import type { CreateProductionDispenseInput, DispenseSelectionItem } from '../dispense/types'
 import { AddMaterialDialog } from './components/AddMaterialDialog'
 import { ProductionFilters } from './components/ProductionFilters'
 import { ProjectLotSelector } from './components/ProjectLotSelector'
@@ -23,6 +26,7 @@ import { useCreateProductionItem } from './mutations/useCreateProductionItem'
 import { useImportProductionFile } from './mutations/useImportProductionFile'
 import { useProductionItems } from './queries/productionQueries'
 import type { CreateProductionItemInput, DirectStageAction, ProductionSearchRow } from './types'
+import { formatQuantity } from './utils'
 
 function ProductionState({ children }: { children: ReactNode }) {
   return <section className="production-state">{children}</section>
@@ -37,6 +41,8 @@ export function ProductionPage() {
   const [isAddMaterialOpen, setIsAddMaterialOpen] = useState(false)
   const [isImportOpen, setIsImportOpen] = useState(false)
   const [stageSelection, setStageSelection] = useState<{ action: DirectStageAction; item: ProductionSearchRow } | null>(null)
+  const [dispenseItems, setDispenseItems] = useState<DispenseSelectionItem[]>([])
+  const [dispenseSelectionResetKey, setDispenseSelectionResetKey] = useState(0)
   const [historySelection, setHistorySelection] = useState<ProductionSearchRow | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const productionFilters = useProductionFilters()
@@ -51,6 +57,7 @@ export function ProductionPage() {
   const itemsQuery = useProductionItems(searchFilters)
   const createMaterialMutation = useCreateProductionItem(searchFilters)
   const addStageMutation = useAddProductionStageEntry(searchFilters)
+  const createDispenseMutation = useCreateProductionDispense()
   const importMutation = useImportProductionFile(searchFilters)
   const canAddMaterial = Boolean(userProfile && canCreateProductionItems(userProfile.role))
   const canImport = Boolean(userProfile && canImportProduction(userProfile.role))
@@ -84,6 +91,28 @@ export function ProductionPage() {
       stage: stageSelection.action.stage,
     })
     setSuccessMessage(`${stageSelection.action.stage} progress added successfully.`)
+  }
+
+  const selectStageAction = (item: ProductionSearchRow, action: DirectStageAction) => {
+    if (action.stage === 'DISPENSE' && item.production_item_id) {
+      setDispenseItems([{
+        article: item.article ?? 'Unknown article',
+        availableQuantity: action.availableQuantity,
+        designation: item.designation,
+        productionItemId: item.production_item_id,
+      }])
+      return
+    }
+    setStageSelection({ item, action })
+  }
+
+  const createDispense = async (input: CreateProductionDispenseInput) => {
+    await createDispenseMutation.mutateAsync(input)
+    const totalQuantity = input.items.reduce((total, item) => total + item.quantity, 0)
+    setSuccessMessage(
+      `${formatQuantity(totalQuantity)} total quantity across ${input.items.length} item${input.items.length === 1 ? '' : 's'} dispensed to ${input.recipientName}.`,
+    )
+    setDispenseSelectionResetKey((current) => current + 1)
   }
 
   const selectProjectNumber = (nextProjectNumberId: string | null, label: string | null) => {
@@ -180,8 +209,10 @@ export function ProductionPage() {
               key={lotId}
               filterKey={JSON.stringify(searchFilters)}
               items={itemsQuery.data}
-              onStageAction={(item, action) => setStageSelection({ item, action })}
+              onDispenseItems={setDispenseItems}
+              onStageAction={selectStageAction}
               onViewHistory={(item) => setHistorySelection(item)}
+              selectionResetKey={dispenseSelectionResetKey}
             />
           </section>
         ) : null}
@@ -201,6 +232,13 @@ export function ProductionPage() {
         item={stageSelection?.item ?? null}
         onClose={() => setStageSelection(null)}
         onSubmit={addStageEntry}
+      />
+      <DispenseDialog
+        createdBy={session?.user.id ?? null}
+        isOpen={dispenseItems.length > 0}
+        items={dispenseItems}
+        onClose={() => setDispenseItems([])}
+        onSubmit={createDispense}
       />
       <ProductionHistoryDialog
         isOpen={Boolean(historySelection)}

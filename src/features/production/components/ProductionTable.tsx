@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import { Button } from '../../../components/ui/Button'
+import type { DispenseSelectionItem } from '../../dispense/types'
+import { getAvailableDirectStageActions } from '../productionActions'
 import { ProductionTableRow } from './ProductionTableRow'
 import type { DirectStageAction, ProductionSearchRow } from '../types'
 
@@ -9,13 +11,29 @@ const PAGE_SIZE = 25
 interface ProductionTableProps {
   filterKey: string
   items: ProductionSearchRow[]
+  onDispenseItems: (items: DispenseSelectionItem[]) => void
   onStageAction: (item: ProductionSearchRow, action: DirectStageAction) => void
   onViewHistory: (item: ProductionSearchRow) => void
+  selectionResetKey: number
 }
 
-export function ProductionTable({ filterKey, items, onStageAction, onViewHistory }: ProductionTableProps) {
+function getDispenseSelection(item: ProductionSearchRow): DispenseSelectionItem | null {
+  const productionItemId = item.production_item_id
+  const dispenseAction = getAvailableDirectStageActions(item).find((action) => action.stage === 'DISPENSE')
+  if (!productionItemId || !dispenseAction) return null
+
+  return {
+    article: item.article ?? 'Unknown article',
+    availableQuantity: dispenseAction.availableQuantity,
+    designation: item.designation,
+    productionItemId,
+  }
+}
+
+export function ProductionTable({ filterKey, items, onDispenseItems, onStageAction, onViewHistory, selectionResetKey }: ProductionTableProps) {
   const [page, setPage] = useState(1)
   const [selectedArticles, setSelectedArticles] = useState<string[]>([])
+  const [selectedDispenseItemIds, setSelectedDispenseItemIds] = useState<string[]>([])
   const [articleSearch, setArticleSearch] = useState('')
   const articleOptions = [...new Set(items.map((item) => item.article).filter((article): article is string => Boolean(article)))]
     .sort((first, second) => first.localeCompare(second, undefined, { numeric: true }))
@@ -28,10 +46,26 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
   const currentPage = Math.min(page, pageCount)
   const firstIndex = (currentPage - 1) * PAGE_SIZE
   const visibleItems = displayedItems.slice(firstIndex, firstIndex + PAGE_SIZE)
+  const selectedDispenseSet = new Set(selectedDispenseItemIds)
+  const selectedDispenseItems = items.flatMap((item) => {
+    const selection = getDispenseSelection(item)
+    return selection && selectedDispenseSet.has(selection.productionItemId) ? [selection] : []
+  })
+  const visibleDispenseItems = visibleItems.flatMap((item) => {
+    const selection = getDispenseSelection(item)
+    return selection ? [selection] : []
+  })
+  const areAllVisibleDispenseItemsSelected = visibleDispenseItems.length > 0
+    && visibleDispenseItems.every((item) => selectedDispenseSet.has(item.productionItemId))
 
   useEffect(() => {
     setPage(1)
+    setSelectedDispenseItemIds([])
   }, [filterKey])
+
+  useEffect(() => {
+    setSelectedDispenseItemIds([])
+  }, [selectionResetKey])
 
   const toggleArticle = (article: string, selected: boolean) => {
     const nextArticles = selected
@@ -51,6 +85,19 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
 
   const viewHistory = (item: ProductionSearchRow) => {
     onViewHistory(item)
+  }
+
+  const toggleDispenseItem = (productionItemId: string, selected: boolean) => {
+    setSelectedDispenseItemIds((current) => selected
+      ? [...new Set([...current, productionItemId])]
+      : current.filter((id) => id !== productionItemId))
+  }
+
+  const toggleVisibleDispenseItems = (selected: boolean) => {
+    const visibleIds = new Set(visibleDispenseItems.map((item) => item.productionItemId))
+    setSelectedDispenseItemIds((current) => selected
+      ? [...new Set([...current, ...visibleIds])]
+      : current.filter((id) => !visibleIds.has(id)))
   }
 
   return (
@@ -84,6 +131,16 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
             Show all Articles
           </Button>
         ) : null}
+        {selectedDispenseItems.length > 0 ? (
+          <>
+            <Button type="button" onClick={() => onDispenseItems(selectedDispenseItems)}>
+              Dispense {selectedDispenseItems.length} Item{selectedDispenseItems.length === 1 ? '' : 's'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setSelectedDispenseItemIds([])}>
+              Clear DISPENSE Selection
+            </Button>
+          </>
+        ) : null}
       </div>
       {selectedArticles.length > 0 ? (
         <div className="production-selected-articles" aria-label="Selected Articles">
@@ -98,6 +155,15 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
         <table className="production-table">
           <thead>
             <tr>
+              <th scope="col" className="production-table__select">
+                <input
+                  aria-label="Select all DISPENSE-eligible items on this page"
+                  checked={areAllVisibleDispenseItemsSelected}
+                  disabled={visibleDispenseItems.length === 0}
+                  type="checkbox"
+                  onChange={(event) => toggleVisibleDispenseItems(event.target.checked)}
+                />
+              </th>
               <th scope="col">Article</th>
               <th scope="col">Designation</th>
               <th scope="col">Profile</th>
@@ -116,8 +182,10 @@ export function ProductionTable({ filterKey, items, onStageAction, onViewHistory
             return (
               <ProductionTableRow
                 key={rowKey}
+                isSelectedForDispense={Boolean(item.production_item_id && selectedDispenseSet.has(item.production_item_id))}
                 item={item}
                 onStageAction={selectStageAction}
+                onToggleDispenseItem={toggleDispenseItem}
                 onViewHistory={viewHistory}
               />
             )

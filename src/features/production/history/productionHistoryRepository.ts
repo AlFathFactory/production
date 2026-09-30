@@ -58,7 +58,23 @@ function mapError(error: unknown, action: 'history' | 'audit' | 'correct' | 'del
   return new ProductionHistoryRepositoryError('unknown', action === 'correct' ? 'The correction could not be completed.' : action === 'delete' ? 'The deletion could not be completed.' : 'History could not be loaded.')
 }
 
-function mapStageEntryRow(row: Database['public']['Tables']['production_stage_entries']['Row']): ProductionStageEntry {
+type StageEntryRowShape = Pick<
+  Database['public']['Tables']['production_stage_entries']['Row'],
+  | 'id'
+  | 'production_item_id'
+  | 'stage'
+  | 'quantity'
+  | 'entry_date'
+  | 'note'
+  | 'source'
+  | 'source_reference'
+  | 'created_at'
+  | 'created_by'
+  | 'performed_by'
+  | 'performed_by_name_snapshot'
+>
+
+function mapStageEntryRow(row: StageEntryRowShape): ProductionStageEntry {
   let source: ProductionStageSource = 'manual'
   if (row.source === 'excel_import') source = 'excel_import'
   else if (row.source === 'document') source = 'document'

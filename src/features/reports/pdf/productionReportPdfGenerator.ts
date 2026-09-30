@@ -210,16 +210,17 @@ function addOperationsTable(
   startY: number,
 ): void {
   const columns: TableColumn[] = [
-    { label: 'Operation Date', value: (row) => formatReportDate(row.operation_date), width: 20 },
-    { label: 'Article', value: (row) => pdfText(row.article), width: 25 },
-    { label: 'Designation', value: (row) => pdfText(row.designation), width: 60 },
-    { label: 'Profile', value: (row) => pdfText(row.profile), width: 38 },
-    { label: 'Routing', value: (row) => pdfText(row.routing), width: 18 },
-    { label: 'Operation', value: (row) => reportOperationLabels[row.operation], width: 27 },
-    { align: 'right', label: 'Qty', value: (row) => formatReportQuantity(row.quantity), width: 17 },
-    { align: 'right', label: 'Unit Wt. kg', value: (row) => formatReportWeight(row.unit_weight_kg), width: 20 },
-    { align: 'right', label: 'Operation Wt. kg', value: (row) => formatReportWeight(row.operation_weight_kg), width: 23 },
-    { label: 'Performed By', value: (row) => pdfText(row.performed_by_name), width: 29 },
+    { label: 'Operation Date', value: (row) => formatReportDate(row.operation_date), width: 18 },
+    { label: 'Article', value: (row) => pdfText(row.article), width: 20 },
+    { label: 'Designation', value: (row) => pdfText(row.designation), width: 56 },
+    { label: 'Profile', value: (row) => pdfText(row.profile), width: 32 },
+    { label: 'Routing', value: (row) => pdfText(row.routing), width: 16 },
+    { label: 'Operation', value: (row) => reportOperationLabels[row.operation], width: 23 },
+    { label: 'Dispensed To', value: (row) => row.operation === 'DISPENSE' ? pdfText(row.dispensed_to_name || 'Not recorded') : '-', width: 30 },
+    { align: 'right', label: 'Qty', value: (row) => formatReportQuantity(row.quantity), width: 14 },
+    { align: 'right', label: 'Unit Wt. kg', value: (row) => formatReportWeight(row.unit_weight_kg), width: 17 },
+    { align: 'right', label: 'Operation Wt. kg', value: (row) => formatReportWeight(row.operation_weight_kg), width: 20 },
+    { label: 'Performed By', value: (row) => pdfText(row.performed_by_name), width: 31 },
   ]
   let y = startY
 

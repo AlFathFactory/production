@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { PageHeader } from '../../components/shared/PageHeader'
 import { CurrentStatusReport } from './components/CurrentStatusReport'
+import { DispenseHistoryReport } from './components/DispenseHistoryReport'
 import { HistoricalEventsReport } from './components/HistoricalEventsReport'
 import type { ReportsMode } from './types'
 
@@ -16,7 +17,9 @@ export function ReportsPage() {
         title="Reports"
         description={mode === 'historical-events'
           ? 'Review saved Production operations using the authoritative report data.'
-          : 'Review the current production position and pending operational quantities.'}
+          : mode === 'current-status'
+            ? 'Review the current production position and pending operational quantities.'
+            : 'Review who received DISPENSE items using the authoritative history data.'}
       />
       <div className="reports-workspace">
         <div className="reports-mode-switch" role="tablist" aria-label="Report mode">
@@ -40,6 +43,16 @@ export function ReportsPage() {
           >
             Current Status
           </button>
+          <button
+            id="reports-mode-dispense"
+            type="button"
+            role="tab"
+            aria-controls="reports-panel-dispense"
+            aria-selected={mode === 'dispense-history'}
+            onClick={() => setMode('dispense-history')}
+          >
+            Dispense History
+          </button>
         </div>
         <div
           id="reports-panel-historical"
@@ -58,6 +71,15 @@ export function ReportsPage() {
           hidden={mode !== 'current-status'}
         >
           <CurrentStatusReport active={mode === 'current-status'} />
+        </div>
+        <div
+          id="reports-panel-dispense"
+          className="reports-mode-panel"
+          role="tabpanel"
+          aria-labelledby="reports-mode-dispense"
+          hidden={mode !== 'dispense-history'}
+        >
+          <DispenseHistoryReport active={mode === 'dispense-history'} />
         </div>
       </div>
     </>
