@@ -1,6 +1,12 @@
 import { supabase } from '../../services/supabase/client'
 import { mapProductionImportRequestError, parseProductionImportResponse } from './import/productionImportResponse'
-import type { ImportProductionFileInput, ProductionImportResult } from './import/types'
+import { parseProductionValidationResponse } from './import/productionValidationResponse'
+import type {
+  ImportProductionFileInput,
+  ProductionBackendValidationResult,
+  ProductionImportResult,
+  ValidateProductionRowsInput,
+} from './import/types'
 import type {
   AddProductionStageEntryInput,
   CreateProductionItemInput,
@@ -149,5 +155,18 @@ export const productionRepository = {
     }
 
     return parseProductionImportResponse(data)
+  },
+
+  async validateProductionPreparationRows(input: ValidateProductionRowsInput): Promise<ProductionBackendValidationResult> {
+    const { data, error } = await supabase.rpc('validate_production_preparation_rows', {
+      p_lot_id: input.lotId,
+      p_rows: input.rows,
+    })
+
+    if (error) {
+      throw mapProductionImportRequestError(error)
+    }
+
+    return parseProductionValidationResponse(data)
   },
 }

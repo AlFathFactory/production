@@ -222,6 +222,7 @@ export function ProductionPage() {
         <ProductionImportDialog
           destination={importDestination || 'Selected Lot'}
           isOpen={isImportOpen}
+          lotId={lotId}
           onClose={() => setIsImportOpen(false)}
           onImport={importWorkbook}
         />

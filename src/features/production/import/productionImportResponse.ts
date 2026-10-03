@@ -55,6 +55,23 @@ export function parseProductionImportResponse(data: Json): ProductionImportResul
   }
 
   if (data.success !== true) {
+    const validation: unknown = (data as Record<string, unknown>).validation
+    if (isRecord(validation)) {
+      const errors: unknown = validation.errors
+      if (Array.isArray(errors)) {
+        const firstError: unknown = errors.find((entry) => isRecord(entry))
+        if (isRecord(firstError)) {
+          const sourceRow = typeof firstError.source_row === 'number' ? firstError.source_row : null
+          const article = typeof firstError.article === 'string' ? firstError.article : null
+          const reason = typeof firstError.message === 'string' ? firstError.message : 'Production validation failed.'
+          const context = [
+            sourceRow === null ? null : `Excel Row ${sourceRow}`,
+            article ? `Article ${article}` : null,
+          ].filter((part): part is string => part !== null).join(' — ')
+          throw new ProductionImportError(`Import failed:\nBackend validation error:\n${context ? `${context}:\n` : ''}${reason}`)
+        }
+      }
+    }
     const message = typeof data.error === 'string' ? data.error : ''
     throw new ProductionImportError(formatImportFailure('Backend validation error', message))
   }

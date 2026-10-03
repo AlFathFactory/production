@@ -1001,6 +1001,13 @@ import_production_preparation_file: {
         }
         Returns: Json
       },
+      validate_production_preparation_rows: {
+        Args: {
+          p_lot_id: string
+          p_rows: Json
+        }
+        Returns: Json
+      }
       correct_production_stage_entry: {
         Args: {
           p_entry_id: string

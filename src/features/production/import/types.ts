@@ -50,10 +50,25 @@ export interface ProductionSourceColumn {
 }
 
 export interface ProductionImportIssue {
+  actualValue?: number | string | null
+  code?: string
   field?: ProductionImportField
+  maximumValue?: number | null
   message: string
+  origin?: 'backend' | 'local'
   severity: 'error' | 'warning'
   sourceRow: number
+  stage?: string | null
+  values?: ProductionQuantityValues
+}
+
+export interface ProductionQuantityValues {
+  bend_qty: number | null
+  cut_qty: number | null
+  dispensed_qty: number | null
+  out_bend_qty: number | null
+  rolling_qty: number | null
+  total_quantity: number | null
 }
 
 export interface NormalizedProductionImportRow {
@@ -112,7 +127,9 @@ export interface NormalizedProductionSheet {
 }
 
 export interface ProductionImportPreviewRow {
+  changedFields: ProductionImportField[]
   errors: ProductionImportIssue[]
+  originalRow: NormalizedProductionImportRow
   row: NormalizedProductionImportRow
   warnings: ProductionImportIssue[]
 }
@@ -128,6 +145,29 @@ export interface ProductionImportPreview {
   warningCount: number
 }
 
+export type ProductionImportValidationStatus = 'not-run' | 'pending' | 'passed' | 'failed'
+
+export interface ProductionBackendValidationError {
+  actualValue: number | string | null
+  article: string | null
+  errorCode: string
+  field?: ProductionImportField
+  maximumValue: number | null
+  message: string
+  routing: string | null
+  sourceRow: number
+  stage: string | null
+  values: ProductionQuantityValues
+}
+
+export interface ProductionBackendValidationResult {
+  errors: ProductionBackendValidationError[]
+  invalidRows: number
+  totalRows: number
+  valid: boolean
+  validRows: number
+}
+
 export interface ProductionImportResult {
   importId: string
   itemsInserted: number
@@ -139,6 +179,11 @@ export interface ProductionImportResult {
 
 export interface ImportProductionFileInput {
   fileName: string
+  lotId: string
+  rows: ProductionImportPayloadRow[]
+}
+
+export interface ValidateProductionRowsInput {
   lotId: string
   rows: ProductionImportPayloadRow[]
 }
