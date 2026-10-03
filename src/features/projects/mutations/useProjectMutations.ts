@@ -17,9 +17,5 @@ export function useProjectMutations() {
         projectsRepository.updateProject(id, values),
       onSuccess: invalidateProjects,
     }),
-    deleteProject: useMutation({
-      mutationFn: projectsRepository.deleteProject,
-      onSuccess: invalidateProjects,
-    }),
   }
 }

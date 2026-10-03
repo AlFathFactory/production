@@ -1051,6 +1051,13 @@ import_production_preparation_file: {
           performed_by_name_snapshot: string | null
         }
       },
+      delete_production_project_with_data: {
+        Args: {
+          p_project_id: string
+          p_confirmation: string
+        }
+        Returns: Json
+      },
       search_production_items: {
         Args: {
           p_last_activity_from?: string

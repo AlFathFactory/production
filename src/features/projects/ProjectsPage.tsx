@@ -6,12 +6,14 @@ import { Button } from '../../components/ui/Button'
 import { useAuth } from '../auth/hooks/useAuth'
 import { canManageProjects } from '../auth/permissions'
 import { useLotMutations } from './mutations/useLotMutations'
+import { useDeleteProjectWithData } from './mutations/useDeleteProjectWithData'
 import { useProjectMutations } from './mutations/useProjectMutations'
 import { useProjectNumberMutations } from './mutations/useProjectNumberMutations'
 import { useLots } from './queries/useLots'
 import { useProjectNumbers } from './queries/useProjectNumbers'
 import { useProjects } from './queries/useProjects'
 import { DeleteConfirmationDialog } from './components/DeleteConfirmationDialog'
+import { DeleteProjectWithDataDialog } from './components/DeleteProjectWithDataDialog'
 import { LotFormDialog } from './components/LotFormDialog'
 import { LotsList } from './components/LotsList'
 import { ProjectDetails } from './components/ProjectDetails'
@@ -25,7 +27,6 @@ type ProjectDialogState = Project | 'new' | null
 type ProjectNumberDialogState = ProjectNumber | 'new' | null
 type LotDialogState = Lot | 'new' | null
 type DeleteTarget =
-  | { type: 'project'; entity: Project }
   | { type: 'projectNumber'; entity: ProjectNumber }
   | { type: 'lot'; entity: Lot }
   | null
@@ -44,10 +45,12 @@ export function ProjectsPage() {
   const [projectNumberDialog, setProjectNumberDialog] = useState<ProjectNumberDialogState>(null)
   const [lotDialog, setLotDialog] = useState<LotDialogState>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null)
+  const [purgeTarget, setPurgeTarget] = useState<Project | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const projectMutations = useProjectMutations()
   const projectNumberMutations = useProjectNumberMutations()
   const lotMutations = useLotMutations()
+  const deleteProjectWithData = useDeleteProjectWithData()
   const projects = projectsQuery.data ?? []
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null
   const projectNumbersQuery = useProjectNumbers(selectedProjectId)
@@ -92,10 +95,17 @@ export function ProjectsPage() {
   }
 
   function closeDeleteDialog() {
-    projectMutations.deleteProject.reset()
     projectNumberMutations.deleteProjectNumber.reset()
     lotMutations.deleteLot.reset()
     setDeleteTarget(null)
+  }
+
+  function closePurgeDialog() {
+    if (deleteProjectWithData.isPending) {
+      return
+    }
+    deleteProjectWithData.reset()
+    setPurgeTarget(null)
   }
 
   async function saveProject(values: ProjectFormValues) {
@@ -148,12 +158,7 @@ export function ProjectsPage() {
   async function confirmDelete() {
     if (!deleteTarget) return
     try {
-      const deletedEntity = deleteTarget.type === 'projectNumber' ? 'Project number' : deleteTarget.type === 'project' ? 'Project' : 'Lot'
-      if (deleteTarget.type === 'project') {
-        await projectMutations.deleteProject.mutateAsync(deleteTarget.entity.id)
-        setSelectedProjectId(null)
-        setSelectedProjectNumberId(null)
-      }
+      const deletedEntity = deleteTarget.type === 'projectNumber' ? 'Project number' : 'Lot'
       if (deleteTarget.type === 'projectNumber' && selectedProjectId) {
         await projectNumberMutations.deleteProjectNumber.mutateAsync({ id: deleteTarget.entity.id, projectId: selectedProjectId })
         setSelectedProjectNumberId(null)
@@ -168,11 +173,38 @@ export function ProjectsPage() {
     }
   }
 
-  const deleteMutation = deleteTarget?.type === 'project'
-    ? projectMutations.deleteProject
-    : deleteTarget?.type === 'projectNumber'
-      ? projectNumberMutations.deleteProjectNumber
-      : lotMutations.deleteLot
+  async function confirmProjectPurge(confirmation: string) {
+    if (!purgeTarget) return
+    try {
+      const result = await deleteProjectWithData.mutateAsync({ projectId: purgeTarget.id, confirmation })
+      const counts = [
+        [result.deleted.projectNumbers, 'project numbers'],
+        [result.deleted.lots, 'lots'],
+        [result.deleted.productionItems, 'items'],
+        [result.deleted.stageEntries, 'stage entries'],
+        [result.deleted.dispatches, 'dispatches'],
+        [result.deleted.returns, 'returns'],
+        [result.deleted.imports, 'imports'],
+      ] as const
+      const summary = counts
+        .filter(([count]) => count > 0)
+        .map(([count, label]) => `${count} ${label}`)
+        .join(', ')
+      deleteProjectWithData.reset()
+      setPurgeTarget(null)
+      setSelectedProjectId(null)
+      setSelectedProjectNumberId(null)
+      setSuccessMessage(
+        `Project ${result.projectName || purgeTarget.project_name} and all related Production data were deleted successfully${summary ? ` (${summary}).` : '.'}`,
+      )
+    } catch {
+      // Mutation state supplies a concise message to the dialog.
+    }
+  }
+
+  const deleteMutation = deleteTarget?.type === 'projectNumber'
+    ? projectNumberMutations.deleteProjectNumber
+    : lotMutations.deleteLot
 
   return (
     <section className="projects-page">
@@ -194,7 +226,7 @@ export function ProjectsPage() {
       <div className="projects-workspace">
         <ProjectsList canManage={canManage} error={getErrorMessage(projectsQuery.error)} isLoading={projectsQuery.isPending} onRetry={() => void projectsQuery.refetch()} onSelect={selectProject} projects={projects} selectedProjectId={selectedProjectId} />
         <div className="projects-details">
-          <ProjectDetails canManage={canManage} onDelete={() => selectedProject && setDeleteTarget({ type: 'project', entity: selectedProject })} onEdit={() => selectedProject && setProjectDialog(selectedProject)} project={selectedProject} />
+          <ProjectDetails canManage={canManage} onDelete={() => selectedProject && setPurgeTarget(selectedProject)} onEdit={() => selectedProject && setProjectDialog(selectedProject)} project={selectedProject} />
           {selectedProject ? <ProjectNumbersList canManage={canManage} error={getErrorMessage(projectNumbersQuery.error)} isLoading={projectNumbersQuery.isPending} onDelete={(entity) => setDeleteTarget({ type: 'projectNumber', entity })} onEdit={setProjectNumberDialog} onNew={() => setProjectNumberDialog('new')} onRetry={() => void projectNumbersQuery.refetch()} onSelect={setSelectedProjectNumberId} projectName={selectedProject.project_name} projectNumbers={projectNumbers} selectedProjectNumberId={selectedProjectNumberId} /> : null}
           {selectedProjectNumber ? <LotsList canManage={canManage} error={getErrorMessage(lotsQuery.error)} isLoading={lotsQuery.isPending} lotReference={selectedProjectNumber.project_number} lots={lotsQuery.data ?? []} onDelete={(entity) => setDeleteTarget({ type: 'lot', entity })} onEdit={setLotDialog} onNew={() => setLotDialog('new')} onRetry={() => void lotsQuery.refetch()} /> : null}
         </div>
@@ -202,7 +234,8 @@ export function ProjectsPage() {
       <ProjectFormDialog error={getErrorMessage(projectDialog === 'new' ? projectMutations.createProject.error : projectMutations.updateProject.error)} isOpen={Boolean(projectDialog)} isSaving={projectMutations.createProject.isPending || projectMutations.updateProject.isPending} onClose={closeProjectDialog} onSubmit={saveProject} project={projectDialog === 'new' ? null : projectDialog} />
       <ProjectNumberFormDialog error={getErrorMessage(projectNumberDialog === 'new' ? projectNumberMutations.createProjectNumber.error : projectNumberMutations.updateProjectNumber.error)} isOpen={Boolean(projectNumberDialog)} isSaving={projectNumberMutations.createProjectNumber.isPending || projectNumberMutations.updateProjectNumber.isPending} onClose={closeProjectNumberDialog} onSubmit={saveProjectNumber} projectNumber={projectNumberDialog === 'new' ? null : projectNumberDialog} />
       <LotFormDialog error={getErrorMessage(lotDialog === 'new' ? lotMutations.createLot.error : lotMutations.updateLot.error)} isOpen={Boolean(lotDialog)} isSaving={lotMutations.createLot.isPending || lotMutations.updateLot.isPending} lot={lotDialog === 'new' ? null : lotDialog} onClose={closeLotDialog} onSubmit={saveLot} />
-      <DeleteConfirmationDialog error={getErrorMessage(deleteMutation.error)} isDeleting={deleteMutation.isPending} isOpen={Boolean(deleteTarget)} onClose={closeDeleteDialog} onConfirm={confirmDelete} subject={deleteTarget?.type === 'project' ? `project “${deleteTarget.entity.project_name}”` : deleteTarget?.type === 'projectNumber' ? `project number “${deleteTarget.entity.project_number}”` : deleteTarget ? `lot “${deleteTarget.entity.lot_number}”` : 'record'} />
+      <DeleteConfirmationDialog error={getErrorMessage(deleteMutation.error)} isDeleting={deleteMutation.isPending} isOpen={Boolean(deleteTarget)} onClose={closeDeleteDialog} onConfirm={confirmDelete} subject={deleteTarget?.type === 'projectNumber' ? `project number “${deleteTarget.entity.project_number}”` : deleteTarget ? `lot “${deleteTarget.entity.lot_number}”` : 'record'} />
+      <DeleteProjectWithDataDialog error={getErrorMessage(deleteProjectWithData.error)} isDeleting={deleteProjectWithData.isPending} isOpen={Boolean(purgeTarget)} onClose={closePurgeDialog} onConfirm={confirmProjectPurge} project={purgeTarget} />
     </section>
   )
 }

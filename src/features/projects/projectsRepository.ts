@@ -67,6 +67,82 @@ function toLot(lot: { status: string } & Omit<Lot, 'status'>): Lot {
   return { ...lot, status: asHierarchyStatus(lot.status) }
 }
 
+export interface DeleteProjectWithDataCounts {
+  projectNumbers: number
+  lots: number
+  productionItems: number
+  stageEntries: number
+  dispatches: number
+  returns: number
+  imports: number
+}
+
+export interface DeleteProjectWithDataResult {
+  projectId: string
+  projectName: string
+  deleted: DeleteProjectWithDataCounts
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function finiteCount(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0
+}
+
+function parseProjectPurgeResult(projectId: string, data: unknown): DeleteProjectWithDataResult {
+  if (!isRecord(data)) {
+    throw new ProjectsRepositoryError('Project deletion failed. No data was deleted.')
+  }
+
+  const deleted = isRecord(data.deleted) ? data.deleted : {}
+
+  return {
+    projectId: typeof data.project_id === 'string' ? data.project_id : projectId,
+    projectName: typeof data.project_name === 'string' ? data.project_name : '',
+    deleted: {
+      projectNumbers: finiteCount(deleted.project_numbers),
+      lots: finiteCount(deleted.lots),
+      productionItems: finiteCount(deleted.production_items),
+      stageEntries: finiteCount(deleted.stage_entries),
+      dispatches: finiteCount(deleted.dispatches),
+      returns: finiteCount(deleted.returns),
+      imports: finiteCount(deleted.imports),
+    },
+  }
+}
+
+function mapProjectPurgeError(error: unknown): ProjectsRepositoryError {
+  const message = typeof error === 'object' && error !== null && 'message' in error
+    ? String(error.message)
+    : error instanceof Error
+      ? error.message
+      : ''
+
+  if (/Admin access required/i.test(message)) {
+    return new ProjectsRepositoryError('You do not have permission to delete projects with data. Admin access required.')
+  }
+
+  if (/Project not found/i.test(message)) {
+    return new ProjectsRepositoryError('The project is no longer available. It may have been deleted already.')
+  }
+
+  if (/confirmation does not match/i.test(message)) {
+    return new ProjectsRepositoryError('Project name confirmation does not match. Type the exact project name.')
+  }
+
+  if (typeof error === 'object' && error !== null && 'code' in error && String(error.code) === '42501') {
+    return new ProjectsRepositoryError('You do not have permission to delete projects with data.')
+  }
+
+  if (error instanceof TypeError || /fetch|network|connection|offline/i.test(message)) {
+    return new ProjectsRepositoryError('Unable to reach Production Control. Check your connection and try again.')
+  }
+
+  return new ProjectsRepositoryError('Project deletion failed. No data was deleted.')
+}
+
 export const projectsRepository = {
   async listProjects(): Promise<Project[]> {
     const { data, error } = await supabase
@@ -146,12 +222,17 @@ export const projectsRepository = {
     return data
   },
 
-  async deleteProject(id: string): Promise<void> {
-    const { error } = await supabase.from('production_projects').delete().eq('id', id)
+  async deleteProjectWithData(projectId: string, confirmation: string): Promise<DeleteProjectWithDataResult> {
+    const { data, error } = await supabase.rpc('delete_production_project_with_data', {
+      p_project_id: projectId,
+      p_confirmation: confirmation,
+    })
 
     if (error) {
-      throw mapProjectsError(error, 'delete')
+      throw mapProjectPurgeError(error)
     }
+
+    return parseProjectPurgeResult(projectId, data)
   },
 
   async createProjectNumber(projectId: string, values: ProjectNumberFormValues): Promise<ProjectNumber> {
