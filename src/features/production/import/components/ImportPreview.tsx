@@ -1,7 +1,7 @@
 import { formatQuantity } from '../../utils'
 import type { ProductionImportPreview } from '../types'
 
-const PREVIEW_ROW_LIMIT = 100
+const PREVIEW_ROW_LIMIT = 10
 
 function previewQuantity(value: number | null): string {
   return value === null ? '—' : formatQuantity(value)
@@ -53,13 +53,17 @@ export function ImportPreview({ preview }: { preview: ProductionImportPreview })
               <th scope="col">Row</th>
               <th scope="col">Article</th>
               <th scope="col">Profile</th>
-              <th scope="col">Route</th>
-              <th scope="col">T.QTY</th>
-              <th scope="col">CUT</th>
-              <th scope="col">OUT BEND</th>
-              <th scope="col">BEND</th>
-              <th scope="col">ROLLING</th>
-              <th scope="col">DISPENSE</th>
+              <th scope="col">Routing</th>
+              <th scope="col">Designation</th>
+              <th scope="col">Material</th>
+              <th scope="col">Total Quantity</th>
+              <th scope="col">Unit Weight</th>
+              <th scope="col">Cut Quantity</th>
+              <th scope="col">Out Bend Quantity</th>
+              <th scope="col">Bend Quantity</th>
+              <th scope="col">Rolling Quantity</th>
+              <th scope="col">Dispensed Quantity</th>
+              <th scope="col">Remark</th>
               <th scope="col">Status</th>
             </tr>
           </thead>
@@ -70,12 +74,16 @@ export function ImportPreview({ preview }: { preview: ProductionImportPreview })
                 <td dir="auto">{row.article || '—'}</td>
                 <td dir="auto">{row.profile ?? '—'}</td>
                 <td>{row.routing}</td>
+                <td dir="auto">{row.designation ?? '—'}</td>
+                <td dir="auto">{row.material ?? '—'}</td>
                 <td>{previewQuantity(row.total_quantity)}</td>
+                <td>{previewQuantity(row.unit_weight_kg)}</td>
                 <td>{previewQuantity(row.cut_qty)}</td>
                 <td>{previewQuantity(row.out_bend_qty)}</td>
                 <td>{previewQuantity(row.bend_qty)}</td>
                 <td>{previewQuantity(row.rolling_qty)}</td>
                 <td>{previewQuantity(row.dispensed_qty)}</td>
+                <td dir="auto">{row.remark ?? '—'}</td>
                 <td className="production-import-table__status">
                   {errors.length === 0 && warnings.length === 0 ? <span className="production-import-valid">Valid</span> : null}
                   {errors.map((issue) => <span className="production-import-error" key={`${issue.field}-${issue.message}`}>{issue.message}</span>)}

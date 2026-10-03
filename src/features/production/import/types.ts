@@ -9,20 +9,45 @@ export interface ParsedProductionWorkbook {
 }
 
 export type ProductionImportField =
+  | 'action_date'
+  | 'admin_name'
   | 'article'
-  | 'unit_weight_kg'
-  | 'total_quantity'
+  | 'bend_date'
+  | 'bend_qty'
   | 'cut_qty'
   | 'cut_date'
   | 'out_bend_qty'
   | 'out_bend_date'
-  | 'bend_qty'
-  | 'bend_date'
-  | 'rolling_qty'
-  | 'rolling_date'
+  | 'designation'
   | 'dispensed_qty'
-  | 'action_date'
+  | 'material'
+  | 'profile'
+  | 'remark'
+  | 'rolling_date'
+  | 'rolling_qty'
   | 'routing'
+  | 'total_quantity'
+  | 'unit_weight_kg'
+
+export type ProductionImportMapping = Record<number, ProductionImportField | null>
+
+export type ProductionImportValueKind = 'date' | 'number' | 'route' | 'text'
+
+export interface ProductionImportFieldDefinition {
+  aliases: readonly string[]
+  key: ProductionImportField
+  kind: ProductionImportValueKind
+  label: string
+  required: boolean
+}
+
+export interface ProductionSourceColumn {
+  header: string
+  index: number
+  isBlank: boolean
+  letter: string
+  samples: string[]
+}
 
 export interface ProductionImportIssue {
   field?: ProductionImportField

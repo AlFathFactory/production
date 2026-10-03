@@ -1,7 +1,9 @@
 import { useState } from 'react'
 
+import '../ProductionImport.css'
 import { Button } from '../../../../components/ui/Button'
 import { Dialog } from '../../../../components/ui/Dialog'
+import { ColumnMappingStep } from './ColumnMappingStep'
 import { ImportFileStep } from './ImportFileStep'
 import { ImportPreview } from './ImportPreview'
 import { ImportResult } from './ImportResult'
@@ -21,6 +23,7 @@ function messageFromError(error: unknown): string {
 
 export function ProductionImportDialog({ destination, isOpen, onClose, onImport }: ProductionImportDialogProps) {
   const productionImport = useProductionImport()
+  const [step, setStep] = useState<'mapping' | 'preview'>('mapping')
   const [isImporting, setIsImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [result, setResult] = useState<ProductionImportResult | null>(null)
@@ -30,6 +33,7 @@ export function ProductionImportDialog({ destination, isOpen, onClose, onImport 
       return
     }
     productionImport.reset()
+    setStep('mapping')
     setImportError(null)
     setResult(null)
     onClose()
@@ -52,9 +56,16 @@ export function ProductionImportDialog({ destination, isOpen, onClose, onImport 
     }
   }
 
+  const continueToPreview = () => {
+    if (productionImport.createPreview()) {
+      setImportError(null)
+      setStep('preview')
+    }
+  }
+
   return (
     <Dialog
-      className="dialog--production-import"
+      className="dialog--wide dialog--production-import"
       isCloseDisabled={isImporting || productionImport.isParsing}
       isOpen={isOpen}
       onClose={closeDialog}
@@ -73,32 +84,68 @@ export function ProductionImportDialog({ destination, isOpen, onClose, onImport 
             <span>Import into</span>
             <strong>{destination}</strong>
           </p>
-          <ImportFileStep
-            error={productionImport.error}
-            fileName={productionImport.fileName}
-            isDisabled={isImporting || productionImport.isParsing}
-            isParsing={productionImport.isParsing}
-            onFileSelect={productionImport.selectFile}
-            onSheetSelect={productionImport.selectSheet}
-            sheetName={productionImport.sheetName}
-            sheetNames={productionImport.sheetNames}
-          />
-          {productionImport.preview ? <ImportPreview preview={productionImport.preview} /> : null}
+          <ol className="production-import-steps" aria-label="Import progress">
+            <li className={step === 'mapping' ? 'is-current' : 'is-complete'}>Upload &amp; Mapping</li>
+            <li className={step === 'preview' ? 'is-current' : ''}>Preview &amp; Validation</li>
+            <li>Import</li>
+          </ol>
+
+          {step === 'mapping' ? (
+            <>
+              <ImportFileStep
+                error={productionImport.sourceColumns.length === 0 ? productionImport.error : null}
+                fileName={productionImport.fileName}
+                isDisabled={isImporting || productionImport.isParsing}
+                isParsing={productionImport.isParsing}
+                onFileSelect={productionImport.selectFile}
+                onSheetSelect={productionImport.selectSheet}
+                sheetName={productionImport.sheetName}
+                sheetNames={productionImport.sheetNames}
+              />
+              {productionImport.headerRow !== null ? (
+                <ColumnMappingStep
+                  headerRow={productionImport.headerRow}
+                  headerRowOptions={productionImport.headerRowOptions}
+                  mapping={productionImport.mapping}
+                  missingRequiredFields={productionImport.missingRequiredFields}
+                  onHeaderRowChange={productionImport.selectHeaderRow}
+                  onMappingChange={productionImport.mapColumn}
+                  sourceColumns={productionImport.sourceColumns}
+                />
+              ) : null}
+            </>
+          ) : productionImport.preview ? <ImportPreview preview={productionImport.preview} /> : null}
+          {productionImport.error && productionImport.sourceColumns.length > 0 ? <p className="form-error" role="alert">{productionImport.error}</p> : null}
           {importError ? <p className="form-error production-import-failure" role="alert">{importError}</p> : null}
           <div className="entity-form__actions">
-            <Button type="button" variant="secondary" disabled={isImporting} onClick={closeDialog}>Cancel</Button>
-            <Button
-              type="button"
-              disabled={!productionImport.preview?.payload?.length}
-              isLoading={isImporting}
-              onClick={() => void importWorkbook()}
-            >
-              {isImporting
-                ? 'Importing…'
-                : productionImport.preview?.errorRows
-                  ? `Fix ${productionImport.preview.errorRows} Invalid ${productionImport.preview.errorRows === 1 ? 'Row' : 'Rows'} to Import`
-                  : `Import ${productionImport.preview?.validRows ?? 0} Rows`}
-            </Button>
+            {step === 'mapping' ? (
+              <>
+                <Button type="button" variant="secondary" onClick={closeDialog}>Cancel</Button>
+                <Button
+                  type="button"
+                  disabled={productionImport.sourceColumns.length === 0 || productionImport.missingRequiredFields.length > 0}
+                  onClick={continueToPreview}
+                >
+                  Review Preview
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button type="button" variant="secondary" disabled={isImporting} onClick={() => setStep('mapping')}>Back to Mapping</Button>
+                <Button
+                  type="button"
+                  disabled={!productionImport.preview?.payload?.length}
+                  isLoading={isImporting}
+                  onClick={() => void importWorkbook()}
+                >
+                  {isImporting
+                    ? 'Importing…'
+                    : productionImport.preview?.errorRows
+                      ? `Fix ${productionImport.preview.errorRows} Invalid ${productionImport.preview.errorRows === 1 ? 'Row' : 'Rows'} to Import`
+                      : `Import ${productionImport.preview?.validRows ?? 0} Rows`}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}

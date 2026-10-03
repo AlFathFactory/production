@@ -1,8 +1,20 @@
 import { useState } from 'react'
 
-import { normalizeProductionRows } from '../normalizeProductionRows'
+import {
+  detectProductionHeaderRow,
+  getMissingRequiredMappings,
+  getProductionSourceColumns,
+  mapProductionRows,
+  suggestProductionColumnMapping,
+} from '../productionColumnMapping'
 import { parseProductionWorkbook, ProductionWorkbookError } from '../parseProductionWorkbook'
-import type { ParsedProductionWorkbook, ProductionImportPreview } from '../types'
+import type {
+  ParsedProductionWorkbook,
+  ProductionImportField,
+  ProductionImportMapping,
+  ProductionImportPreview,
+  ProductionSourceColumn,
+} from '../types'
 import { validateProductionRows } from '../validateProductionRows'
 
 export const MAX_IMPORT_FILE_SIZE_BYTES = 15 * 1024 * 1024
@@ -22,12 +34,18 @@ export function useProductionImport() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [workbook, setWorkbook] = useState<ParsedProductionWorkbook | null>(null)
   const [sheetName, setSheetName] = useState<string | null>(null)
+  const [headerRow, setHeaderRow] = useState<number | null>(null)
+  const [sourceColumns, setSourceColumns] = useState<ProductionSourceColumn[]>([])
+  const [mapping, setMapping] = useState<ProductionImportMapping>({})
   const [preview, setPreview] = useState<ProductionImportPreview | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isParsing, setIsParsing] = useState(false)
 
-  const previewSheet = (parsedWorkbook: ParsedProductionWorkbook, nextSheetName: string) => {
+  const configureSheet = (parsedWorkbook: ParsedProductionWorkbook, nextSheetName: string) => {
     setSheetName(nextSheetName)
+    setHeaderRow(null)
+    setSourceColumns([])
+    setMapping({})
     setPreview(null)
     setError(null)
 
@@ -36,9 +54,13 @@ export function useProductionImport() {
       if (!rows) {
         throw new ProductionWorkbookError('The selected workbook sheet is unavailable.')
       }
-      setPreview(validateProductionRows(normalizeProductionRows(rows)))
-    } catch (previewError) {
-      setError(errorMessage(previewError))
+      const detectedHeaderRow = detectProductionHeaderRow(rows)
+      const columns = getProductionSourceColumns(rows, detectedHeaderRow)
+      setHeaderRow(detectedHeaderRow)
+      setSourceColumns(columns)
+      setMapping(suggestProductionColumnMapping(columns))
+    } catch (configurationError) {
+      setError(errorMessage(configurationError))
     }
   }
 
@@ -46,6 +68,9 @@ export function useProductionImport() {
     setPreview(null)
     setWorkbook(null)
     setSheetName(null)
+    setHeaderRow(null)
+    setSourceColumns([])
+    setMapping({})
     setFileName(null)
     setError(null)
 
@@ -64,7 +89,7 @@ export function useProductionImport() {
       const firstSheetName = parsedWorkbook.sheetNames[0]
       setFileName(file.name)
       setWorkbook(parsedWorkbook)
-      previewSheet(parsedWorkbook, firstSheetName)
+      configureSheet(parsedWorkbook, firstSheetName)
     } catch (parseError) {
       setError(errorMessage(parseError))
     } finally {
@@ -74,7 +99,48 @@ export function useProductionImport() {
 
   const selectSheet = (nextSheetName: string) => {
     if (workbook) {
-      previewSheet(workbook, nextSheetName)
+      configureSheet(workbook, nextSheetName)
+    }
+  }
+
+  const selectHeaderRow = (nextHeaderRow: number) => {
+    if (!workbook || !sheetName) return
+    const rows = workbook.sheets[sheetName]
+    if (!rows) return
+    try {
+      const columns = getProductionSourceColumns(rows, nextHeaderRow)
+      setHeaderRow(nextHeaderRow)
+      setSourceColumns(columns)
+      setMapping(suggestProductionColumnMapping(columns))
+      setPreview(null)
+      setError(null)
+    } catch (headerError) {
+      setError(errorMessage(headerError))
+    }
+  }
+
+  const mapColumn = (columnIndex: number, field: ProductionImportField | null) => {
+    setMapping((current) => ({ ...current, [columnIndex]: field }))
+    setPreview(null)
+    setError(null)
+  }
+
+  const createPreview = (): boolean => {
+    if (!workbook || !sheetName || headerRow === null) return false
+    const missing = getMissingRequiredMappings(mapping)
+    if (missing.length > 0) {
+      setError(`Required fields are not mapped: ${missing.map((field) => field.label).join(', ')}.`)
+      return false
+    }
+    try {
+      const rows = workbook.sheets[sheetName]
+      if (!rows) throw new ProductionWorkbookError('The selected workbook sheet is unavailable.')
+      setPreview(validateProductionRows(mapProductionRows(rows, headerRow, mapping)))
+      setError(null)
+      return true
+    } catch (previewError) {
+      setError(errorMessage(previewError))
+      return false
     }
   }
 
@@ -82,20 +148,33 @@ export function useProductionImport() {
     setFileName(null)
     setWorkbook(null)
     setSheetName(null)
+    setHeaderRow(null)
+    setSourceColumns([])
+    setMapping({})
     setPreview(null)
     setError(null)
     setIsParsing(false)
   }
 
   return {
+    createPreview,
     error,
     fileName,
+    headerRow,
+    headerRowOptions: workbook && sheetName
+      ? workbook.sheets[sheetName].slice(0, 20).map((_, index) => index + 1)
+      : [],
     isParsing,
+    mapColumn,
+    mapping,
+    missingRequiredFields: getMissingRequiredMappings(mapping),
     preview,
     reset,
     selectFile,
+    selectHeaderRow,
     selectSheet,
     sheetName,
     sheetNames: workbook?.sheetNames ?? [],
+    sourceColumns,
   }
 }
