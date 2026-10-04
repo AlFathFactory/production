@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-shell",
+  "description": "Phase 1 desktop shell with no native API access.",
+  "windows": ["main"],
+  "permissions": []
+}
+
