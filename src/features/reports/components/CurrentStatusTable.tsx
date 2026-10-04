@@ -2,8 +2,10 @@ import { ProductionActionBadge } from '../../production/components/ProductionAct
 import { ProductionProgressBadge } from '../../production/components/ProductionProgressBadge'
 import { ProductionRouteBadge } from '../../production/components/ProductionRouteBadge'
 import { formatPercent, toFiniteNumber, toNullableNumber } from '../../production/utils'
+import { useReportPagination } from '../hooks/useReportPagination'
 import type { CurrentStatus, CurrentStatusRow } from '../types'
 import { formatReportQuantity } from '../utils/reportSummary'
+import { ReportsPagination } from './ReportsPagination'
 
 type OperationalColumn =
   | 'total_quantity'
@@ -73,13 +75,15 @@ interface CurrentStatusTableProps {
 }
 
 export function CurrentStatusTable({ rows, statuses }: CurrentStatusTableProps) {
+  const { currentPage, firstIndex, pageCount, setPage, visibleRows } = useReportPagination(rows)
   const visibleColumns = getVisibleColumns(statuses)
   const isVisible = (column: OperationalColumn) => visibleColumns.has(column)
   const showStatusDetails = statuses.length === 0
 
   return (
-    <div className="reports-table-wrap" tabIndex={0} aria-label="Current production status report. Scroll horizontally to view all columns.">
-      <table className="reports-table current-status-table">
+    <>
+      <div className="reports-table-wrap" tabIndex={0} aria-label="Current production status report. Scroll horizontally to view all columns.">
+        <table className="reports-table current-status-table">
         <thead>
           <tr>
             <th scope="col">Article</th>
@@ -106,8 +110,8 @@ export function CurrentStatusTable({ rows, statuses }: CurrentStatusTableProps) 
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={row.production_item_id ?? `${row.article}-${index}`}>
+          {visibleRows.map((row, index) => (
+            <tr key={row.production_item_id ?? `${row.article}-${firstIndex + index}`}>
               <td dir="auto">{row.article ?? '—'}</td>
               <td className="reports-table__designation" dir="auto">{row.designation ?? '—'}</td>
               <td dir="auto">{row.profile ?? '—'}</td>
@@ -132,7 +136,16 @@ export function CurrentStatusTable({ rows, statuses }: CurrentStatusTableProps) 
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+        </table>
+      </div>
+      <ReportsPagination
+        currentPage={currentPage}
+        firstIndex={firstIndex}
+        itemLabel={rows.length === 1 ? 'item' : 'items'}
+        pageCount={pageCount}
+        totalItems={rows.length}
+        onPageChange={setPage}
+      />
+    </>
   )
 }

@@ -1,11 +1,16 @@
 import { ProductionRouteBadge } from '../../production/components/ProductionRouteBadge'
 import type { DispenseHistoryRow } from '../../dispense/types'
+import { useReportPagination } from '../hooks/useReportPagination'
 import { formatReportDate, formatReportQuantity, formatReportWeight } from '../utils/reportSummary'
+import { ReportsPagination } from './ReportsPagination'
 
 export function DispenseHistoryTable({ rows }: { rows: DispenseHistoryRow[] }) {
+  const { currentPage, firstIndex, pageCount, setPage, visibleRows } = useReportPagination(rows)
+
   return (
-    <div className="reports-table-wrap" tabIndex={0} aria-label="DISPENSE history. Scroll horizontally to view all columns.">
-      <table className="reports-table dispense-history-table">
+    <>
+      <div className="reports-table-wrap" tabIndex={0} aria-label="DISPENSE history. Scroll horizontally to view all columns.">
+        <table className="reports-table dispense-history-table">
         <thead>
           <tr>
             <th scope="col">Date</th>
@@ -26,8 +31,8 @@ export function DispenseHistoryTable({ rows }: { rows: DispenseHistoryRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={row.stage_entry_id ?? `${row.dispense_date}-${row.article}-${index}`}>
+          {visibleRows.map((row, index) => (
+            <tr key={row.stage_entry_id ?? `${row.dispense_date}-${row.article}-${firstIndex + index}`}>
               <td>{formatReportDate(row.dispense_date)}</td>
               <td dir="auto">{row.dispensed_to_name?.trim() || 'Not recorded'}</td>
               <td dir="auto">{row.project_name ?? '—'}</td>
@@ -46,7 +51,16 @@ export function DispenseHistoryTable({ rows }: { rows: DispenseHistoryRow[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+        </table>
+      </div>
+      <ReportsPagination
+        currentPage={currentPage}
+        firstIndex={firstIndex}
+        itemLabel={rows.length === 1 ? 'item' : 'items'}
+        pageCount={pageCount}
+        totalItems={rows.length}
+        onPageChange={setPage}
+      />
+    </>
   )
 }
