@@ -80,7 +80,7 @@ interface ProductionHistoryTableProps {
 }
 
 export function ProductionHistoryTable({ history, audit, userRole, onCorrect, onDelete }: ProductionHistoryTableProps) {
-  const isAdmin = canCorrectProduction(userRole ?? 'operator')
+  const canManageHistory = canCorrectProduction(userRole ?? 'operator')
 
   return (
     <div className="production-history-dialog">
@@ -114,7 +114,7 @@ export function ProductionHistoryTable({ history, audit, userRole, onCorrect, on
                     <td dir="auto">{entry.note ?? '—'}</td>
                     <td>{formatDate(entry.createdAt)}</td>
                     <td>
-                      {isAdmin && entry.source !== 'document' ? (
+                      {canManageHistory && entry.source !== 'document' ? (
                         <div className="production-history-actions">
                           <button type="button" className="button button--secondary" onClick={() => onCorrect(entry)}>Correct</button>
                           <button type="button" className="button button--secondary button--danger" onClick={() => onDelete(entry)}>Delete</button>

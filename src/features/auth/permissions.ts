@@ -4,12 +4,16 @@ export function canManageUsers(role: AppRole): boolean {
   return canAccessUserManagement(role)
 }
 
+export function canManageProduction(role: AppRole): boolean {
+  return role === 'admin' || role === 'supervisor'
+}
+
 export function canManageProjects(role: AppRole): boolean {
-  return role === 'admin'
+  return canManageProduction(role)
 }
 
 export function canCorrectProduction(role: AppRole): boolean {
-  return role === 'admin'
+  return canManageProduction(role)
 }
 
 export function canCreateBendingDocuments(role: AppRole): boolean {
@@ -21,11 +25,11 @@ export function canAddProductionStageEntry(role: AppRole): boolean {
 }
 
 export function canCreateProductionItems(role: AppRole): boolean {
-  return role === 'admin'
+  return canManageProduction(role)
 }
 
 export function canImportProduction(role: AppRole): boolean {
-  return role === 'admin'
+  return canManageProduction(role)
 }
 
 export function canAccessUserManagement(role: AppRole): boolean {
