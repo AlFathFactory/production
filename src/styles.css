@@ -2059,6 +2059,25 @@ button.hierarchy-list__select:hover,
   outline-offset: 1px;
 }
 
+.saved-file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.saved-file-actions .button {
+  min-height: 30px;
+  padding: 4px 9px;
+  font-size: 0.74rem;
+}
+
+.saved-file-actions__error {
+  flex-basis: 100%;
+  color: var(--danger);
+}
+
 @keyframes app-notification-enter {
   from {
     opacity: 0;

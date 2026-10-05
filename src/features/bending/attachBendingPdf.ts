@@ -2,6 +2,11 @@ import { DocumentStorageError, documentStorage, type DocumentUploadResult } from
 import { bendingPdfRepository } from './bendingPdfRepository'
 import type { BendingPdfTarget } from './types'
 
+export interface AttachedBendingPdf {
+  path: string
+  pdf: Blob | null
+}
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'The PDF path could not be attached to the document.'
 }
@@ -23,11 +28,11 @@ async function throwAttachmentFailure(error: unknown, upload: DocumentUploadResu
   throw new Error(`${errorMessage(error)} The uploaded PDF was removed from Storage.`)
 }
 
-export async function attachBendingPdf(target: BendingPdfTarget): Promise<string> {
+export async function attachBendingPdf(target: BendingPdfTarget): Promise<AttachedBendingPdf> {
   if (target.kind === 'return' && !target.id) {
     throw new Error('Internal error: the created Bending Return ID is missing. The PDF was not queried or uploaded.')
   }
-  if (target.pdfPath) return target.pdfPath
+  if (target.pdfPath) return { path: target.pdfPath, pdf: null }
 
   // Load the (heavy) generator chunk concurrently with the model queries
   // instead of waiting for the import before touching the network.
@@ -48,7 +53,8 @@ export async function attachBendingPdf(target: BendingPdfTarget): Promise<string
     }
     const upload = await documentStorage.uploadDispatchPdf(target.reference, target.id, pdf)
     try {
-      return await bendingPdfRepository.saveDispatchPdfPath(target.id, upload.path)
+      const path = await bendingPdfRepository.saveDispatchPdfPath(target.id, upload.path)
+      return { path, pdf }
     } catch (error) {
       return throwAttachmentFailure(error, upload)
     }
@@ -66,7 +72,8 @@ export async function attachBendingPdf(target: BendingPdfTarget): Promise<string
   }
   const upload = await documentStorage.uploadReturnPdf(target.reference, target.id, pdf)
   try {
-    return await bendingPdfRepository.saveReturnPdfPath(target.id, upload.path)
+    const path = await bendingPdfRepository.saveReturnPdfPath(target.id, upload.path)
+    return { path, pdf }
   } catch (error) {
     return throwAttachmentFailure(error, upload)
   }

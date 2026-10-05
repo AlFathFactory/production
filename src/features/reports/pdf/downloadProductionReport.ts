@@ -1,3 +1,4 @@
+import { savePdfFile, type PdfSaveResult } from '../../../services/files/pdfFiles'
 import type { ProductionReportPdfModel } from './reportPdfModel'
 
 function sanitizeFilename(value: string): string {
@@ -26,17 +27,8 @@ export function buildProductionReportFilename(
 export async function downloadProductionReport(
   model: ProductionReportPdfModel,
   filename: string,
-): Promise<void> {
+): Promise<PdfSaveResult> {
   const { generateProductionReportPdf } = await import('./productionReportPdfGenerator')
   const pdf = await generateProductionReportPdf(model)
-  const url = URL.createObjectURL(pdf)
-  const link = document.createElement('a')
-
-  link.href = url
-  link.download = filename
-  link.style.display = 'none'
-  document.body.append(link)
-  link.click()
-  link.remove()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1_000)
+  return savePdfFile(pdf, filename)
 }

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
+import { SavedFileActions } from '../../../components/shared/SavedFileActions'
 import { Button } from '../../../components/ui/Button'
+import { downloadStoredPdf } from '../../../services/files/pdfFiles'
 import { documentStorage } from '../../../services/supabase/documentStorage'
 import type { BendingPdfAttachmentState } from '../hooks/useBendingPdfAttachment'
 
@@ -12,6 +14,7 @@ interface BendingPdfStatusProps {
 export function BendingPdfStatus({ onRetry, state }: BendingPdfStatusProps) {
   const [action, setAction] = useState<'download' | 'open' | null>(null)
   const [accessError, setAccessError] = useState<string | null>(null)
+  const [savedPath, setSavedPath] = useState<string | null>(null)
 
   if (state.status === 'idle') return null
   if (state.status === 'attaching') {
@@ -51,7 +54,8 @@ export function BendingPdfStatus({ onRetry, state }: BendingPdfStatusProps) {
     setAccessError(null)
     setAction('download')
     try {
-      await documentStorage.downloadDocument(state.path, `${state.target.kind}_${state.target.reference}`)
+      const result = await downloadStoredPdf(state.path, `${state.target.kind}_${state.target.reference}.pdf`)
+      if (result.status === 'saved') setSavedPath(result.path)
     } catch (error) {
       setAccessError(error instanceof Error ? error.message : 'The PDF could not be downloaded.')
     } finally {
@@ -59,13 +63,21 @@ export function BendingPdfStatus({ onRetry, state }: BendingPdfStatusProps) {
     }
   }
 
+  const automaticSavedPath = state.localSave?.status === 'saved' ? state.localSave.path : null
+
   return (
     <div className="bending-pdf-status">
-      <strong>PDF attached</strong>
+      <strong>{state.localSave?.status === 'saving' ? 'PDF attached · Choose where to save it' : 'PDF attached'}</strong>
       <div className="bending-pdf-status__actions">
         <Button isLoading={action === 'open'} type="button" variant="secondary" onClick={() => void openPdf()}>Open PDF</Button>
         <Button isLoading={action === 'download'} type="button" variant="secondary" onClick={() => void downloadPdf()}>Download PDF</Button>
       </div>
+      {automaticSavedPath || savedPath ? <SavedFileActions path={savedPath ?? automaticSavedPath!} /> : null}
+      {state.localSave?.status === 'failed' ? (
+        <span className="bending-pdf-status__error" role="alert">
+          PDF attached, but the local copy was not saved. {state.localSave.error}
+        </span>
+      ) : null}
       {accessError ? <span className="bending-pdf-status__error" role="alert">{accessError}</span> : null}
     </div>
   )

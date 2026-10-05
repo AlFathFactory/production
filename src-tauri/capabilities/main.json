@@ -1,8 +1,14 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-shell",
-  "description": "Phase 1 desktop shell with no native API access.",
+  "description": "Desktop-native file selection and user-directed PDF saving.",
   "windows": ["main"],
-  "permissions": []
+  "permissions": [
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "fs:allow-stat",
+    "fs:allow-read-file",
+    "fs:allow-write-file",
+    "opener:allow-reveal-item-in-dir"
+  ]
 }
-

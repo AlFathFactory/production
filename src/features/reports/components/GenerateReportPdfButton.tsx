@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { SavedFileActions } from '../../../components/shared/SavedFileActions'
 import { AppNotification } from '../../../components/ui/AppNotification'
 import { Button } from '../../../components/ui/Button'
 import type { ReportContextData, ReportRow } from '../types'
@@ -32,12 +33,13 @@ export function GenerateReportPdfButton({
 }: GenerateReportPdfButtonProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [savedPath, setSavedPath] = useState<string | null>(null)
 
   const generatePdf = async () => {
     setError(null)
     setIsGenerating(true)
     try {
-      await downloadProductionReport(
+      const result = await downloadProductionReport(
         {
           generatedAt: new Date().toISOString(),
           generatedBy,
@@ -47,8 +49,9 @@ export function GenerateReportPdfButton({
         },
         buildProductionReportFilename(dateFrom, dateTo),
       )
-    } catch {
-      setError('The Production report PDF could not be generated. Please retry.')
+      if (result.status === 'saved') setSavedPath(result.path)
+    } catch (pdfError) {
+      setError(pdfError instanceof Error ? pdfError.message : 'The Production report PDF could not be generated. Please retry.')
     } finally {
       setIsGenerating(false)
     }
@@ -59,6 +62,11 @@ export function GenerateReportPdfButton({
       {error ? (
         <AppNotification onDismiss={() => setError(null)} title="PDF generation failed" tone="error">
           <span>{error}</span>
+        </AppNotification>
+      ) : null}
+      {savedPath ? (
+        <AppNotification onDismiss={() => setSavedPath(null)} title="Production report saved">
+          <SavedFileActions path={savedPath} />
         </AppNotification>
       ) : null}
       <Button

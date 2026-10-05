@@ -108,6 +108,12 @@ export const documentStorage = {
     if (error) throw mapStorageError(error, 'remove')
   },
 
+  async downloadDocumentBlob(path: string): Promise<Blob> {
+    const { data, error } = await supabase.storage.from(DOCUMENT_BUCKET).download(path)
+    if (error) throw mapStorageError(error, 'download')
+    return data
+  },
+
   async downloadDocument(path: string, fileName: string): Promise<void> {
     try {
       const signedUrl = await this.createSignedUrl(path, sanitizePathPart(fileName) + '.pdf')

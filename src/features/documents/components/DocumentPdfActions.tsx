@@ -1,7 +1,9 @@
 import { useState } from 'react'
 
+import { SavedFileActions } from '../../../components/shared/SavedFileActions'
 import { Button } from '../../../components/ui/Button'
 import { AppNotification } from '../../../components/ui/AppNotification'
+import { downloadStoredPdf } from '../../../services/files/pdfFiles'
 import { documentStorage } from '../../../services/supabase/documentStorage'
 
 interface DocumentPdfActionsProps {
@@ -12,6 +14,7 @@ interface DocumentPdfActionsProps {
 export function DocumentPdfActions({ pdfPath, reference }: DocumentPdfActionsProps) {
   const [action, setAction] = useState<'download' | 'open' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [savedPath, setSavedPath] = useState<string | null>(null)
 
   const openPdf = async () => {
     setError(null)
@@ -38,7 +41,8 @@ export function DocumentPdfActions({ pdfPath, reference }: DocumentPdfActionsPro
     setError(null)
     setAction('download')
     try {
-      await documentStorage.downloadDocument(pdfPath, reference)
+      const result = await downloadStoredPdf(pdfPath, `${reference}.pdf`)
+      if (result.status === 'saved') setSavedPath(result.path)
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'The PDF could not be downloaded.')
     } finally {
@@ -51,6 +55,11 @@ export function DocumentPdfActions({ pdfPath, reference }: DocumentPdfActionsPro
       {error ? (
         <AppNotification onDismiss={() => setError(null)} title="PDF action failed" tone="error">
           <span>{error}</span>
+        </AppNotification>
+      ) : null}
+      {savedPath ? (
+        <AppNotification onDismiss={() => setSavedPath(null)} title="PDF saved">
+          <SavedFileActions path={savedPath} />
         </AppNotification>
       ) : null}
       <div>
