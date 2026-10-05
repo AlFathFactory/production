@@ -1,9 +1,12 @@
 import { supabase } from '../../services/supabase/client'
+import { getProvisionUserFailure } from './provisionUserError'
 import type { AppUsersRow, CreateUserInput, UpdateUserInput, UserFilters, UserListItem } from './types'
+
+export type UsersRepositoryErrorKind = 'permission' | 'duplicate' | 'not_found' | 'network' | 'validation' | 'unknown'
 
 export class UsersRepositoryError extends Error {
   constructor(
-    public readonly kind: 'permission' | 'duplicate' | 'not_found' | 'network' | 'validation' | 'unknown',
+    public readonly kind: UsersRepositoryErrorKind,
     message: string,
   ) {
     super(message)
@@ -93,7 +96,11 @@ export const usersRepository = {
       },
     })
 
-    if (error) throw mapError(error, 'create')
+    const backendError = data && typeof data === 'object' && 'error' in data
+    if (error || backendError) {
+      const failure = await getProvisionUserFailure(data, error)
+      throw new UsersRepositoryError(failure.kind, failure.message)
+    }
 
     return mapUserRow(data)
   },

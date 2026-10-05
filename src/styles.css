@@ -276,6 +276,13 @@ a:focus-visible {
   font-size: 0.77rem;
 }
 
+.form-field__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .input {
   width: 100%;
   min-height: 48px;
