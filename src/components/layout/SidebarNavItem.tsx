@@ -14,6 +14,7 @@ function NavigationIcon({ icon }: { icon: NavigationIcon }) {
     dashboard: <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />,
     projects: <path d="M3 7h7l2 3h9v10H3zM3 7V5h7l2 3" />,
     production: <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />,
+    'bom-structure': <path d="M4 5h5v4H4zM15 5h5v4h-5zM9 7h6M6.5 9v8h4M6.5 13h8.5M15 11h5v4h-5zM15 17h5v4h-5z" />,
     reports: <path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5" />,
     bending: <path d="M4 5v5a6 6 0 0 0 12 0V5m0 0h4m-4 0v4" />,
     documents: <path d="M6 3h9l4 4v14H6zM15 3v5h5M9 13h6M9 17h6" />,

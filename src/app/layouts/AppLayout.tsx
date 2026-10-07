@@ -7,6 +7,7 @@ import { getNavigationLabel } from '../navigation/navigation'
 
 export function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const location = useLocation()
   const pageTitle = getNavigationLabel(location.pathname) ?? 'Page not found'
 
@@ -26,8 +27,18 @@ export function AppLayout() {
   }, [isSidebarOpen])
 
   return (
-    <div className="app-shell">
-      <AppSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+    <div className={`app-shell${isSidebarCollapsed ? ' app-shell--sidebar-collapsed' : ''}`}>
+      <AppSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onToggleCollapse={() => {
+          if (isSidebarOpen) {
+            setIsSidebarOpen(false)
+          } else {
+            setIsSidebarCollapsed((current) => !current)
+          }
+        }}
+      />
       {isSidebarOpen ? (
         <button
           aria-label="Close navigation menu"
@@ -37,7 +48,16 @@ export function AppLayout() {
         />
       ) : null}
       <div className="app-shell__workspace">
-        <AppHeader pageTitle={pageTitle} onMenuClick={() => setIsSidebarOpen(true)} />
+        <AppHeader
+          pageTitle={pageTitle}
+          onMenuClick={() => {
+            if (window.matchMedia('(max-width: 820px)').matches) {
+              setIsSidebarOpen(true)
+            } else {
+              setIsSidebarCollapsed((current) => !current)
+            }
+          }}
+        />
         <main className="app-shell__content">
           <Outlet />
         </main>

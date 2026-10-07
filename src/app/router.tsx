@@ -5,6 +5,7 @@ import { canAccessBendingDocuments, canAccessUserManagement } from '../features/
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { BendingPage } from '../features/bending/BendingPage'
+import { BomStructurePage } from '../features/bom-structure/BomStructurePage'
 import { DashboardPage } from '../features/dashboard/DashboardPage'
 import { DocumentsPage } from '../features/documents/DocumentsPage'
 import { ProjectsPage } from '../features/projects/ProjectsPage'
@@ -36,6 +37,10 @@ export const router = createBrowserRouter([
           {
             path: 'production',
             element: <ProductionPage />,
+          },
+          {
+            path: 'bom-structure',
+            element: <BomStructurePage />,
           },
           {
             path: 'reports',

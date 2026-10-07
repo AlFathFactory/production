@@ -4,6 +4,7 @@ export type NavigationIcon =
   | 'dashboard'
   | 'projects'
   | 'production'
+  | 'bom-structure'
   | 'reports'
   | 'bending'
   | 'documents'

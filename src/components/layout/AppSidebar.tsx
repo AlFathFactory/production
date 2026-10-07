@@ -7,13 +7,14 @@ import { SidebarNavItem } from './SidebarNavItem'
 interface AppSidebarProps {
   isOpen: boolean
   onClose: () => void
+  onToggleCollapse: () => void
 }
 
 function visibleItems(items: NavigationItem[], role: AppRole) {
   return items.filter((item) => !item.isVisible || item.isVisible(role))
 }
 
-export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
+export function AppSidebar({ isOpen, onClose, onToggleCollapse }: AppSidebarProps) {
   const { userProfile } = useAuth()
 
   if (!userProfile) {
@@ -28,6 +29,9 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
       <div className="app-sidebar__brand">
         <span className="app-sidebar__mark" aria-hidden="true">PC</span>
         <span>Follow Up System</span>
+        <button aria-label="Close sidebar" className="sidebar-collapse-button" type="button" onClick={onToggleCollapse}>
+          <span aria-hidden="true">×</span>
+        </button>
       </div>
 
       <nav className="app-sidebar__navigation" aria-label="Main navigation">

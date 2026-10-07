@@ -39,7 +39,7 @@ export function AppHeader({ pageTitle, onMenuClick }: AppHeaderProps) {
         </AppNotification>
       ) : null}
       <div className="app-shell-header__context">
-        <button className="menu-toggle" type="button" aria-label="Open navigation menu" onClick={onMenuClick}>
+        <button className="menu-toggle" type="button" aria-label="Toggle navigation menu" onClick={onMenuClick}>
           <span aria-hidden="true">☰</span>
         </button>
         <p>{pageTitle}</p>
