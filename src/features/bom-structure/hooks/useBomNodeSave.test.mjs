@@ -23,7 +23,7 @@ const { outputFiles } = await build({
           : path === '@tanstack/react-query'
             ? 'export const useMutation = (...args) => globalThis.__bomHookTest.useMutation(...args); export const useQueryClient = () => globalThis.__bomHookTest.queryClient'
             : path.endsWith('bomRepository')
-              ? 'export const bomRepository = { validateNodes: (...args) => globalThis.__bomHookTest.repository.validateNodes(...args), saveNodes: (...args) => globalThis.__bomHookTest.repository.saveNodes(...args) }'
+              ? 'export const bomRepository = { validateNodes: (...args) => globalThis.__bomHookTest.repository.validateNodes(...args), saveNodes: (...args) => globalThis.__bomHookTest.repository.saveNodes(...args), replaceNodes: (...args) => globalThis.__bomHookTest.repository.replaceNodes(...args) }'
               : 'export const bomKeys = { import: id => ["bom", "import", id], tree: id => ["bom", "tree", id], summary: id => ["bom", "summary", id], warnings: id => ["bom", "warnings", id], rollups: id => ["bom", "rollups", id] }',
         loader: 'js',
       }))
@@ -47,7 +47,7 @@ function parsedBom(quantity = 5) {
 
 function harness(warningCount = 0) {
   const states = []
-  const calls = { validated: [], saved: [] }
+  const calls = { validated: [], saved: [], replaced: [] }
   let cursor = 0
   globalThis.__bomHookTest = {
     useState(initial) {
@@ -85,6 +85,10 @@ function harness(warningCount = 0) {
       },
       async saveNodes(payload) {
         calls.saved.push(payload)
+        return { importId: payload.p_bom_import_id, insertedCount: payload.p_nodes.length, warningCount, status: 'saved' }
+      },
+      async replaceNodes(payload) {
+        calls.replaced.push(payload)
         return { importId: payload.p_bom_import_id, insertedCount: payload.p_nodes.length, warningCount, status: 'saved' }
       },
     },
@@ -148,4 +152,24 @@ test('an uncertain save error is surfaced without an automatic retry', async () 
   }
   await assert.rejects(render().saveMutation.mutateAsync({ importId: 'import-a' }), /Network response unknown/)
   assert.equal(attempts, 1)
+})
+
+test('replace sends the exact validated payload and does not rebuild changed parsed data', async () => {
+  const { calls, render } = harness()
+  const parsed = parsedBom(5)
+  await render().validateMutation.mutateAsync({ importId: 'current-a', parsed })
+  parsed.nodes[0].quantityPerParent = 20
+  await render().replaceMutation.mutateAsync({ importId: 'current-a' })
+  assert.equal(calls.replaced[0].p_nodes, calls.validated[0])
+  assert.equal(calls.replaced[0].p_nodes[0].quantity_per_parent, 5)
+})
+
+test('replace cannot reuse another import validation and still requires warning acknowledgment', async () => {
+  const { calls, render } = harness(1)
+  await render().validateMutation.mutateAsync({ importId: 'current-a', parsed: parsedBom() })
+  await assert.rejects(render().replaceMutation.mutateAsync({ importId: 'current-b' }), /Validate this workbook/)
+  await assert.rejects(render().replaceMutation.mutateAsync({ importId: 'current-a' }), /Acknowledge the backend warnings/)
+  render().setAcknowledgedWarnings(true)
+  await render().replaceMutation.mutateAsync({ importId: 'current-a' })
+  assert.equal(calls.replaced.length, 1)
 })

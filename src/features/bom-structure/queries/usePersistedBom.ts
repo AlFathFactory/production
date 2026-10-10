@@ -11,6 +11,30 @@ export function useBomImport(importId: string | null) {
   })
 }
 
+export function useBomVersions(groupId: string | null) {
+  return useQuery({
+    queryKey: bomKeys.versions(groupId ?? ''),
+    queryFn: () => bomRepository.listVersions(groupId!),
+    enabled: Boolean(groupId),
+  })
+}
+
+export function useBomCurrentVersion(groupId: string | null) {
+  return useQuery({
+    queryKey: bomKeys.currentVersion(groupId ?? ''),
+    queryFn: () => bomRepository.getCurrentSavedVersionId(groupId!),
+    enabled: Boolean(groupId),
+  })
+}
+
+export function useBomExtractionPreview(importId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: bomKeys.extraction(importId ?? ''),
+    queryFn: () => bomRepository.getExtractionPreview(importId!),
+    enabled: Boolean(importId && enabled),
+  })
+}
+
 export function useBomTree(importId: string | null, enabled: boolean) {
   return useQuery({
     queryKey: bomKeys.tree(importId ?? ''),

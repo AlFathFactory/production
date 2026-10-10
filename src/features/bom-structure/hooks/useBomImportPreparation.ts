@@ -16,13 +16,18 @@ import type { BomImport } from '../types/bomDomain.types'
 
 export type BomPreparationStage = 'idle' | 'hashing' | 'creating' | 'uploading' | 'attaching' | 'complete'
 
-interface PreparationInput {
+type PreparationInput = {
   file: File
   parsed: BomParseResult
+} & ({
+  mode: 'reimport'
+  previousImportId: string
+} | {
+  mode: 'new'
   projectId: string
   projectNumberId: string
   lotId: string
-}
+})
 
 interface PreparationAttempt {
   file: File
@@ -49,12 +54,12 @@ export function useBomImportPreparation() {
       if (!input.parsed.summary.rootCode || !input.parsed.sheetName || input.parsed.headerRow < 1) {
         throw new Error('The parsed workbook is missing a root code, sheet name, or header row.')
       }
-      if (!input.projectId || !input.projectNumberId || !input.lotId) {
+      if (input.mode === 'new' && (!input.projectId || !input.projectNumberId || !input.lotId)) {
         throw new Error('Choose a project, project number, and lot before creating the import.')
       }
-      if (!projectsQuery.data?.some((project) => project.id === input.projectId)
+      if (input.mode === 'new' && (!projectsQuery.data?.some((project) => project.id === input.projectId)
         || !projectNumbersQuery.data?.some((number) => number.id === input.projectNumberId && number.project_id === input.projectId)
-        || !lotsQuery.data?.some((lot) => lot.id === input.lotId && lot.project_number_id === input.projectNumberId)) {
+        || !lotsQuery.data?.some((lot) => lot.id === input.lotId && lot.project_number_id === input.projectNumberId))) {
         throw new Error('The selected project hierarchy is no longer available. Refresh the choices and try again.')
       }
 
@@ -68,16 +73,16 @@ export function useBomImportPreparation() {
         setStage('hashing')
         const sha256 = await sha256BomSourceFile(input.file)
         setStage('creating')
-        const importItem = await bomRepository.createImport({
+        const source = {
           p_file_name: input.file.name,
           p_sheet_name: input.parsed.sheetName,
           p_header_row: input.parsed.headerRow,
           p_root_code: input.parsed.summary.rootCode,
           p_parser_version: BOM_PARSER_VERSION,
-          p_project_id: input.projectId,
-          p_project_number_id: input.projectNumberId,
-          p_lot_id: input.lotId,
-        })
+        }
+        const importItem = input.mode === 'reimport'
+          ? await bomRepository.createReimport({ ...source, p_previous_import_id: input.previousImportId, p_source_file_name: input.file.name })
+          : await bomRepository.createImport({ ...source, p_project_id: input.projectId, p_project_number_id: input.projectNumberId, p_lot_id: input.lotId })
         currentAttempt = {
           file: input.file,
           importItem,

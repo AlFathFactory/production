@@ -440,6 +440,18 @@
 .bom-state-message { border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; color: var(--muted); background: var(--surface); }
 .bom-state-message button { border: 0; color: var(--brand); background: transparent; cursor: pointer; font-weight: 700; }
 
+.bom-version-history, .bom-extraction-preview { min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 16px; background: var(--surface); }
+.bom-version-history h2, .bom-extraction-preview h2 { margin: 0 0 10px; font-size: 1rem; }
+.bom-version-history p, .bom-extraction-preview p { color: var(--muted); font-size: 0.8rem; }
+.bom-version-history__scroll, .bom-extraction-preview__scroll { max-height: 65vh; overflow: auto; }
+.bom-version-history table, .bom-extraction-preview table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 0.8rem; }
+.bom-version-history th, .bom-extraction-preview th { position: sticky; top: 0; padding: 8px; background: #f5f8f6; text-align: left; white-space: nowrap; }
+.bom-version-history td, .bom-extraction-preview td { padding: 8px; border-top: 1px solid var(--line); vertical-align: top; }
+.bom-import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.bom-import-actions button, .bom-version-history button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--brand); background: var(--surface); cursor: pointer; }
+.bom-import-actions button:disabled, .bom-version-history button:disabled { cursor: default; opacity: .5; }
+.bom-extraction-preview select { min-width: 110px; }
+
 @media (max-width: 1450px) {
   .bom-summary { grid-template-columns: repeat(5, minmax(110px, 1fr)); }
   .bom-summary__metric:nth-child(5) { border-right: 0; }

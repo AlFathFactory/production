@@ -6,6 +6,7 @@ import type { BomParseResult } from '../types'
 
 interface BomImportPreparationProps {
   file: File
+  previousImportId?: string | null
   onAttached: (importId: string) => void
   preparation: ReturnType<typeof useBomImportPreparation>
   result: BomParseResult
@@ -18,7 +19,7 @@ const STAGES = [
   ['attaching', 'Attaching source metadata'],
 ] as const
 
-export function BomImportPreparation({ file, onAttached, preparation, result }: BomImportPreparationProps) {
+export function BomImportPreparation({ file, onAttached, preparation, previousImportId, result }: BomImportPreparationProps) {
   const projects = preparation.projectsQuery.data ?? []
   const projectNumbers = preparation.projectNumbersQuery.data ?? []
   const lots = preparation.lotsQuery.data ?? []
@@ -27,12 +28,12 @@ export function BomImportPreparation({ file, onAttached, preparation, result }: 
     result.summary.rootCode
       && result.sheetName
       && result.headerRow > 0
-      && preparation.projectId
-      && preparation.projectNumberId
-      && preparation.lotId
-      && !preparation.projectsQuery.isPending
-      && !preparation.projectNumbersQuery.isPending
-      && !preparation.lotsQuery.isPending,
+      && (previousImportId || (preparation.projectId
+        && preparation.projectNumberId
+        && preparation.lotId
+        && !preparation.projectsQuery.isPending
+        && !preparation.projectNumbersQuery.isPending
+        && !preparation.lotsQuery.isPending)),
   )
   const currentStageIndex = STAGES.findIndex(([stage]) => stage === preparation.stage)
 
@@ -40,13 +41,9 @@ export function BomImportPreparation({ file, onAttached, preparation, result }: 
     event.preventDefault()
     if (!ready || preparation.isBusy || preparation.isComplete) return
     try {
-      const prepared = await preparation.mutation.mutateAsync({
-        file,
-        parsed: result,
-        projectId: preparation.projectId,
-        projectNumberId: preparation.projectNumberId,
-        lotId: preparation.lotId,
-      })
+      const prepared = await preparation.mutation.mutateAsync(previousImportId
+        ? { file, parsed: result, mode: 'reimport', previousImportId }
+        : { file, parsed: result, mode: 'new', projectId: preparation.projectId, projectNumberId: preparation.projectNumberId, lotId: preparation.lotId })
       onAttached(prepared.importItem.id)
     } catch {
       // The mutation keeps its error and stage visible for a retry.
@@ -56,11 +53,11 @@ export function BomImportPreparation({ file, onAttached, preparation, result }: 
   return (
     <section className="bom-import-preparation" aria-labelledby="bom-import-preparation-title">
       <div className="bom-import-preparation__heading">
-        <h2 id="bom-import-preparation-title">Prepare new BOM import</h2>
+        <h2 id="bom-import-preparation-title">{previousImportId ? 'Prepare re-import candidate' : 'Prepare new BOM import'}</h2>
         <span>Source workbook</span>
       </div>
       <form onSubmit={(event) => void submit(event)}>
-        <div className="bom-import-preparation__fields">
+        {!previousImportId ? <div className="bom-import-preparation__fields">
           <label>
             <span>Project *</span>
             <Select disabled={locked || preparation.projectsQuery.isPending} required value={preparation.projectId} onChange={(event) => preparation.selectProject(event.target.value)}>
@@ -82,9 +79,9 @@ export function BomImportPreparation({ file, onAttached, preparation, result }: 
               {lots.map((lot) => <option key={lot.id} value={lot.id}>{lot.lot_number} ({lot.status})</option>)}
             </Select>
           </label>
-        </div>
+        </div> : <p>The previous saved version remains current until this candidate is validated and saved.</p>}
 
-        {preparation.projectsQuery.error || preparation.projectNumbersQuery.error || preparation.lotsQuery.error ? (
+        {!previousImportId && (preparation.projectsQuery.error || preparation.projectNumbersQuery.error || preparation.lotsQuery.error) ? (
           <div className="bom-import-preparation__error" role="alert">
             Could not load the project hierarchy.
             <button type="button" onClick={() => {

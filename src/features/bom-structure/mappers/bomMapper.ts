@@ -56,6 +56,8 @@ function toItemType(value: string): PersistedBomNode['itemType'] {
 export function mapBomImport(row: BomImportRow): BomImport {
   return {
     id: row.id,
+    createdBy: row.created_by,
+    createdByName: null,
     fileName: row.file_name,
     status: row.status,
     projectId: row.project_id,

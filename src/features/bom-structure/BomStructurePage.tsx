@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
 import { PageHeader } from '../../components/shared/PageHeader'
+import { isDesktopRuntime } from '../../config/platform'
 import { useAuth } from '../auth/hooks/useAuth'
 import { canManageBomImports } from '../auth/permissions'
 import { getAncestorIds, getVisibleBomNodes } from './bomTree'
 import { BomDetails } from './components/BomDetails'
+import { BomExtractionPreview } from './components/BomExtractionPreview'
 import { BomFilePicker } from './components/BomFilePicker'
 import { BomImportSelector } from './components/BomImportSelector'
 import { BomImportPreparation } from './components/BomImportPreparation'
@@ -14,18 +17,24 @@ import { BomSummary } from './components/BomSummary'
 import { BomToolbar } from './components/BomToolbar'
 import { BomTree } from './components/BomTree'
 import { BomWarnings } from './components/BomWarnings'
+import { BomVersionHistory } from './components/BomVersionHistory'
 import { RolledUpParts } from './components/RolledUpParts'
 import { useBomImportPreparation } from './hooks/useBomImportPreparation'
 import { useBomNodeSave } from './hooks/useBomNodeSave'
 import { useBomWorkbook } from './hooks/useBomWorkbook'
 import { useBomImports } from './queries/useBomImports'
+import { bomRepository } from './repositories/bomRepository'
+import { sha256BomSourceFile } from './bomSourceFile'
 import {
+  useBomCurrentVersion,
+  useBomExtractionPreview,
   useBomImport,
   useBomNodeDetails,
   useBomRolledUpParts,
   useBomSummary,
   useBomTree,
   useBomWarnings,
+  useBomVersions,
 } from './queries/usePersistedBom'
 import type { BomItemType, BomNode, BomParseResult } from './types'
 import './BomStructurePage.css'
@@ -41,10 +50,18 @@ export function BomStructurePage() {
   const preparation = useBomImportPreparation()
   const saving = useBomNodeSave()
   const { userProfile } = useAuth()
+  const queryClient = useQueryClient()
   const canManageImports = Boolean(userProfile?.is_active && canManageBomImports(userProfile.role))
+  const isAdmin = Boolean(userProfile?.is_active && userProfile.role === 'admin')
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedImportId = searchParams.get('bomImportId') || null
-  const [activeView, setActiveView] = useState<'structure' | 'rollup'>('structure')
+  const [activeView, setActiveView] = useState<'structure' | 'rollup' | 'extraction'>('structure')
+  const [reimportSourceId, setReimportSourceId] = useState<string | null>(null)
+  const [replaceImportId, setReplaceImportId] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [actionBusy, setActionBusy] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState('')
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [importSearch, setImportSearch] = useState('')
@@ -54,13 +71,18 @@ export function BomStructurePage() {
   const importsQuery = useBomImports({ search: importSearch })
   const importQuery = useBomImport(selectedImportId)
   const selectedImport = importQuery.data
+  const versionsQuery = useBomVersions(selectedImport?.versionGroupId ?? null)
+  const currentVersionQuery = useBomCurrentVersion(selectedImport?.versionGroupId ?? null)
+  const currentSavedId = currentVersionQuery.data ?? null
+  const isCurrentSaved = selectedImport?.status === 'saved' && selectedImport.id === currentSavedId
   const isPersisted = selectedImport?.status === 'saved' || selectedImport?.status === 'superseded'
+  const extractionQuery = useBomExtractionPreview(selectedImportId, Boolean(isCurrentSaved))
   const treeQuery = useBomTree(selectedImportId, isPersisted)
   const summaryQuery = useBomSummary(selectedImportId, isPersisted)
   const warningsQuery = useBomWarnings(selectedImportId, isPersisted)
   const rollupsQuery = useBomRolledUpParts(selectedImportId, isPersisted)
-  const activePreview = !isPersisted && workbook.result
-    && (!selectedImportId || selectedImportId === preparation.attempt?.importItem.id)
+  const activePreview = (replaceImportId === selectedImportId || !isPersisted) && workbook.result
+    && (replaceImportId === selectedImportId || !selectedImportId || selectedImportId === preparation.attempt?.importItem.id)
     ? workbook.result : null
 
   const persistedWorkspace = useMemo<WorkspaceData | null>(() => {
@@ -79,15 +101,15 @@ export function BomStructurePage() {
       warnings: warningsQuery.data,
     }
   }, [isPersisted, rollupsQuery.data, selectedImport, summaryQuery.data, treeQuery.data, warningsQuery.data])
-  const workspace: WorkspaceView | null = isPersisted
+  const workspace: WorkspaceView | null = isPersisted && replaceImportId !== selectedImportId
     ? persistedWorkspace ? { source: 'persisted', data: persistedWorkspace } : null
     : activePreview ? { source: 'local-preview', data: activePreview } : null
   const view = workspace?.data ?? null
   const isBackendView = workspace?.source === 'persisted'
   const nodesById = useMemo(() => new Map(view?.nodes.map((node) => [node.id, node]) ?? []), [view])
   const currentNode = selectedNode ? nodesById.get(selectedNode.id) ?? null : null
-  const detailsQuery = useBomNodeDetails(currentNode?.id ?? null, Boolean(isPersisted && isDetailsOpen))
-  const detailNode = isPersisted && currentNode && detailsQuery.data
+  const detailsQuery = useBomNodeDetails(currentNode?.id ?? null, Boolean(isPersisted && replaceImportId !== selectedImportId && isDetailsOpen))
+  const detailNode = isBackendView && currentNode && detailsQuery.data
     ? { ...currentNode, ...detailsQuery.data, children: currentNode.children, isLeaf: currentNode.isLeaf, reuseCount: currentNode.reuseCount }
     : currentNode
   const visibleNodes = useMemo(() => view
@@ -148,8 +170,85 @@ export function BomStructurePage() {
     if (preparation.isBusy || saving.isBusy || (preparation.attempt && !preparation.isComplete)) return
     preparation.reset()
     saving.reset()
+    setReplaceImportId(null)
+    setActionError(null)
     selectImport(null)
     await workbook.selectFile(file)
+  }
+
+  const openImport = (id: string | null) => {
+    if (preparation.isBusy || saving.isBusy) return
+    preparation.reset()
+    saving.reset()
+    setReplaceImportId(null)
+    setReimportSourceId(null)
+    setShowDelete(false)
+    setActionError(null)
+    selectImport(id)
+  }
+
+  const startReplace = async () => {
+    if (!selectedImport?.sourceFilePath || !selectedImport.sourceFileName || selectedImport.sourceFileBucket !== 'bom-imports' || !isCurrentSaved) return
+    setActionBusy(true)
+    setActionError(null)
+    try {
+      const blob = await bomRepository.downloadSourceFile(selectedImport.sourceFilePath)
+      const file = new File([blob], selectedImport.sourceFileName, { type: selectedImport.sourceFileMimeType ?? '' })
+      if (selectedImport.sourceFileSha256 && await sha256BomSourceFile(file) !== selectedImport.sourceFileSha256) {
+        throw new Error('Downloaded workbook checksum differs from the attached source. Replacement was cancelled.')
+      }
+      preparation.reset()
+      saving.reset()
+      setReplaceImportId(selectedImport.id)
+      await workbook.selectFile(file)
+    } catch (error) {
+      setReplaceImportId(null)
+      setActionError(error instanceof Error ? error.message : 'Could not load the original workbook.')
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
+  const downloadOriginal = async () => {
+    if (!selectedImport?.sourceFilePath || !selectedImport.sourceFileName || selectedImport.sourceFileBucket !== 'bom-imports') return
+    setActionBusy(true)
+    setActionError(null)
+    try {
+      const blob = await bomRepository.downloadSourceFile(selectedImport.sourceFilePath)
+      if (isDesktopRuntime()) {
+        const { saveDesktopWorkbook } = await import('../../services/desktop/desktopFiles')
+        await saveDesktopWorkbook(new Uint8Array(await blob.arrayBuffer()), selectedImport.sourceFileName)
+        return
+      }
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = selectedImport.sourceFileName
+      document.body.append(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Could not download the original workbook.')
+    } finally {
+      setActionBusy(false)
+    }
+  }
+
+  const deleteImport = async () => {
+    if (!selectedImport || !isAdmin || deleteConfirmation !== 'DELETE') return
+    setActionBusy(true)
+    setActionError(null)
+    try {
+      await bomRepository.deleteImport({ p_bom_import_id: selectedImport.id, p_confirmation: deleteConfirmation })
+      await queryClient.invalidateQueries({ queryKey: ['bom'] })
+      openImport(null)
+      setDeleteConfirmation('')
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Could not delete the BOM import.')
+    } finally {
+      setActionBusy(false)
+    }
   }
 
   const persistedError = [treeQuery, summaryQuery, warningsQuery, rollupsQuery]
@@ -181,14 +280,34 @@ export function BomStructurePage() {
           selectedImportId={selectedImportId}
           onRetry={() => void importsQuery.refetch()}
           onSearchChange={setImportSearch}
-          onSelect={(importId) => selectImport(importId || null)}
+          onSelect={(importId) => openImport(importId || null)}
         />
+        {selectedImport ? <>
+          <BomVersionHistory currentId={currentSavedId} error={versionsQuery.error instanceof Error ? versionsQuery.error.message : null}
+            imports={versionsQuery.data ?? []} isLoading={versionsQuery.isPending} onRetry={() => void versionsQuery.refetch()}
+            onSelect={(id) => openImport(id)} selectedId={selectedImport.id} />
+          {currentVersionQuery.isPending ? <p role="status">Resolving current saved version…</p> : currentVersionQuery.error ? <p role="alert">Could not resolve the current saved version. <button type="button" onClick={() => void currentVersionQuery.refetch()}>Retry</button></p>
+            : <p role="status">{isCurrentSaved ? 'This is the current saved Production source.' : currentSavedId ? `Current saved Production source: v${versionsQuery.data?.find((item) => item.id === currentSavedId)?.versionNumber ?? '?'}.` : 'No current saved Production source exists for this version group.'} {selectedImport.status === 'parsed' ? 'This parsed candidate is not active.' : null}</p>}
+          <div className="bom-import-actions">
+            {selectedImport.sourceFilePath && selectedImport.sourceFileBucket === 'bom-imports' ? <button disabled={actionBusy} type="button" onClick={() => void downloadOriginal()}>Download Original Workbook</button> : null}
+            {canManageImports && isCurrentSaved ? <>
+              <button disabled={actionBusy || saving.isBusy} type="button" onClick={() => void startReplace()}>Replace Current Import</button>
+              <button disabled={actionBusy || saving.isBusy} type="button" onClick={() => { setReimportSourceId(selectedImport.id); setReplaceImportId(null); setActionError(null) }}>Re-Import (choose a new workbook below)</button>
+            </> : null}
+            {isAdmin ? <button disabled={actionBusy || saving.isBusy} type="button" onClick={() => setShowDelete((value) => !value)}>Delete Import…</button> : null}
+          </div>
+          {reimportSourceId === selectedImport.id ? <p>Choose a workbook above to create v{selectedImport.versionNumber + 1}. The saved v{selectedImport.versionNumber} remains current until the candidate is saved. <button type="button" onClick={() => setReimportSourceId(null)}>Cancel</button></p> : null}
+          {replaceImportId === selectedImport.id ? <p>Replacing nodes from this import’s verified original workbook. <button type="button" onClick={() => { setReplaceImportId(null); saving.reset() }}>Cancel replacement</button></p> : null}
+          {showDelete && isAdmin ? <div role="group" aria-label="Delete BOM import confirmation"><p>Delete import v{selectedImport.versionNumber} ({selectedImport.fileName}) and its nodes/warnings? This cannot be undone. Type DELETE to confirm.</p><input aria-label="Type DELETE to confirm" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} /><button disabled={deleteConfirmation !== 'DELETE' || actionBusy} type="button" onClick={() => void deleteImport()}>Delete this import</button></div> : null}
+          {actionError ? <p role="alert">{actionError}</p> : null}
+        </> : null}
         {selectedImportId && importQuery.error ? <div className="bom-state-message" role="alert">Unable to load this import. <button type="button" onClick={() => void importQuery.refetch()}>Retry</button></div> : null}
         {selectedImportId && importQuery.isPending ? <div className="bom-state-message" role="status">Loading import…</div> : null}
         {selectedImportId && importQuery.isSuccess && !selectedImport ? <div className="bom-state-message" role="alert">This BOM import is not available.</div> : null}
-        {canManageImports && activePreview && workbook.sourceFile ? (
+        {canManageImports && activePreview && workbook.sourceFile && !(replaceImportId && replaceImportId === selectedImportId) ? (
           <BomImportPreparation
             file={workbook.sourceFile}
+            previousImportId={reimportSourceId}
             preparation={preparation}
             result={activePreview}
             onAttached={(importId) => {
@@ -203,9 +322,13 @@ export function BomStructurePage() {
             importId={preparation.attempt.importItem.id}
             result={activePreview}
             saving={saving}
-            onSaved={(importId) => selectImport(importId)}
+            onSaved={(importId) => { setReimportSourceId(null); selectImport(importId) }}
           />
         ) : null}
+        {canManageImports && isCurrentSaved && replaceImportId === selectedImportId && activePreview ? <BomSaveReview
+          importId={selectedImport.id} mode="replace" result={activePreview} saving={saving}
+          onSaved={() => { setReplaceImportId(null); void queryClient.invalidateQueries({ queryKey: ['bom'] }) }}
+        /> : null}
         {selectedImport?.status === 'parsed' && !activePreview ? (
           <div className="bom-state-message">This import has an attached source, but its structure is not saved. Reopen the original workbook to continue preparing it.</div>
         ) : null}
@@ -233,6 +356,7 @@ export function BomStructurePage() {
             <div className="bom-view-tabs" role="tablist" aria-label="BOM views">
               <button aria-selected={activeView === 'structure'} role="tab" type="button" onClick={() => setActiveView('structure')}>Structure Explorer</button>
               <button aria-selected={activeView === 'rollup'} role="tab" type="button" onClick={() => setActiveView('rollup')}>Rolled-up Parts <span>{view.rolledUpParts.length.toLocaleString('en-US')}</span></button>
+              {isBackendView && isCurrentSaved ? <button aria-selected={activeView === 'extraction'} role="tab" type="button" onClick={() => setActiveView('extraction')}>Extraction Preview</button> : null}
             </div>
             {activeView === 'structure' ? (
               <>
@@ -255,13 +379,16 @@ export function BomStructurePage() {
                     onToggle={toggleExpanded}
                   />
                   {currentNode && isDetailsOpen ? (
-                    isPersisted && detailsQuery.isPending ? <aside className="bom-details bom-details--empty" role="status">Loading saved node details…</aside>
-                      : isPersisted && (detailsQuery.error || !detailsQuery.data) ? <aside className="bom-details bom-details--empty" role="alert">Could not load saved node details. <button type="button" onClick={() => void detailsQuery.refetch()}>Retry</button></aside>
-                        : <BomDetails byCode={view.byCode} node={detailNode} nodesById={nodesById} canManageMappings={canManageImports} persisted={isBackendView} onClose={() => setIsDetailsOpen(false)} onNavigate={revealNode} />
+                    isBackendView && detailsQuery.isPending ? <aside className="bom-details bom-details--empty" role="status">Loading saved node details…</aside>
+                      : isBackendView && (detailsQuery.error || !detailsQuery.data) ? <aside className="bom-details bom-details--empty" role="alert">Could not load saved node details. <button type="button" onClick={() => void detailsQuery.refetch()}>Retry</button></aside>
+                        : <BomDetails byCode={view.byCode} node={detailNode} nodesById={nodesById} canManageMappings={canManageImports && (!isBackendView || Boolean(isCurrentSaved))} persisted={isBackendView} onClose={() => setIsDetailsOpen(false)} onNavigate={revealNode} />
                   ) : null}
                 </div>
               </>
-            ) : <RolledUpParts parts={view.rolledUpParts} persisted={isBackendView} />}
+            ) : activeView === 'rollup' ? <RolledUpParts parts={view.rolledUpParts} persisted={isBackendView} />
+              : isBackendView && isCurrentSaved ? extractionQuery.isPending ? <p role="status">Loading extraction preview…</p>
+                : extractionQuery.error ? <p role="alert">Could not load extraction preview. <button type="button" onClick={() => void extractionQuery.refetch()}>Retry</button></p>
+                  : <BomExtractionPreview key={selectedImportId} candidates={extractionQuery.data ?? []} importId={selectedImportId!} /> : null}
           </>
         ) : null}
         {activePreview && !isPersisted ? <div className="bom-local-only">Structure preview only · nodes not saved</div> : null}

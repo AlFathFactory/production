@@ -56,11 +56,19 @@ export const bomRepository = {
     const row = await bomApi.getImport(importId)
     return row ? mapBomImport(row) : null
   }),
+  listVersions: (groupId: string) => execute('load BOM version history', async () => {
+    const rows = await bomApi.listVersions(groupId)
+    // Profile lookup is supplementary; keep the version history usable if it is not permitted.
+    const creators = await bomApi.getCreatorNames([...new Set(rows.map((row) => row.created_by))]).catch(() => ({} as Record<string, string>))
+    return rows.map((row) => ({ ...mapBomImport(row), createdByName: creators[row.created_by] ?? null }))
+  }),
+  getCurrentSavedVersionId: (groupId: string) => execute('resolve the current saved BOM version', () => bomApi.getCurrentSavedVersionId(groupId)),
   createImport: (payload: CreateBomImportPayload) => execute('create the BOM import', async () => mapBomImport(await bomApi.createImport(payload))),
   uploadSourceFile: (objectPath: string, file: File) => execute('upload the source workbook', () => bomApi.uploadSourceFile(objectPath, file)),
+  downloadSourceFile: (objectPath: string) => execute('download the original workbook', () => bomApi.downloadSourceFile(objectPath)),
   attachSourceFile: (payload: AttachBomSourceFilePayload) => execute('attach the source workbook', async () => mapBomImport(await bomApi.attachSourceFile(payload))),
   saveNodes: (payload: BomNodeBulkPayload) => execute('save BOM nodes', async () => mapBomSaveResult(await bomApi.saveNodes(payload))),
-  replaceNodes: (payload: BomNodeBulkPayload) => execute('replace BOM nodes', () => bomApi.replaceNodes(payload)),
+  replaceNodes: (payload: BomNodeBulkPayload) => execute('replace BOM nodes', async () => mapBomSaveResult(await bomApi.replaceNodes(payload))),
   createReimport: (payload: CreateBomReimportPayload) => execute('create the re-import', async () => mapBomImport(await bomApi.createReimport(payload))),
   deleteImport: (payload: BomDeletePayload) => execute('delete the BOM import', () => bomApi.deleteImport(payload)),
   getTree: (importId: string) => execute('load the BOM tree', async () => {

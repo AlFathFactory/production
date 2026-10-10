@@ -70,6 +70,28 @@ export const bomApi = {
     return data ? toBomImportRow(data) : null
   },
 
+  async listVersions(groupId: string): Promise<BomImportRow[]> {
+    const { data, error } = await supabase.from('bom_imports').select('*')
+      .eq('version_group_id', groupId).order('version_number', { ascending: false })
+    if (error) throw error
+    return data.map(toBomImportRow)
+  },
+
+  async getCreatorNames(authUserIds: string[]): Promise<Record<string, string>> {
+    if (!authUserIds.length) return {}
+    const { data, error } = await supabase.from('app_users').select('auth_user_id,full_name').in('auth_user_id', authUserIds)
+    if (error) throw error
+    return Object.fromEntries(data.filter((item) => item.auth_user_id).map((item) => [item.auth_user_id!, item.full_name]))
+  },
+
+  async getCurrentSavedVersionId(groupId: string): Promise<string | null> {
+    const { data, error } = await supabase.from('bom_current_versions').select('id')
+      .eq('version_group_id', groupId).eq('status', 'saved')
+      .order('version_number', { ascending: false }).limit(1).maybeSingle()
+    if (error) throw error
+    return data?.id ?? null
+  },
+
   async uploadSourceFile(objectPath: string, file: File): Promise<{ path: string }> {
     const contentType = getBomSourceMimeType(file)
     const { data, error } = await supabase.storage.from(BOM_SOURCE_BUCKET).upload(objectPath, file, {
@@ -78,6 +100,12 @@ export const bomApi = {
     })
     if (error) throw error
     return { path: data.path }
+  },
+
+  async downloadSourceFile(objectPath: string): Promise<Blob> {
+    const { data, error } = await supabase.storage.from(BOM_SOURCE_BUCKET).download(objectPath)
+    if (error) throw error
+    return data
   },
 
   async attachSourceFile(payload: AttachBomSourceFilePayload): Promise<BomImportRow> {
@@ -192,8 +220,13 @@ export const bomApi = {
   },
 
   async getExtractionPreview(importId: string): Promise<BomExtractionCandidateRow[]> {
-    const { data, error } = await supabase.rpc('get_bom_production_extraction_preview', { p_bom_import_id: importId })
-    if (error) throw error
-    return data
+    const rows: BomExtractionCandidateRow[] = []
+    for (let start = 0; ; start += 1000) {
+      const { data, error } = await supabase.rpc('get_bom_production_extraction_preview', { p_bom_import_id: importId })
+        .order('representative_node_id').range(start, start + 999)
+      if (error) throw error
+      rows.push(...data)
+      if (data.length < 1000) return rows
+    }
   },
 }

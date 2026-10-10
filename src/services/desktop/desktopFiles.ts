@@ -125,6 +125,29 @@ export async function saveDesktopPdf(bytes: Uint8Array, suggestedFileName: strin
   }
 }
 
+export async function saveDesktopWorkbook(bytes: Uint8Array, suggestedFileName: string): Promise<string | null> {
+  const { save } = await import('@tauri-apps/plugin-dialog')
+  const { writeFile } = await import('@tauri-apps/plugin-fs')
+  let selectedPath: string | null
+  try {
+    selectedPath = await save({
+      defaultPath: lastSaveDirectory ? pathInDirectory(lastSaveDirectory, suggestedFileName) : suggestedFileName,
+      filters: [{ name: 'Excel workbook', extensions: ['xlsx', 'xls'] }],
+      title: 'Save original BOM workbook',
+    })
+  } catch {
+    throw new DesktopFileError('The Save As dialog could not be opened. Please try again.', 'open')
+  }
+  if (!selectedPath) return null
+  try {
+    await writeFile(selectedPath, bytes)
+    lastSaveDirectory = directoryFromPath(selectedPath)
+    return selectedPath
+  } catch {
+    throw new DesktopFileError('The workbook could not be saved to the selected location.', 'write')
+  }
+}
+
 export async function revealDesktopFile(path: string): Promise<void> {
   const { revealItemInDir } = await import('@tauri-apps/plugin-opener')
   try {

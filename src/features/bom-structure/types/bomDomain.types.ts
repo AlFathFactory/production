@@ -4,6 +4,8 @@ import type { BomDimensionRole, BomImportStatus } from './bomBackend.types'
 
 export interface BomImport {
   id: string
+  createdBy: string
+  createdByName: string | null
   fileName: string
   status: BomImportStatus
   projectId: string | null
