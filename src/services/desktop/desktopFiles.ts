@@ -52,7 +52,7 @@ export async function readDesktopExcelFile(path: string, maxSizeBytes: number): 
       throw new DesktopFileError('The selected item is not a file.', 'read')
     }
     if (fileInfo.size > maxSizeBytes) {
-      throw new DesktopFileError('The workbook is larger than the 15 MB import limit.', 'size')
+      throw new DesktopFileError(`The workbook is larger than the ${Math.round(maxSizeBytes / 1024 / 1024)} MB import limit.`, 'size')
     }
 
     const bytes = await readFile(path)

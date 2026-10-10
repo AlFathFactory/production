@@ -11,13 +11,14 @@ import {
 import { MAX_BOM_FILE_SIZE_BYTES } from '../hooks/useBomWorkbook'
 
 interface BomFilePickerProps {
+  disabled?: boolean
   error: string | null
   fileName: string | null
   isParsing: boolean
   onFileSelect: (file: File) => Promise<void>
 }
 
-export function BomFilePicker({ error, fileName, isParsing, onFileSelect }: BomFilePickerProps) {
+export function BomFilePicker({ disabled = false, error, fileName, isParsing, onFileSelect }: BomFilePickerProps) {
   const isDesktop = usesDesktopExcelHandling()
   const inputRef = useRef<HTMLInputElement>(null)
   const onFileSelectRef = useRef(onFileSelect)
@@ -33,7 +34,7 @@ export function BomFilePicker({ error, fileName, isParsing, onFileSelect }: BomF
     let unlisten: (() => void) | undefined
 
     void listenForExcelFileDrops((event) => {
-      if (disposed || isParsing) return
+      if (disposed || isParsing || disabled) return
       if (event.type === 'enter') return setIsDragging(true)
       if (event.type === 'leave') return setIsDragging(false)
       setIsDragging(false)
@@ -62,9 +63,10 @@ export function BomFilePicker({ error, fileName, isParsing, onFileSelect }: BomF
       disposed = true
       unlisten?.()
     }
-  }, [isDesktop, isParsing])
+  }, [disabled, isDesktop, isParsing])
 
   const chooseFile = async () => {
+    if (disabled) return
     setNativeError(null)
     if (!isDesktop) {
       inputRef.current?.click()
@@ -83,6 +85,7 @@ export function BomFilePicker({ error, fileName, isParsing, onFileSelect }: BomF
 
   const acceptWebDrop = (files: FileList | null) => {
     setIsDragging(false)
+    if (disabled) return
     if (!files?.length) return
     if (files.length !== 1) {
       setNativeError('Drop one Excel workbook at a time.')
@@ -96,7 +99,7 @@ export function BomFilePicker({ error, fileName, isParsing, onFileSelect }: BomF
     <section
       className={`bom-file-picker${isDragging ? ' bom-file-picker--active' : ''}`}
       aria-label="BOM workbook selection"
-      onDragEnter={!isDesktop ? (event) => { event.preventDefault(); setIsDragging(true) } : undefined}
+      onDragEnter={!isDesktop ? (event) => { event.preventDefault(); if (!disabled) setIsDragging(true) } : undefined}
       onDragLeave={!isDesktop ? (event) => { event.preventDefault(); setIsDragging(false) } : undefined}
       onDragOver={!isDesktop ? (event) => event.preventDefault() : undefined}
       onDrop={!isDesktop ? (event) => { event.preventDefault(); acceptWebDrop(event.dataTransfer.files) } : undefined}
@@ -105,17 +108,17 @@ export function BomFilePicker({ error, fileName, isParsing, onFileSelect }: BomF
         <span className="bom-file-picker__icon" aria-hidden="true">XLS</span>
         <div>
           <strong>{isDragging ? 'Drop the workbook here' : 'Select a Penta BOM structure workbook'}</strong>
-          <span>.xlsx or .xls · first worksheet · maximum 15 MB · parsed locally</span>
+          <span>.xlsx or .xls · first worksheet · maximum 25 MB · parsed locally</span>
         </div>
       </div>
-      <Button disabled={isParsing} isLoading={isPicking} type="button" onClick={() => void chooseFile()}>
+      <Button disabled={disabled || isParsing} isLoading={isPicking} type="button" onClick={() => void chooseFile()}>
         {fileName ? 'Replace Excel' : 'Select Excel'}
       </Button>
       <input
         ref={inputRef}
         accept=".xlsx,.xls"
         className="bom-file-picker__input"
-        disabled={isParsing}
+        disabled={disabled || isParsing}
         type="file"
         onChange={(event) => {
           const file = event.currentTarget.files?.[0]
@@ -131,4 +134,3 @@ export function BomFilePicker({ error, fileName, isParsing, onFileSelect }: BomF
     </section>
   )
 }
-

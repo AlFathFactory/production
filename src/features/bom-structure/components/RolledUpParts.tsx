@@ -2,11 +2,11 @@ import type { RolledUpBomPart } from '../types'
 
 const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 })
 
-export function RolledUpParts({ parts }: { parts: RolledUpBomPart[] }) {
+export function RolledUpParts({ parts, persisted = false }: { parts: RolledUpBomPart[]; persisted?: boolean }) {
   return (
     <section className="bom-rollup" aria-label="Rolled-up leaf parts">
       <div className="bom-rollup__intro">
-        <div><h2>Leaf Parts</h2><p>Leaf occurrences grouped by component code. No data is imported or saved.</p></div>
+        <div><h2>Leaf Parts</h2><p>{persisted ? 'Saved leaf occurrences grouped by the backend view.' : 'Leaf occurrences grouped by component code. Preview only.'}</p></div>
         <strong>{parts.length.toLocaleString('en-US')} unique leaves</strong>
       </div>
       <div className="bom-rollup__table-wrap">
@@ -27,4 +27,3 @@ export function RolledUpParts({ parts }: { parts: RolledUpBomPart[] }) {
     </section>
   )
 }
-

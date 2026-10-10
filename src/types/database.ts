@@ -495,6 +495,30 @@ export interface Database {
           corrected_at?: string
         }
         Relationships: []
+      },
+      bom_imports: {
+        Row: { id: string; file_name: string; created_by: string; status: string; created_at: string; project_id: string | null; project_number_id: string | null; lot_id: string | null; sheet_name: string | null; header_row: number | null; root_code: string | null; parser_version: string | null; source_file_bucket: string | null; source_file_path: string | null; source_file_name: string | null; source_file_mime_type: string | null; source_file_size_bytes: number | null; source_file_sha256: string | null; source_file_uploaded_at: string | null; version_group_id: string; version_number: number; supersedes_import_id: string | null; superseded_by_import_id: string | null; activated_at: string | null; updated_at: string; updated_by: string | null }
+        Insert: { id?: string; file_name: string; created_by?: string; status?: string; created_at?: string; project_id?: string | null; project_number_id?: string | null; lot_id?: string | null; sheet_name?: string | null; header_row?: number | null; root_code?: string | null; parser_version?: string | null; source_file_bucket?: string | null; source_file_path?: string | null; source_file_name?: string | null; source_file_mime_type?: string | null; source_file_size_bytes?: number | null; source_file_sha256?: string | null; source_file_uploaded_at?: string | null; version_group_id?: string; version_number?: number; supersedes_import_id?: string | null; superseded_by_import_id?: string | null; activated_at?: string | null; updated_at?: string; updated_by?: string | null }
+        Update: { id?: string; file_name?: string; created_by?: string; status?: string; created_at?: string; project_id?: string | null; project_number_id?: string | null; lot_id?: string | null; sheet_name?: string | null; header_row?: number | null; root_code?: string | null; parser_version?: string | null; source_file_bucket?: string | null; source_file_path?: string | null; source_file_name?: string | null; source_file_mime_type?: string | null; source_file_size_bytes?: number | null; source_file_sha256?: string | null; source_file_uploaded_at?: string | null; version_group_id?: string; version_number?: number; supersedes_import_id?: string | null; superseded_by_import_id?: string | null; activated_at?: string | null; updated_at?: string; updated_by?: string | null }
+        Relationships: []
+      },
+      bom_nodes: {
+        Row: { id: string; bom_import_id: string; parent_id: string | null; level: number; article: string | null; position: string | null; component: string | null; article_type: string | null; source_type: string | null; description: string | null; drawing_number: string | null; quantity_per_parent: number; calculated_cumulative_quantity: number; position_weight_kg: number | null; rolled_weight_kg: number; material: string | null; source_row: number; raw_data: Json; created_at: string; code: string | null; parent_code: string | null; item_type: string; updated_at: string; formatted_raw_data: Json; excel_cumulative_quantity: number | null; created_by: string; updated_by: string | null; name: string | null; name2: string | null }
+        Insert: { id?: string; bom_import_id: string; parent_id?: string | null; level: number; article?: string | null; position?: string | null; component?: string | null; article_type?: string | null; source_type?: string | null; description?: string | null; drawing_number?: string | null; quantity_per_parent: number; calculated_cumulative_quantity: number; position_weight_kg?: number | null; rolled_weight_kg: number; material?: string | null; source_row: number; raw_data: Json; code?: string | null; parent_code?: string | null; item_type: string; formatted_raw_data: Json; excel_cumulative_quantity?: number | null; name?: string | null; name2?: string | null }
+        Update: { id?: string; bom_import_id?: string; parent_id?: string | null; level?: number; article?: string | null; position?: string | null; component?: string | null; article_type?: string | null; source_type?: string | null; description?: string | null; drawing_number?: string | null; quantity_per_parent?: number; calculated_cumulative_quantity?: number; position_weight_kg?: number | null; rolled_weight_kg?: number; material?: string | null; source_row?: number; raw_data?: Json; code?: string | null; parent_code?: string | null; item_type?: string; formatted_raw_data?: Json; excel_cumulative_quantity?: number | null; name?: string | null; name2?: string | null }
+        Relationships: []
+      },
+      bom_import_warnings: {
+        Row: { id: string; bom_import_id: string; warning_index: number; kind: string; source_row: number | null; message: string; details: Json; created_at: string; created_by: string }
+        Insert: { id?: string; bom_import_id: string; warning_index: number; kind: string; source_row?: number | null; message: string; details: Json; created_at?: string; created_by?: string }
+        Update: { id?: string; bom_import_id?: string; warning_index?: number; kind?: string; source_row?: number | null; message?: string; details?: Json; created_at?: string; created_by?: string }
+        Relationships: []
+      },
+      bom_dimension_mappings: {
+        Row: { id: string; code: string | null; description: string; token_index: number; token_raw: string; token_value: number | null; role: string; created_by: string; created_at: string; updated_at: string; updated_by: string | null }
+        Insert: { id?: string; code?: string | null; description: string; token_index: number; token_raw: string; token_value?: number | null; role: string; created_by?: string; created_at?: string; updated_at?: string; updated_by?: string | null }
+        Update: { id?: string; code?: string | null; description?: string; token_index?: number; token_raw?: string; token_value?: number | null; role?: string; created_by?: string; created_at?: string; updated_at?: string; updated_by?: string | null }
+        Relationships: []
       }
     }
     Views: {
@@ -747,9 +771,59 @@ export interface Database {
           progress_state: string | null
         }
         Relationships: []
+      },
+      bom_current_versions: {
+        Row: { id: string | null; file_name: string | null; created_by: string | null; status: string | null; created_at: string | null; project_id: string | null; project_number_id: string | null; lot_id: string | null; sheet_name: string | null; header_row: number | null; root_code: string | null; parser_version: string | null; source_file_path: string | null; source_file_name: string | null; updated_at: string | null; updated_by: string | null; source_file_bucket: string | null; source_file_mime_type: string | null; source_file_size_bytes: number | null; source_file_sha256: string | null; source_file_uploaded_at: string | null; version_group_id: string | null; version_number: number | null; supersedes_import_id: string | null; superseded_by_import_id: string | null; activated_at: string | null }
+        Relationships: []
+      },
+      bom_summary: {
+        Row: { bom_import_id: string | null; root_code: string | null; rows: number | null; levels: number | null; unique_codes: number | null; assemblies: number | null; parts: number | null; materials: number | null; leaf_items: number | null; total_calculated_leaf_mass_kg: number | null }
+        Relationships: []
+      },
+      bom_reuse_counts: {
+        Row: { bom_import_id: string | null; code: string | null; reuse_count: number | null; is_reused: boolean | null }
+        Relationships: []
+      },
+      bom_rolled_up_leaf_parts: {
+        Row: { bom_import_id: string | null; code: string | null; description: string | null; material: string | null; occurrence_count: number | null; total_quantity: number | null; unit_weight_kg: number | null; total_weight_kg: number | null }
+        Relationships: []
+      },
+      bom_production_extraction_candidates: {
+        Row: { bom_import_id: string | null; version_group_id: string | null; version_number: number | null; lot_id: string | null; representative_node_id: string | null; article: string | null; name: string | null; name2: string | null; designation: string | null; material: string | null; source_type: string | null; drawing_number: string | null; occurrence_count: number | null; total_quantity: number | null; unit_weight_kg: number | null; total_weight_kg: number | null; profile: string | null; length_value: number | null; width_value: number | null; height_value: number | null; requires_routing_assignment: boolean | null; blockers: Json | null; is_ready_for_production: boolean | null }
+        Relationships: []
       }
     }
     Functions: {
+      create_bom_import: {
+        Args: { p_file_name: string; p_sheet_name: string; p_header_row: number; p_root_code: string; p_parser_version: string; p_project_id: string; p_project_number_id: string; p_lot_id: string; p_source_file_path?: string; p_source_file_name?: string }
+        Returns: Database['public']['Tables']['bom_imports']['Row']
+      }
+      attach_bom_import_source_file: {
+        Args: { p_bom_import_id: string; p_object_path: string; p_original_file_name: string; p_mime_type: string; p_size_bytes: number; p_sha256: string }
+        Returns: Database['public']['Tables']['bom_imports']['Row']
+      }
+      create_bom_reimport: {
+        Args: { p_previous_import_id: string; p_file_name: string; p_sheet_name: string; p_header_row: number; p_root_code: string; p_parser_version: string; p_source_file_name: string }
+        Returns: Database['public']['Tables']['bom_imports']['Row']
+      }
+      delete_bom_import: { Args: { p_bom_import_id: string; p_confirmation: string }; Returns: Json }
+      insert_bom_nodes_bulk: { Args: { p_bom_import_id: string; p_nodes: Json }; Returns: Json }
+      replace_bom_import_nodes: { Args: { p_bom_import_id: string; p_nodes: Json }; Returns: Json }
+      validate_bom_import_nodes: { Args: { p_nodes: Json }; Returns: Json }
+      get_bom_tree: {
+        Args: { p_bom_import_id: string }
+        Returns: Array<{ id: string; bom_import_id: string; parent_id: string | null; level: number; source_row: number; code: string; parent_code: string | null; position: string; article_type: string; item_type: string; source_type: string; name: string; name2: string; description: string; drawing_number: string; material: string; quantity_per_parent: number; calculated_cumulative_quantity: number; excel_cumulative_quantity: number | null; position_weight_kg: number | null; rolled_weight_kg: number }>
+      }
+      get_bom_node_details: {
+        Args: { p_node_id: string }
+        Returns: Array<{ id: string; bom_import_id: string; parent_id: string | null; level: number; source_row: number; code: string; parent_code: string | null; position: string; article_type: string; item_type: string; source_type: string; name: string; name2: string; description: string; drawing_number: string; material: string; quantity_per_parent: number; calculated_cumulative_quantity: number; excel_cumulative_quantity: number | null; position_weight_kg: number | null; rolled_weight_kg: number; raw_data: Json; formatted_raw_data: Json; created_at: string; updated_at: string }>
+      }
+      get_bom_dimension_mapping: {
+        Args: { p_code: string; p_description: string }
+        Returns: Array<{ id: string; code: string; description: string; token_index: number; token_raw: string; token_value: number; role: string; match_scope: string; created_by: string; created_at: string; updated_at: string }>
+      }
+      save_bom_dimension_mapping: { Args: { p_code: string; p_description: string; p_assignments: Json }; Returns: Json }
+      get_bom_production_extraction_preview: { Args: { p_bom_import_id: string }; Returns: Array<Database['public']['Views']['bom_production_extraction_candidates']['Row']> }
       search_bending_destination_inventory: {
         Args: {
           p_destination_id?: string

@@ -7,6 +7,7 @@ interface BomDetailsProps {
   nodesById: Map<string, BomNode>
   onClose: () => void
   onNavigate: (node: BomNode) => void
+  persisted?: boolean
 }
 
 const RAW_FIELDS = [
@@ -35,7 +36,7 @@ function pathFor(node: BomNode, nodesById: Map<string, BomNode>): BomNode[] {
   return path
 }
 
-export function BomDetails({ byCode, node, nodesById, onClose, onNavigate }: BomDetailsProps) {
+export function BomDetails({ byCode, node, nodesById, onClose, onNavigate, persisted = false }: BomDetailsProps) {
   if (!node) {
     return <aside className="bom-details bom-details--empty"><span>Select a row to inspect its calculations and original Excel values.</span></aside>
   }
@@ -75,13 +76,26 @@ export function BomDetails({ byCode, node, nodesById, onClose, onNavigate }: Bom
         </div>
       ) : null}
       <section className="bom-details__section">
+        <h3>Node values</h3>
+        <dl className="bom-details__grid">
+          <div><dt>Position</dt><dd>{node.position || '—'}</dd></div>
+          <div><dt>Article type</dt><dd>{node.articleType || '—'}</dd></div>
+          <div><dt>Drawing</dt><dd>{node.drawingNumber || '—'}</dd></div>
+          <div><dt>Material</dt><dd>{node.material || '—'}</dd></div>
+          <div><dt>Quantity / parent</dt><dd>{number.format(node.quantityPerParent)}</dd></div>
+          <div><dt>Calculated cumulative</dt><dd>{number.format(node.calculatedCumulativeQuantity)}</dd></div>
+          <div><dt>Position weight</dt><dd>{node.positionWeightKg === null ? '—' : `${number.format(node.positionWeightKg)} kg`}</dd></div>
+          <div><dt>Rolled weight</dt><dd>{number.format(node.rolledWeightKg)} kg</dd></div>
+        </dl>
+      </section>
+      {!persisted ? <section className="bom-details__section">
         <h3>Description dimensions</h3>
         <BomDimensionMapper
           key={node.id}
           code={node.code}
           description={[node.name, node.name2].filter(Boolean).join(' ')}
         />
-      </section>
+      </section> : null}
       <section className="bom-details__section">
         <h3>Excel fields</h3>
         <dl className="bom-details__raw">

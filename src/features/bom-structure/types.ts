@@ -14,6 +14,7 @@ export type BomWarningKind =
   | 'multiple-roots'
   | 'negative-quantity'
   | 'no-root'
+  | (string & {})
 
 export interface BomWarning {
   code: string | null

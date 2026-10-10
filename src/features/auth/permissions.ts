@@ -12,6 +12,10 @@ export function canManageProjects(role: AppRole): boolean {
   return canManageProduction(role)
 }
 
+export function canManageBomImports(role: AppRole): boolean {
+  return role === 'admin' || role === 'supervisor'
+}
+
 export function canCorrectProduction(role: AppRole): boolean {
   return canManageProduction(role)
 }
