@@ -24,7 +24,8 @@ import { useBomNodeSave } from './hooks/useBomNodeSave'
 import { useBomWorkbook } from './hooks/useBomWorkbook'
 import { useBomImports } from './queries/useBomImports'
 import { bomRepository } from './repositories/bomRepository'
-import { sha256BomSourceFile } from './bomSourceFile'
+import { canReimportCurrentBom, canReplaceCurrentBom, downloadBomReplacementSource } from './bomReplaceGuard'
+import { BOM_PARSER_VERSION, sha256BomSourceFile } from './bomSourceFile'
 import {
   useBomCurrentVersion,
   useBomExtractionPreview,
@@ -75,6 +76,9 @@ export function BomStructurePage() {
   const currentVersionQuery = useBomCurrentVersion(selectedImport?.versionGroupId ?? null)
   const currentSavedId = currentVersionQuery.data ?? null
   const isCurrentSaved = selectedImport?.status === 'saved' && selectedImport.id === currentSavedId
+  const canReplaceWithCurrentParser = selectedImport?.parserVersion === BOM_PARSER_VERSION
+  const canStartReplace = canReplaceCurrentBom(selectedImport, currentSavedId, canManageImports)
+  const canStartReimport = canReimportCurrentBom(selectedImport, currentSavedId, canManageImports)
   const isPersisted = selectedImport?.status === 'saved' || selectedImport?.status === 'superseded'
   const extractionQuery = useBomExtractionPreview(selectedImportId, Boolean(isCurrentSaved))
   const treeQuery = useBomTree(selectedImportId, isPersisted)
@@ -188,11 +192,12 @@ export function BomStructurePage() {
   }
 
   const startReplace = async () => {
-    if (!selectedImport?.sourceFilePath || !selectedImport.sourceFileName || selectedImport.sourceFileBucket !== 'bom-imports' || !isCurrentSaved) return
+    if (!selectedImport?.sourceFileName || !canReplaceCurrentBom(selectedImport, currentSavedId, canManageImports)) return
     setActionBusy(true)
     setActionError(null)
     try {
-      const blob = await bomRepository.downloadSourceFile(selectedImport.sourceFilePath)
+      const blob = await downloadBomReplacementSource(selectedImport, currentSavedId, canManageImports, bomRepository.downloadSourceFile)
+      if (!blob) return
       const file = new File([blob], selectedImport.sourceFileName, { type: selectedImport.sourceFileMimeType ?? '' })
       if (selectedImport.sourceFileSha256 && await sha256BomSourceFile(file) !== selectedImport.sourceFileSha256) {
         throw new Error('Downloaded workbook checksum differs from the attached source. Replacement was cancelled.')
@@ -291,11 +296,12 @@ export function BomStructurePage() {
           <div className="bom-import-actions">
             {selectedImport.sourceFilePath && selectedImport.sourceFileBucket === 'bom-imports' ? <button disabled={actionBusy} type="button" onClick={() => void downloadOriginal()}>Download Original Workbook</button> : null}
             {canManageImports && isCurrentSaved ? <>
-              <button disabled={actionBusy || saving.isBusy} type="button" onClick={() => void startReplace()}>Replace Current Import</button>
-              <button disabled={actionBusy || saving.isBusy} type="button" onClick={() => { setReimportSourceId(selectedImport.id); setReplaceImportId(null); setActionError(null) }}>Re-Import (choose a new workbook below)</button>
+              <button disabled={!canStartReplace || actionBusy || saving.isBusy} type="button" onClick={() => void startReplace()}>Replace Current Import</button>
+              <button disabled={!canStartReimport || actionBusy || saving.isBusy} type="button" onClick={() => { setReimportSourceId(selectedImport.id); setReplaceImportId(null); setActionError(null) }}>Re-Import (choose a new workbook below)</button>
             </> : null}
             {isAdmin ? <button disabled={actionBusy || saving.isBusy} type="button" onClick={() => setShowDelete((value) => !value)}>Delete Import…</button> : null}
           </div>
+          {canManageImports && isCurrentSaved && !canReplaceWithCurrentParser ? <p role="alert">This BOM was created with parser version {selectedImport.parserVersion ?? 'unknown'}, while the current application uses {BOM_PARSER_VERSION}. In-place replacement is blocked to preserve import reproducibility. Use Re-Import to create a new version with the current parser.</p> : null}
           {reimportSourceId === selectedImport.id ? <p>Choose a workbook above to create v{selectedImport.versionNumber + 1}. The saved v{selectedImport.versionNumber} remains current until the candidate is saved. <button type="button" onClick={() => setReimportSourceId(null)}>Cancel</button></p> : null}
           {replaceImportId === selectedImport.id ? <p>Replacing nodes from this import’s verified original workbook. <button type="button" onClick={() => { setReplaceImportId(null); saving.reset() }}>Cancel replacement</button></p> : null}
           {showDelete && isAdmin ? <div role="group" aria-label="Delete BOM import confirmation"><p>Delete import v{selectedImport.versionNumber} ({selectedImport.fileName}) and its nodes/warnings? This cannot be undone. Type DELETE to confirm.</p><input aria-label="Type DELETE to confirm" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} /><button disabled={deleteConfirmation !== 'DELETE' || actionBusy} type="button" onClick={() => void deleteImport()}>Delete this import</button></div> : null}
@@ -325,7 +331,7 @@ export function BomStructurePage() {
             onSaved={(importId) => { setReimportSourceId(null); selectImport(importId) }}
           />
         ) : null}
-        {canManageImports && isCurrentSaved && replaceImportId === selectedImportId && activePreview ? <BomSaveReview
+        {canStartReplace && selectedImport && replaceImportId === selectedImportId && activePreview ? <BomSaveReview
           importId={selectedImport.id} mode="replace" result={activePreview} saving={saving}
           onSaved={() => { setReplaceImportId(null); void queryClient.invalidateQueries({ queryKey: ['bom'] }) }}
         /> : null}
