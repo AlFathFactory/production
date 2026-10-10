@@ -3,6 +3,7 @@ import { bomApi } from '../api/bomApi'
 import { mapBomSaveResult, mapBomValidation } from '../mappers/bomValidation'
 import {
   mapBomDimensionMapping,
+  mapBomDimensionSaveResult,
   mapBomExtractionCandidate,
   mapBomImport,
   mapBomNode,
@@ -78,7 +79,7 @@ export const bomRepository = {
   getReuseCounts: (importId: string) => execute('load BOM reuse counts', async () => (await bomApi.getReuseCounts(importId)).map(mapBomReuseCount)),
   getRolledUpParts: (importId: string) => execute('load rolled-up BOM parts', async () => (await bomApi.getRolledUpParts(importId)).map(mapRolledUpBomPart)),
   getDimensionMapping: (code: string, description: string) => execute('load dimension mappings', async () => (await bomApi.getDimensionMapping(code, description)).map(mapBomDimensionMapping)),
-  saveDimensionMapping: (payload: BomDimensionMappingSavePayload) => execute('save dimension mappings', () => bomApi.saveDimensionMapping(payload)),
+  saveDimensionMapping: (payload: BomDimensionMappingSavePayload) => execute('save dimension mappings', async () => mapBomDimensionSaveResult(await bomApi.saveDimensionMapping(payload))),
   getExtractionPreview: (importId: string) => execute('load the extraction preview', async () => (await bomApi.getExtractionPreview(importId)).map(mapBomExtractionCandidate)),
   validateNodes: (nodes: Json) => execute('validate BOM nodes', async () => mapBomValidation(await bomApi.validateNodes(nodes))),
 }

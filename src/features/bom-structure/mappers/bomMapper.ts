@@ -14,6 +14,7 @@ import type {
 } from '../types/bomBackend.types'
 import type {
   BomDimensionMapping,
+  BomDimensionSaveResult,
   BomExtractionCandidate,
   BomImport,
   BomReuseCount,
@@ -169,8 +170,25 @@ export function mapBomDimensionMapping(row: BomDimensionMappingRow | BomDimensio
     tokenRaw: row.token_raw,
     tokenValue: row.token_value === null ? null : Number(row.token_value),
     role: row.role,
+    matchScope: 'match_scope' in row ? row.match_scope : null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
+  }
+}
+
+export function mapBomDimensionSaveResult(value: Json): BomDimensionSaveResult {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)
+    || (value.status !== 'saved' && value.status !== 'already_saved')
+    || (value.code !== null && typeof value.code !== 'string')
+    || typeof value.description !== 'string'
+    || typeof value.saved_count !== 'number') {
+    throw new Error('The server returned an invalid dimension mapping save result. Reopen the mapping before retrying.')
+  }
+  return {
+    status: value.status,
+    code: value.code,
+    description: value.description,
+    savedCount: value.saved_count,
   }
 }
 

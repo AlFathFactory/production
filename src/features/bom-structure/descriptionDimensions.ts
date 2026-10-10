@@ -1,12 +1,7 @@
-// Pure helpers that split the numbers out of a BOM description such as
-// "AKT L 5/90/100/521" so the user can assign each number a meaning.
-//
-// The Excel file never labels which number is thickness/profile, length,
-// width, or height, and the count varies per row — so extraction is
-// order-preserving and assignment stays manual in the UI. The resulting
-// `DimensionMapping` is the shape a future backend can persist, e.g. as
-// nullable numeric columns (thickness_mm, length_mm, width_mm, height_mm)
-// on a BOM/part table. Nothing here writes to any database.
+// Pure, order-preserving token helpers. Persisted assignments are fetched and
+// saved through the BOM repository; browser storage is not a mapping source.
+
+import type { BomDimensionAssignmentPayload } from './types/bomBackend.types'
 
 export type DimensionRole = 'profile' | 'length' | 'width' | 'height' | 'unassigned'
 
@@ -78,40 +73,19 @@ export function buildDimensionMapping(description: string, roles: DimensionRole[
   }
 }
 
-const STORAGE_PREFIX = 'bom-dimension-roles:'
-
-/** Storage key for a row mapping. Falls back to the description when the row has no code. */
-export function buildDimensionStorageKey(code: string, description: string): string {
-  const basis = code.trim() || description.trim() || 'unknown'
-  return `${STORAGE_PREFIX}${basis.toLocaleLowerCase()}`
-}
-
-/** Roles array fitted to the current token count (pads with 'unassigned', trims extras). */
-export function fitRolesToTokens(roles: DimensionRole[], tokenCount: number): DimensionRole[] {
-  return Array.from({ length: tokenCount }, (_, index) => roles[index] ?? 'unassigned')
-}
-
-function isDimensionRole(value: unknown): value is DimensionRole {
-  return typeof value === 'string' && (DIMENSION_ROLES as string[]).includes(value)
-}
-
-export function loadSavedDimensionRoles(storageKey: string): DimensionRole[] | null {
-  try {
-    const stored = window.localStorage.getItem(storageKey)
-    if (!stored) return null
-    const parsed: unknown = JSON.parse(stored)
-    if (!Array.isArray(parsed) || !parsed.every(isDimensionRole)) return null
-    return parsed
-  } catch {
-    return null
+export function buildDimensionAssignments(description: string, roles: DimensionRole[]): BomDimensionAssignmentPayload[] {
+  const tokens = extractDimensionTokens(description)
+  if (!tokens.length || roles.length !== tokens.length || roles.some((role) => !DIMENSION_ROLES.includes(role))) {
+    throw new Error('Review every description number before saving its dimension mapping.')
   }
-}
-
-export function saveDimensionRoles(storageKey: string, roles: DimensionRole[]): boolean {
-  try {
-    window.localStorage.setItem(storageKey, JSON.stringify(roles))
-    return true
-  } catch {
-    return false
+  const assignedRoles = roles.filter((role) => role !== 'unassigned')
+  if (new Set(assignedRoles).size !== assignedRoles.length) {
+    throw new Error('Each dimension can be assigned to only one number.')
   }
+  return tokens.map((token) => ({
+    token_index: token.index,
+    token_raw: token.raw,
+    token_value: token.value,
+    role: roles[token.index],
+  }))
 }

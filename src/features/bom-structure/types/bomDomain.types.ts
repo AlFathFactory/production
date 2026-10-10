@@ -72,8 +72,16 @@ export interface BomDimensionMapping {
   tokenRaw: string
   tokenValue: number | null
   role: BomDimensionRole
+  matchScope: string | null
   createdAt: Date
   updatedAt: Date
+}
+
+export interface BomDimensionSaveResult {
+  status: 'saved' | 'already_saved'
+  code: string | null
+  description: string
+  savedCount: number
 }
 
 export type PersistedBomSummary = BomSummary

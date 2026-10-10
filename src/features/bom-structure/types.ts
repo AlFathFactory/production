@@ -25,6 +25,7 @@ export interface BomWarning {
 
 export interface BomNode {
   articleType: string
+  description?: string
   calculatedCumulativeQuantity: number
   children: BomNode[]
   code: string

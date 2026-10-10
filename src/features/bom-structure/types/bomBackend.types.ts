@@ -197,6 +197,13 @@ export interface BomDimensionMappingSavePayload {
   p_assignments: Json
 }
 
+export interface BomDimensionAssignmentPayload {
+  token_index: number
+  token_raw: string
+  token_value: number | null
+  role: BomDimensionRole
+}
+
 export interface BomImportListFilters {
   projectId?: string
   projectNumberId?: string

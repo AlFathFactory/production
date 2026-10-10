@@ -34,6 +34,7 @@ const ALL_ITEM_TYPES = new Set<BomItemType>(['assembly', 'part', 'material'])
 const ALL_SOURCE_TYPES = new Set(['Eigenfertigung', 'Fremdbezug'])
 
 type WorkspaceData = Pick<BomParseResult, 'byCode' | 'headerRow' | 'nodes' | 'rolledUpParts' | 'roots' | 'sheetName' | 'summary' | 'warnings'>
+type WorkspaceView = { source: 'local-preview' | 'persisted'; data: WorkspaceData }
 
 export function BomStructurePage() {
   const workbook = useBomWorkbook()
@@ -78,7 +79,11 @@ export function BomStructurePage() {
       warnings: warningsQuery.data,
     }
   }, [isPersisted, rollupsQuery.data, selectedImport, summaryQuery.data, treeQuery.data, warningsQuery.data])
-  const view = persistedWorkspace ?? activePreview
+  const workspace: WorkspaceView | null = isPersisted
+    ? persistedWorkspace ? { source: 'persisted', data: persistedWorkspace } : null
+    : activePreview ? { source: 'local-preview', data: activePreview } : null
+  const view = workspace?.data ?? null
+  const isBackendView = workspace?.source === 'persisted'
   const nodesById = useMemo(() => new Map(view?.nodes.map((node) => [node.id, node]) ?? []), [view])
   const currentNode = selectedNode ? nodesById.get(selectedNode.id) ?? null : null
   const detailsQuery = useBomNodeDetails(currentNode?.id ?? null, Boolean(isPersisted && isDetailsOpen))
@@ -220,11 +225,11 @@ export function BomStructurePage() {
         {view ? (
           <>
             <div className="bom-result-meta">
-              <span><strong>{view.sheetName}</strong> · {isPersisted ? `saved import v${selectedImport?.versionNumber}` : `header detected at Excel row ${view.headerRow}`}</span>
+              <span><strong>{view.sheetName}</strong> · {isBackendView ? `saved import v${selectedImport?.versionNumber} · backend calculations` : `header detected at Excel row ${view.headerRow} · local preview calculations`}</span>
               <span>{visibleNodes.length.toLocaleString('en-US')} of {view.nodes.length.toLocaleString('en-US')} rows visible</span>
             </div>
             <BomSummary summary={view.summary} />
-            <BomWarnings persisted={isPersisted} warnings={view.warnings} />
+            <BomWarnings persisted={isBackendView} warnings={view.warnings} />
             <div className="bom-view-tabs" role="tablist" aria-label="BOM views">
               <button aria-selected={activeView === 'structure'} role="tab" type="button" onClick={() => setActiveView('structure')}>Structure Explorer</button>
               <button aria-selected={activeView === 'rollup'} role="tab" type="button" onClick={() => setActiveView('rollup')}>Rolled-up Parts <span>{view.rolledUpParts.length.toLocaleString('en-US')}</span></button>
@@ -252,11 +257,11 @@ export function BomStructurePage() {
                   {currentNode && isDetailsOpen ? (
                     isPersisted && detailsQuery.isPending ? <aside className="bom-details bom-details--empty" role="status">Loading saved node details…</aside>
                       : isPersisted && (detailsQuery.error || !detailsQuery.data) ? <aside className="bom-details bom-details--empty" role="alert">Could not load saved node details. <button type="button" onClick={() => void detailsQuery.refetch()}>Retry</button></aside>
-                        : <BomDetails byCode={view.byCode} node={detailNode} nodesById={nodesById} persisted={isPersisted} onClose={() => setIsDetailsOpen(false)} onNavigate={revealNode} />
+                        : <BomDetails byCode={view.byCode} node={detailNode} nodesById={nodesById} canManageMappings={canManageImports} persisted={isBackendView} onClose={() => setIsDetailsOpen(false)} onNavigate={revealNode} />
                   ) : null}
                 </div>
               </>
-            ) : <RolledUpParts parts={view.rolledUpParts} persisted={isPersisted} />}
+            ) : <RolledUpParts parts={view.rolledUpParts} persisted={isBackendView} />}
           </>
         ) : null}
         {activePreview && !isPersisted ? <div className="bom-local-only">Structure preview only · nodes not saved</div> : null}

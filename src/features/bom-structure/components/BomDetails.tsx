@@ -7,6 +7,7 @@ interface BomDetailsProps {
   nodesById: Map<string, BomNode>
   onClose: () => void
   onNavigate: (node: BomNode) => void
+  canManageMappings: boolean
   persisted?: boolean
 }
 
@@ -36,7 +37,7 @@ function pathFor(node: BomNode, nodesById: Map<string, BomNode>): BomNode[] {
   return path
 }
 
-export function BomDetails({ byCode, node, nodesById, onClose, onNavigate, persisted = false }: BomDetailsProps) {
+export function BomDetails({ byCode, node, nodesById, onClose, onNavigate, canManageMappings, persisted = false }: BomDetailsProps) {
   if (!node) {
     return <aside className="bom-details bom-details--empty"><span>Select a row to inspect its calculations and original Excel values.</span></aside>
   }
@@ -76,7 +77,7 @@ export function BomDetails({ byCode, node, nodesById, onClose, onNavigate, persi
         </div>
       ) : null}
       <section className="bom-details__section">
-        <h3>Node values</h3>
+        <h3>{persisted ? 'Saved node values' : 'Preview node values'}</h3>
         <dl className="bom-details__grid">
           <div><dt>Position</dt><dd>{node.position || '—'}</dd></div>
           <div><dt>Article type</dt><dd>{node.articleType || '—'}</dd></div>
@@ -88,14 +89,15 @@ export function BomDetails({ byCode, node, nodesById, onClose, onNavigate, persi
           <div><dt>Rolled weight</dt><dd>{number.format(node.rolledWeightKg)} kg</dd></div>
         </dl>
       </section>
-      {!persisted ? <section className="bom-details__section">
+      <section className="bom-details__section">
         <h3>Description dimensions</h3>
         <BomDimensionMapper
           key={node.id}
+          canManage={canManageMappings}
           code={node.code}
-          description={[node.name, node.name2].filter(Boolean).join(' ')}
+          description={node.description ?? [node.name, node.name2].filter(Boolean).join(' ')}
         />
-      </section> : null}
+      </section>
       <section className="bom-details__section">
         <h3>Excel fields</h3>
         <dl className="bom-details__raw">
