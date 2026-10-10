@@ -16,7 +16,7 @@ export function BomSaveReview({ importId, onSaved, result, saving }: Props) {
 
   const save = async () => {
     try {
-      const saved = await saving.saveMutation.mutateAsync({ importId, parsed: result })
+      const saved = await saving.saveMutation.mutateAsync({ importId })
       onSaved(saved.importId)
     } catch {
       // Keep the mutation error visible, including ambiguous network outcomes.
