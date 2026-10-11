@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
 import { PageHeader } from '../../components/shared/PageHeader'
+import { Select } from '../../components/ui/Select'
 import { isDesktopRuntime } from '../../config/platform'
 import { useAuth } from '../auth/hooks/useAuth'
 import { canManageBomImports } from '../auth/permissions'
@@ -398,14 +399,29 @@ export function BomStructurePage() {
             onSelect={(id) => openImport(id)} selectedId={selectedImport.id} />
           {currentVersionQuery.isPending ? <p role="status">Resolving current saved version…</p> : currentVersionQuery.error ? <p role="alert">Could not resolve the current saved version. <button type="button" onClick={() => void currentVersionQuery.refetch()}>Retry</button></p>
             : <p role="status">{isCurrentSaved ? 'This is the current saved Production source.' : currentSavedId ? `Current saved Production source: v${versionsQuery.data?.find((item) => item.id === currentSavedId)?.versionNumber ?? '?'}.` : 'No current saved Production source exists for this version group.'} {selectedImport.status === 'parsed' ? 'This parsed candidate is not active.' : null}</p>}
-          <div className="bom-import-actions">
-            {selectedImport.sourceFilePath && selectedImport.sourceFileBucket === 'bom-imports' ? <button disabled={actionBusy} type="button" onClick={() => void downloadOriginal()}>Download Original Workbook</button> : null}
-            {canManageImports && isCurrentSaved ? <>
-              <button disabled={!canStartReplace || actionBusy || saving.isBusy} type="button" onClick={() => void startReplace()}>Replace Current Import</button>
-              <button disabled={!canStartReimport || actionBusy || saving.isBusy} type="button" onClick={() => { setReimportSourceId(selectedImport.id); setReplaceImportId(null); setActionError(null) }}>Re-Import (choose a new workbook below)</button>
-            </> : null}
-            {isAdmin ? <button disabled={actionBusy || saving.isBusy} type="button" onClick={() => setShowDelete((value) => !value)}>Delete Import…</button> : null}
-          </div>
+          {(selectedImport.sourceFilePath && selectedImport.sourceFileName && selectedImport.sourceFileBucket === 'bom-imports') || (canManageImports && isCurrentSaved) || isAdmin ? (
+            <div className="bom-import-actions">
+              <Select aria-label="Import actions" defaultValue="" disabled={actionBusy} onChange={(event) => {
+                const action = event.currentTarget.value
+                event.currentTarget.value = ''
+                if (action === 'download') void downloadOriginal()
+                else if (action === 'replace' && canStartReplace && !saving.isBusy) void startReplace()
+                else if (action === 'reimport' && canStartReimport && !saving.isBusy) {
+                  setReimportSourceId(selectedImport.id)
+                  setReplaceImportId(null)
+                  setActionError(null)
+                } else if (action === 'delete' && isAdmin && !saving.isBusy) setShowDelete(true)
+              }}>
+                <option value="">Choose import action…</option>
+                {selectedImport.sourceFilePath && selectedImport.sourceFileName && selectedImport.sourceFileBucket === 'bom-imports' ? <option value="download">Download Original Workbook</option> : null}
+                {canManageImports && isCurrentSaved ? <>
+                  <option disabled={!canStartReplace || saving.isBusy} value="replace">Replace Current Import</option>
+                  <option disabled={!canStartReimport || saving.isBusy} value="reimport">Re-Import (choose a new workbook below)</option>
+                </> : null}
+                {isAdmin ? <option disabled={saving.isBusy} value="delete">Delete Import…</option> : null}
+              </Select>
+            </div>
+          ) : null}
           {canManageImports && isCurrentSaved && !canReplaceWithCurrentParser ? <p role="alert">This BOM was created with parser version {selectedImport.parserVersion ?? 'unknown'}, while the current application uses {BOM_PARSER_VERSION}. In-place replacement is blocked to preserve import reproducibility. Use Re-Import to create a new version with the current parser.</p> : null}
           {reimportSourceId === selectedImport.id ? <p>Choose a workbook above to create v{selectedImport.versionNumber + 1}. The saved v{selectedImport.versionNumber} remains current until the candidate is saved. <button type="button" onClick={() => setReimportSourceId(null)}>Cancel</button></p> : null}
           {replaceImportId === selectedImport.id ? <p>Replacing nodes from this import’s verified original workbook. <button type="button" onClick={() => { setReplaceImportId(null); saving.reset() }}>Cancel replacement</button></p> : null}
@@ -465,7 +481,7 @@ export function BomStructurePage() {
               <span role="status">{hasTreeCriteria ? `${treeMatchCount.toLocaleString('en-US')} matches · ` : ''}{visibleNodes.length.toLocaleString('en-US')} of {view.nodes.length.toLocaleString('en-US')} rows visible</span>
             </div>
             <BomSummary summary={view.summary} />
-            <BomWarnings persisted={isBackendView} warnings={view.warnings} />
+            <BomWarnings key={`${isBackendView ? 'saved' : 'preview'}:${selectedImportId ?? 'unsaved'}`} persisted={isBackendView} warnings={view.warnings} />
             <div className="bom-view-tabs" role="tablist" aria-label="BOM views">
               <button aria-selected={activeView === 'structure'} role="tab" type="button" onClick={() => { setActiveView('structure'); updateWorkspaceUrl({ tab: 'structure' }) }}>Structure Explorer</button>
               <button aria-selected={activeView === 'rollup'} role="tab" type="button" onClick={() => { setActiveView('rollup'); updateWorkspaceUrl({ tab: 'rollup' }) }}>Rolled-up Parts <span>{view.rolledUpParts.length.toLocaleString('en-US')}</span></button>

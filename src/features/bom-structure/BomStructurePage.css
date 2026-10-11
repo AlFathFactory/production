@@ -438,9 +438,9 @@
 .bom-version-history table, .bom-extraction-preview table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 0.8rem; }
 .bom-version-history th, .bom-extraction-preview th { position: sticky; top: 0; padding: 8px; background: #f5f8f6; text-align: left; white-space: nowrap; }
 .bom-version-history td, .bom-extraction-preview td { padding: 8px; border-top: 1px solid var(--line); vertical-align: top; }
-.bom-import-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.bom-import-actions button, .bom-version-history button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--brand); background: var(--surface); cursor: pointer; }
-.bom-import-actions button:disabled, .bom-version-history button:disabled { cursor: default; opacity: .5; }
+.bom-import-actions .select { width: min(100%, 380px); }
+.bom-version-history button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--brand); background: var(--surface); cursor: pointer; }
+.bom-version-history button:disabled { cursor: default; opacity: .5; }
 .bom-extraction-preview select { min-width: 110px; }
 .bom-pipeline-progress ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .bom-pipeline-progress li { display: grid; gap: 5px; border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; color: var(--ink); font-size: .72rem; }
