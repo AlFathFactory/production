@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
 
+import { Button } from '../../../components/ui/Button'
+import { Input } from '../../../components/ui/Input'
 import { useBomExtraction } from '../hooks/useBomExtraction'
 import { useBomExtractionStatus } from '../queries/usePersistedBom'
 import type { BomExtractionCandidate } from '../types/bomDomain.types'
 
 type Route = 'BEND' | 'NO BEND' | 'ROD' | 'ROLLING' | 'LADDER' | 'OTHER'
 const ROUTES: Route[] = ['BEND', 'NO BEND', 'ROD', 'ROLLING', 'LADDER', 'OTHER']
+const PAGE_SIZE = 25
 
 function formatNumber(value: number | null): string { return value === null ? '—' : value.toLocaleString('en-US') }
 
@@ -36,15 +39,27 @@ interface BomExtractionPreviewProps {
 export function BomExtractionPreview({ candidates, importId, lotId, versionNumber, canExecute }: BomExtractionPreviewProps) {
   const [assignments, setAssignments] = useState<Record<string, Route>>({})
   const [confirmed, setConfirmed] = useState(false)
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const statusQuery = useBomExtractionStatus(importId, true)
   const extraction = useBomExtraction(importId)
   const status = statusQuery.data ?? null
   const alreadyExtracted = status !== null
 
   const assignable = useMemo(
-    () => candidates.map((candidate) => ({ candidate, key: assignmentKey(candidate) })),
+    () => candidates.map((candidate, index) => ({ candidate, index, key: assignmentKey(candidate) })),
     [candidates],
   )
+  const filteredCandidates = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase()
+    if (!query) return assignable
+    return assignable.filter(({ candidate }) => [candidate.article, candidate.designation, candidate.profile, candidate.material]
+      .some((value) => value?.toLocaleLowerCase().includes(query)))
+  }, [assignable, search])
+  const pageCount = Math.max(1, Math.ceil(filteredCandidates.length / PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount)
+  const firstIndex = (currentPage - 1) * PAGE_SIZE
+  const visibleCandidates = filteredCandidates.slice(firstIndex, firstIndex + PAGE_SIZE)
   const blockedCount = useMemo(
     () => candidates.filter((candidate) => hasNonRoutingBlocker(candidate.blockers)).length,
     [candidates],
@@ -70,12 +85,6 @@ export function BomExtractionPreview({ candidates, importId, lotId, versionNumbe
 
   return <section className="bom-extraction-preview" aria-label="Production extraction preview">
     <h2>Production extraction preview</h2>
-    <p>
-      Full extraction of saved BOM v{versionNumber}
-      {lotId ? ` into lot ${lotId}` : ''}: {candidates.length.toLocaleString('en-US')} candidates.
-      Every candidate needs one explicit route. Extraction inserts new Production items only and cannot be undone.
-    </p>
-
     {statusQuery.isPending ? <p role="status">Checking whether this version was already extracted…</p> : null}
     {statusQuery.error ? <p role="alert">
       Could not load the extraction ledger. <button type="button" onClick={() => void statusQuery.refetch()}>Retry</button>
@@ -86,9 +95,15 @@ export function BomExtractionPreview({ candidates, importId, lotId, versionNumbe
     </p> : null}
     {!canExecute ? <p role="note">Extraction requires an active Supervisor or Admin account. Operators can inspect this preview.</p> : null}
 
+    <label className="bom-extraction-preview__search">
+      <span>Search candidates</span>
+      <Input type="search" placeholder="Article, designation, profile, or material" value={search}
+        onChange={(event) => { setSearch(event.target.value); setPage(1) }} />
+    </label>
+
     <div className="bom-extraction-preview__scroll"><table>
       <thead><tr><th>Article</th><th>Designation</th><th>Dimensions</th><th>Material</th><th>Quantity</th><th>Weight (kg)</th><th>Blockers</th><th>Route assignment</th></tr></thead>
-      <tbody>{assignable.map(({ candidate, key }, index) => {
+      <tbody>{visibleCandidates.map(({ candidate, key, index }) => {
         const rowKey = candidate.representativeNodeId ?? `${candidate.article ?? 'candidate'}-${index}`
         const blocked = hasNonRoutingBlocker(candidate.blockers)
         return <tr key={rowKey}>
@@ -106,6 +121,15 @@ export function BomExtractionPreview({ candidates, importId, lotId, versionNumbe
       })}</tbody>
     </table></div>
     {candidates.length === 0 ? <p>No extraction candidates were returned.</p> : null}
+    {candidates.length > 0 && filteredCandidates.length === 0 ? <p>No extraction candidates match your search.</p> : null}
+    <nav className="bom-extraction-preview__pagination" aria-label="Extraction preview pages">
+      <span>Showing {filteredCandidates.length ? firstIndex + 1 : 0}–{Math.min(firstIndex + PAGE_SIZE, filteredCandidates.length)} of {filteredCandidates.length} candidates</span>
+      <div className="bom-extraction-preview__pagination-controls">
+        <Button type="button" variant="secondary" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}>Previous</Button>
+        <span aria-live="polite">Page {currentPage} of {pageCount}</span>
+        <Button type="button" variant="secondary" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}>Next</Button>
+      </div>
+    </nav>
     <p>{assignedCount} of {assignableCount} routes assigned for import {importId}.</p>
     {blockedCount > 0 ? <p role="alert">{blockedCount} candidate(s) have unresolved non-routing blockers. Resolve them in the BOM before extracting.</p> : null}
 

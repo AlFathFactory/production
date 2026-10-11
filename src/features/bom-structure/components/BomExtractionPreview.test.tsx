@@ -107,6 +107,30 @@ describe('BomExtractionPreview', () => {
     expect(executeState.mutate).toHaveBeenCalledWith({ 'A-1': 'BEND', 'A-2': 'ROD' })
   })
 
+  test('searches candidates and keeps route assignments across pages', async () => {
+    resetMocks()
+    const user = userEvent.setup()
+    const candidates = Array.from({ length: 26 }, (_, index) => candidate(`A-${index + 1}`))
+    render(<BomExtractionPreview candidates={candidates} canExecute importId="import-1" lotId="lot-1" versionNumber={1} />)
+
+    expect(screen.getByText('Showing 1–25 of 26 candidates')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Route for A-26')).toBeNull()
+    await user.selectOptions(screen.getByLabelText('Route for A-1'), 'BEND')
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByLabelText('Route for A-26')).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Route for A-26'), 'ROD')
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search candidates' }), 'Designation A-1')
+    expect(screen.getByText('Page 1 of 1')).toBeInTheDocument()
+    expect(screen.getByLabelText('Route for A-1')).toHaveValue('BEND')
+    expect(screen.queryByLabelText('Route for A-26')).toBeNull()
+    expect(screen.getByText('2 of 26 routes assigned for import import-1.')).toBeInTheDocument()
+
+    await user.clear(screen.getByRole('searchbox', { name: 'Search candidates' }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByLabelText('Route for A-26')).toHaveValue('ROD')
+  })
+
   test('non-routing blockers prevent extraction and explain the cause', () => {
     resetMocks()
     render(<BomExtractionPreview candidates={[candidate('A-1', ['missing-material']), candidate('A-2')]} canExecute importId="import-1" lotId="lot-1" versionNumber={1} />)

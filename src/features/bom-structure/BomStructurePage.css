@@ -442,6 +442,10 @@
 .bom-version-history button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--brand); background: var(--surface); cursor: pointer; }
 .bom-version-history button:disabled { cursor: default; opacity: .5; }
 .bom-extraction-preview select { min-width: 110px; }
+.bom-extraction-preview__search { display: grid; width: min(100%, 380px); gap: 6px; margin: 16px 0 12px; font-size: .78rem; font-weight: 700; }
+.bom-extraction-preview__pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 12px; color: var(--muted); font-size: .78rem; }
+.bom-extraction-preview__pagination-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.bom-extraction-preview__pagination-controls .button { min-height: 34px; padding-inline: 10px; font-size: .72rem; }
 .bom-pipeline-progress ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .bom-pipeline-progress li { display: grid; gap: 5px; border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; color: var(--ink); font-size: .72rem; }
 .bom-pipeline-progress li span { color: var(--muted); font-size: .64rem; font-weight: 800; text-transform: uppercase; }
