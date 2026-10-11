@@ -2,8 +2,15 @@ import type { BomItemType, BomNode } from './types'
 
 export interface BomTreeFilters {
   itemTypes: Set<BomItemType>
+  level: number | null
+  leafOnly: boolean
   query: string
+  reusedOnly: boolean
+  sourceRowsWithWarnings: ReadonlySet<number>
   sourceTypes: Set<string>
+  unmappedDimensionCodes: ReadonlySet<string>
+  unmappedDimensionsOnly: boolean
+  warningsOnly: boolean
 }
 
 export interface VisibleBomNode {
@@ -20,9 +27,14 @@ function matches(node: BomNode, filters: BomTreeFilters): boolean {
   const allSourcesSelected = FILTERABLE_SOURCE_TYPES.every((source) => filters.sourceTypes.has(source))
   const typeMatches = allTypesSelected || filters.itemTypes.has(node.itemType)
   const sourceMatches = allSourcesSelected || filters.sourceTypes.has(node.sourceType)
+  const levelMatches = filters.level === null || node.level === filters.level
+  const leafMatches = !filters.leafOnly || node.isLeaf
+  const reuseMatches = !filters.reusedOnly || node.reuseCount > 1
+  const warningMatches = !filters.warningsOnly || filters.sourceRowsWithWarnings.has(node.sourceRow)
+  const dimensionsMatch = !filters.unmappedDimensionsOnly || filters.unmappedDimensionCodes.has(node.code)
   const textMatches = !normalizedQuery || [node.code, node.name, node.name2, node.description ?? '', node.material, node.drawingNumber]
     .some((value) => value.toLocaleLowerCase().includes(normalizedQuery))
-  return typeMatches && sourceMatches && textMatches
+  return typeMatches && sourceMatches && levelMatches && leafMatches && reuseMatches && warningMatches && dimensionsMatch && textMatches
 }
 
 export function getVisibleBomNodes(
@@ -35,6 +47,11 @@ export function getVisibleBomNodes(
   const hasActiveCriteria = Boolean(filters.query.trim())
     || !FILTERABLE_ITEM_TYPES.every((type) => filters.itemTypes.has(type))
     || !FILTERABLE_SOURCE_TYPES.every((source) => filters.sourceTypes.has(source))
+    || filters.level !== null
+    || filters.leafOnly
+    || filters.reusedOnly
+    || filters.warningsOnly
+    || filters.unmappedDimensionsOnly
 
   function mark(node: BomNode): boolean {
     const isDirectMatch = matches(node, filters)

@@ -17,7 +17,7 @@ import { BomImportPreparation } from './components/BomImportPreparation'
 import { BomPipelineProgress } from './components/BomPipelineProgress'
 import { BomSaveReview } from './components/BomSaveReview'
 import { BomSummary } from './components/BomSummary'
-import { BomToolbar } from './components/BomToolbar'
+import { BomToolbar, type BomToolbarFilters } from './components/BomToolbar'
 import { BomTree } from './components/BomTree'
 import { BomWarnings } from './components/BomWarnings'
 import { BomVersionHistory } from './components/BomVersionHistory'
@@ -30,6 +30,7 @@ import { useBomImports } from './queries/useBomImports'
 import { bomRepository } from './repositories/bomRepository'
 import { canReimportCurrentBom, canReplaceCurrentBom, downloadBomReplacementSource } from './bomReplaceGuard'
 import { BOM_PARSER_VERSION, sha256BomSourceFile } from './bomSourceFile'
+import { readBomWorkspaceUrl, writeBomWorkspaceUrl, type BomWorkspaceTab, type BomWorkspaceUrlState } from './bomUrlState'
 import {
   useBomCurrentVersion,
   useBomExtractionPreview,
@@ -47,6 +48,26 @@ import './BomStructurePage.css'
 const ALL_ITEM_TYPES = new Set<BomItemType>(['assembly', 'part', 'material'])
 const ALL_SOURCE_TYPES = new Set(['Eigenfertigung', 'Fremdbezug'])
 
+function defaultTreeFilters(): BomToolbarFilters {
+  return {
+    itemTypes: new Set(ALL_ITEM_TYPES),
+    leafOnly: false,
+    level: null,
+    reusedOnly: false,
+    sourceTypes: new Set(ALL_SOURCE_TYPES),
+    unmappedDimensionsOnly: false,
+    warningsOnly: false,
+  }
+}
+
+function toToolbarFilters(state: BomWorkspaceUrlState['filters']): BomToolbarFilters {
+  return { ...state, itemTypes: new Set(state.itemTypes), sourceTypes: new Set(state.sourceTypes) }
+}
+
+function toUrlFilters(filters: BomToolbarFilters): BomWorkspaceUrlState['filters'] {
+  return { ...filters, itemTypes: new Set(filters.itemTypes), sourceTypes: new Set(filters.sourceTypes) }
+}
+
 type WorkspaceData = Pick<BomParseResult, 'byCode' | 'headerRow' | 'nodes' | 'rolledUpParts' | 'roots' | 'sheetName' | 'summary' | 'warnings'>
 type WorkspaceView = { source: 'local-preview' | 'persisted'; data: WorkspaceData }
 
@@ -59,8 +80,9 @@ export function BomStructurePage() {
   const canManageImports = Boolean(userProfile?.is_active && canManageBomImports(userProfile.role))
   const isAdmin = Boolean(userProfile?.is_active && userProfile.role === 'admin')
   const [searchParams, setSearchParams] = useSearchParams()
-  const selectedImportId = searchParams.get('bomImportId') || null
-  const [activeView, setActiveView] = useState<'structure' | 'rollup' | 'extraction'>('structure')
+  const urlState = readBomWorkspaceUrl(searchParams)
+  const selectedImportId = urlState.importId
+  const [activeView, setActiveView] = useState<BomWorkspaceTab>(urlState.tab)
   const [reimportSourceId, setReimportSourceId] = useState<string | null>(null)
   const [replaceImportId, setReplaceImportId] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -70,9 +92,27 @@ export function BomStructurePage() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [importSearch, setImportSearch] = useState('')
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(urlState.query)
+  const [filters, setFilters] = useState<BomToolbarFilters>(() => toToolbarFilters(urlState.filters))
   const [revealId, setRevealId] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<BomNode | null>(null)
+  const updateWorkspaceUrl = useCallback((update: Partial<Omit<BomWorkspaceUrlState, 'filters'>> & { filters?: BomWorkspaceUrlState['filters'] }) => {
+    setSearchParams((current) => {
+      const state = readBomWorkspaceUrl(current)
+      return writeBomWorkspaceUrl(current, { ...state, ...update, filters: update.filters ?? state.filters })
+    }, { replace: true })
+  }, [setSearchParams])
+
+  useEffect(() => {
+    setActiveView(urlState.tab)
+    setQuery(urlState.query)
+    setFilters(toToolbarFilters(urlState.filters))
+    if (!urlState.nodeId) {
+      setSelectedNode(null)
+      setIsDetailsOpen(false)
+    }
+  // URL changes include browser back/forward as well as direct deep links.
+  }, [searchParams.toString()])
   const importsQuery = useBomImports({ search: importSearch })
   const importQuery = useBomImport(selectedImportId)
   const selectedImport = importQuery.data
@@ -120,31 +160,42 @@ export function BomStructurePage() {
   const detailNode = isBackendView && currentNode && detailsQuery.data
     ? { ...currentNode, ...detailsQuery.data, children: currentNode.children, isLeaf: currentNode.isLeaf, reuseCount: currentNode.reuseCount }
     : currentNode
+  const sourceRowsWithWarnings = useMemo(() => new Set(view?.warnings.map((warning) => warning.sourceRow).filter((row) => row > 0) ?? []), [view])
+  const unmappedDimensionCodes = useMemo(() => new Set((extractionQuery.data ?? [])
+    .filter((candidate) => /dimension|mapping/i.test(JSON.stringify(candidate.blockers)))
+    .map((candidate) => candidate.article)
+    .filter((code): code is string => Boolean(code))), [extractionQuery.data])
   const visibleNodes = useMemo(() => view
     ? getVisibleBomNodes(view.roots, expandedIds, {
-        itemTypes: ALL_ITEM_TYPES,
+        ...filters,
         query,
-        sourceTypes: ALL_SOURCE_TYPES,
+        sourceRowsWithWarnings,
+        unmappedDimensionCodes,
       })
-    : [], [expandedIds, query, view])
+    : [], [expandedIds, filters, query, sourceRowsWithWarnings, unmappedDimensionCodes, view])
 
   useEffect(() => {
     if (!view) return
-    setActiveView('structure')
+    setActiveView(urlState.tab)
     setExpandedIds(new Set(view.nodes.filter((node) => node.children.length).map((node) => node.id)))
     setIsDetailsOpen(false)
-    setQuery('')
+    setQuery(urlState.query)
     setRevealId(null)
-    setSelectedNode(null)
-  }, [view])
+    const deepLinkedNode = urlState.nodeId ? nodesById.get(urlState.nodeId) ?? null : null
+    setSelectedNode(deepLinkedNode)
+    setIsDetailsOpen(Boolean(deepLinkedNode))
+    if (deepLinkedNode) setExpandedIds((current) => new Set([...current, ...getAncestorIds(deepLinkedNode, nodesById)]))
+  }, [nodesById, urlState.nodeId, urlState.query, urlState.tab, view])
+
+  useEffect(() => {
+    if (view && activeView === 'extraction' && !(isBackendView && isCurrentSaved)) {
+      setActiveView('structure')
+      updateWorkspaceUrl({ tab: 'structure' })
+    }
+  }, [activeView, isBackendView, isCurrentSaved, updateWorkspaceUrl, view])
 
   const selectImport = (importId: string | null) => {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current)
-      if (importId) next.set('bomImportId', importId)
-      else next.delete('bomImportId')
-      return next
-    })
+    updateWorkspaceUrl({ importId, nodeId: null })
   }
 
   const toggleExpanded = useCallback((node: BomNode) => {
@@ -160,7 +211,8 @@ export function BomStructurePage() {
     setSelectedNode(node)
     setIsDetailsOpen(true)
     setRevealId(null)
-  }, [])
+    updateWorkspaceUrl({ nodeId: node.id })
+  }, [updateWorkspaceUrl])
 
   const revealNode = useCallback((node: BomNode) => {
     setActiveView('structure')
@@ -168,7 +220,8 @@ export function BomStructurePage() {
     setSelectedNode(node)
     setIsDetailsOpen(true)
     setRevealId(node.id)
-  }, [nodesById])
+    updateWorkspaceUrl({ nodeId: node.id, tab: 'structure' })
+  }, [nodesById, updateWorkspaceUrl])
 
   const expandToLevel = (level: number) => {
     if (!view) return
@@ -310,8 +363,9 @@ export function BomStructurePage() {
     || replaceImportId !== null
     || Boolean(saving.validation && !saving.saveMutation.isSuccess && !saving.replaceMutation.isSuccess)
   useBomUnsavedGuard(hasUnsavedBomWork)
-  const hasTreeQuery = query.trim().length > 0
-  const treeMatchCount = hasTreeQuery ? visibleNodes.filter((entry) => entry.isMatch).length : 0
+  const hasTreeCriteria = query.trim().length > 0 || filters.level !== null || filters.leafOnly || filters.reusedOnly
+    || filters.warningsOnly || filters.unmappedDimensionsOnly || filters.itemTypes.size !== ALL_ITEM_TYPES.size || filters.sourceTypes.size !== ALL_SOURCE_TYPES.size
+  const treeMatchCount = hasTreeCriteria ? visibleNodes.filter((entry) => entry.isMatch).length : 0
 
   return (
     <>
@@ -408,24 +462,38 @@ export function BomStructurePage() {
           <>
             <div className="bom-result-meta">
               <span><strong>{view.sheetName}</strong> · {isBackendView ? `saved import v${selectedImport?.versionNumber} · backend calculations` : `header detected at Excel row ${view.headerRow} · local preview calculations`}</span>
-              <span role="status">{hasTreeQuery ? `${treeMatchCount.toLocaleString('en-US')} matches · ` : ''}{visibleNodes.length.toLocaleString('en-US')} of {view.nodes.length.toLocaleString('en-US')} rows visible</span>
+              <span role="status">{hasTreeCriteria ? `${treeMatchCount.toLocaleString('en-US')} matches · ` : ''}{visibleNodes.length.toLocaleString('en-US')} of {view.nodes.length.toLocaleString('en-US')} rows visible</span>
             </div>
             <BomSummary summary={view.summary} />
             <BomWarnings persisted={isBackendView} warnings={view.warnings} />
             <div className="bom-view-tabs" role="tablist" aria-label="BOM views">
-              <button aria-selected={activeView === 'structure'} role="tab" type="button" onClick={() => setActiveView('structure')}>Structure Explorer</button>
-              <button aria-selected={activeView === 'rollup'} role="tab" type="button" onClick={() => setActiveView('rollup')}>Rolled-up Parts <span>{view.rolledUpParts.length.toLocaleString('en-US')}</span></button>
-              {isBackendView && isCurrentSaved ? <button aria-selected={activeView === 'extraction'} role="tab" type="button" onClick={() => setActiveView('extraction')}>Extraction Preview</button> : null}
+              <button aria-selected={activeView === 'structure'} role="tab" type="button" onClick={() => { setActiveView('structure'); updateWorkspaceUrl({ tab: 'structure' }) }}>Structure Explorer</button>
+              <button aria-selected={activeView === 'rollup'} role="tab" type="button" onClick={() => { setActiveView('rollup'); updateWorkspaceUrl({ tab: 'rollup' }) }}>Rolled-up Parts <span>{view.rolledUpParts.length.toLocaleString('en-US')}</span></button>
+              {isBackendView && isCurrentSaved ? <button aria-selected={activeView === 'extraction'} role="tab" type="button" onClick={() => { setActiveView('extraction'); updateWorkspaceUrl({ tab: 'extraction' }) }}>Extraction Preview</button> : null}
             </div>
             {activeView === 'structure' ? (
               <>
                 <BomToolbar
+                  filters={filters}
                   maxLevel={view.summary.levels}
+                  unmappedDimensionsAvailable={isBackendView && isCurrentSaved && extractionQuery.isSuccess}
+                  onClearFilters={() => {
+                    const next = defaultTreeFilters()
+                    setFilters(next)
+                    updateWorkspaceUrl({ filters: toUrlFilters(next) })
+                  }}
                   query={query}
                   onCollapseAll={() => setExpandedIds(new Set())}
                   onExpandAll={expandAll}
                   onExpandLevel={expandToLevel}
-                  onQueryChange={setQuery}
+                  onFiltersChange={(next) => {
+                    setFilters(next)
+                    updateWorkspaceUrl({ filters: toUrlFilters(next) })
+                  }}
+                  onQueryChange={(next) => {
+                    setQuery(next)
+                    updateWorkspaceUrl({ query: next })
+                  }}
                 />
                 <div className={`bom-explorer${currentNode && isDetailsOpen ? ' bom-explorer--details-open' : ''}`}>
                   <BomTree
@@ -440,7 +508,7 @@ export function BomStructurePage() {
                   {currentNode && isDetailsOpen ? (
                     isBackendView && detailsQuery.isPending ? <aside className="bom-details bom-details--empty" role="status">Loading saved node details…</aside>
                       : isBackendView && (detailsQuery.error || !detailsQuery.data) ? <aside className="bom-details bom-details--empty" role="alert">Could not load saved node details. <button type="button" onClick={() => void detailsQuery.refetch()}>Retry</button></aside>
-                        : <BomDetails byCode={view.byCode} node={detailNode} nodesById={nodesById} canManageMappings={canManageImports && (!isBackendView || Boolean(isCurrentSaved))} persisted={isBackendView} onClose={() => setIsDetailsOpen(false)} onNavigate={revealNode} />
+                        : <BomDetails byCode={view.byCode} node={detailNode} nodesById={nodesById} canManageMappings={canManageImports && (!isBackendView || Boolean(isCurrentSaved))} persisted={isBackendView} onClose={() => { setIsDetailsOpen(false); setSelectedNode(null); updateWorkspaceUrl({ nodeId: null }) }} onNavigate={revealNode} />
                   ) : null}
                 </div>
               </>
