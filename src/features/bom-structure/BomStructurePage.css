@@ -275,24 +275,9 @@
 .bom-toolbar__group { display: grid; min-width: 0; gap: 7px; }
 .bom-toolbar__label { color: var(--muted); font-size: 0.69rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
 .bom-search .input { min-width: 0; }
-.bom-level-buttons,
 .bom-toolbar__actions { display: flex; align-items: center; gap: 5px; }
-.bom-level-buttons button {
-  min-height: 32px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  padding: 0 9px;
-  color: var(--muted);
-  background: var(--surface);
-  cursor: pointer;
-  font-size: 0.7rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.bom-level-buttons button { width: 32px; padding: 0; }
-.bom-level-buttons button:last-child { width: auto; padding-inline: 9px; }
 .bom-toolbar__actions .button { min-height: 34px; padding-inline: 10px; font-size: 0.72rem; white-space: nowrap; }
-.bom-toolbar__filter-grid { display: grid; grid-template-columns: minmax(110px, .65fr) minmax(150px, 1fr) minmax(155px, 1fr) minmax(155px, 1fr); gap: 8px; align-items: start; }
+.bom-toolbar__filter-grid { display: grid; grid-template-columns: minmax(110px, .65fr) minmax(155px, 1fr); gap: 8px; align-items: start; }
 .bom-toolbar__filter-grid > label,
 .bom-toolbar__filter-grid fieldset { display: grid; min-width: 0; gap: 4px; margin: 0; border: 0; padding: 0; }
 .bom-toolbar__filter-grid > label > span,
@@ -510,7 +495,6 @@
   .bom-summary__metric:last-child { grid-column: 1 / -1; border-right: 0; border-bottom: 0; }
   .bom-validation__item { grid-template-columns: 1fr; gap: 4px; }
   .bom-toolbar { grid-template-columns: 1fr; }
-  .bom-toolbar__levels { grid-column: auto; }
   .bom-toolbar__filter-grid { grid-template-columns: 1fr 1fr; }
   .bom-toolbar__actions { justify-self: stretch; }
   .bom-toolbar__actions .button { flex: 1; }

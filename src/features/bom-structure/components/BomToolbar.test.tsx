@@ -34,7 +34,6 @@ function Harness({ onFiltersChange = vi.fn(), onQueryChange = vi.fn() }: {
       }}
       onCollapseAll={vi.fn()}
       onExpandAll={vi.fn()}
-      onExpandLevel={vi.fn()}
       onFiltersChange={(next) => {
         setFilters(next)
         onFiltersChange(next)
@@ -66,22 +65,11 @@ describe('BomToolbar', () => {
     expect(onFiltersChange).toHaveBeenLastCalledWith(expect.objectContaining({ level: 3 }))
   })
 
-  test('item type checkbox toggles one type off', async () => {
-    const user = userEvent.setup()
-    const onFiltersChange = vi.fn()
-    render(<Harness onFiltersChange={onFiltersChange} />)
-    await user.click(screen.getByLabelText('Material'))
-    const next = onFiltersChange.mock.calls.at(-1)?.[0] as BomToolbarFilters
-    expect([...next.itemTypes].sort()).toEqual(['assembly', 'part'])
-  })
-
-  test('source type checkbox toggles one source off', async () => {
-    const user = userEvent.setup()
-    const onFiltersChange = vi.fn()
-    render(<Harness onFiltersChange={onFiltersChange} />)
-    await user.click(screen.getByLabelText('Fremdbezug'))
-    const next = onFiltersChange.mock.calls.at(-1)?.[0] as BomToolbarFilters
-    expect([...next.sourceTypes]).toEqual(['Eigenfertigung'])
+  test('does not render item type, source type, or expand-to-level controls', () => {
+    render(<Harness />)
+    expect(screen.queryByText('Item type')).toBeNull()
+    expect(screen.queryByText('Source type')).toBeNull()
+    expect(screen.queryByText('Expand to level')).toBeNull()
   })
 
   test('leaves, reused, warnings, and unmapped toggles report checked state', async () => {

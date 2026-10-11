@@ -228,11 +228,6 @@ export function BomStructurePage() {
     updateWorkspaceUrl({ nodeId: node.id, tab: 'structure' })
   }, [nodesById, updateWorkspaceUrl])
 
-  const expandToLevel = (level: number) => {
-    if (!view) return
-    setExpandedIds(new Set(view.nodes.filter((node) => node.children.length && node.level < level).map((node) => node.id)))
-  }
-
   const expandAll = () => {
     if (!view) return
     setExpandedIds(new Set(view.nodes.filter((node) => node.children.length).map((node) => node.id)))
@@ -490,7 +485,6 @@ export function BomStructurePage() {
                   query={query}
                   onCollapseAll={() => setExpandedIds(new Set())}
                   onExpandAll={expandAll}
-                  onExpandLevel={expandToLevel}
                   onFiltersChange={(next) => {
                     setFilters(next)
                     updateWorkspaceUrl({ filters: toUrlFilters(next) })
