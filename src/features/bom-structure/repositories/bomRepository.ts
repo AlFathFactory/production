@@ -37,6 +37,11 @@ export class BomRepositoryError extends Error {
 function messageFor(error: unknown, action: string): string {
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : ''
   const message = error instanceof Error ? error.message : typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : ''
+  if (error instanceof Error && (/^The BOM server returned|^The server returned|^The extraction result/.test(message))) {
+    // Mapper-authored shape diagnostics already carry recovery guidance
+    // (reopen/retry wording); keep them verbatim instead of collapsing them.
+    return message
+  }
   if (code === '42501' || /Only active admins or supervisors|Authentication required|permission denied/i.test(message)) {
     return 'You do not have permission to manage BOM imports.'
   }
