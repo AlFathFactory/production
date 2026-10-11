@@ -13,6 +13,7 @@ export const bomKeys = {
   dimensionMapping: (code: string, description: string) => ['bom', 'dimension-mapping', code.trim().toLocaleLowerCase(), description.trim()] as const,
   versions: (groupId: string) => ['bom', 'versions', groupId] as const,
   currentVersion: (groupId: string) => ['bom', 'current-version', groupId] as const,
+  extractions: ['bom', 'extraction'] as const,
   extraction: (id: string) => ['bom', 'extraction', id] as const,
   extractionStatus: (id: string) => ['bom', 'extraction-status', id] as const,
 }

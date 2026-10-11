@@ -476,7 +476,6 @@ export function BomStructurePage() {
                 <BomToolbar
                   filters={filters}
                   maxLevel={view.summary.levels}
-                  unmappedDimensionsAvailable={isBackendView && isCurrentSaved && extractionQuery.isSuccess}
                   onClearFilters={() => {
                     const next = defaultTreeFilters()
                     setFilters(next)

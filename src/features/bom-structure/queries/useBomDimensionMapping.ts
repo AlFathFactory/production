@@ -39,6 +39,12 @@ export function useBomDimensionMapping(code: string, description: string, enable
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey })
     },
+    onSuccess: async () => {
+      // Dimension mappings are part of the extraction-candidate calculation.
+      // Refresh any mounted preview immediately and mark the rest stale for the
+      // next time its import is opened.
+      await queryClient.invalidateQueries({ queryKey: bomKeys.extractions })
+    },
   })
   return { mappingQuery, saveMutation }
 }

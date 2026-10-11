@@ -277,16 +277,11 @@
 .bom-search .input { min-width: 0; }
 .bom-toolbar__actions { display: flex; align-items: center; gap: 5px; }
 .bom-toolbar__actions .button { min-height: 34px; padding-inline: 10px; font-size: 0.72rem; white-space: nowrap; }
-.bom-toolbar__filter-grid { display: grid; grid-template-columns: minmax(110px, .65fr) minmax(155px, 1fr); gap: 8px; align-items: start; }
-.bom-toolbar__filter-grid > label,
-.bom-toolbar__filter-grid fieldset { display: grid; min-width: 0; gap: 4px; margin: 0; border: 0; padding: 0; }
-.bom-toolbar__filter-grid > label > span,
-.bom-toolbar__filter-grid legend { padding: 0; color: var(--muted); font-size: .64rem; font-weight: 700; }
+.bom-toolbar__filter-grid { display: grid; grid-template-columns: minmax(110px, 1fr); gap: 8px; align-items: start; }
+.bom-toolbar__filter-grid > label { display: grid; min-width: 0; gap: 4px; margin: 0; border: 0; padding: 0; }
+.bom-toolbar__filter-grid > label > span { padding: 0; color: var(--muted); font-size: .64rem; font-weight: 700; }
 .bom-toolbar__filter-grid .select { min-height: 31px; font-size: .72rem; }
-.bom-toolbar__filter-grid .checkbox-field { min-width: 0; font-size: .68rem; white-space: nowrap; }
-.bom-toolbar__filter-toggles { display: grid; gap: 4px; }
 .bom-toolbar__clear-filters { justify-self: start; border: 0; padding: 0; color: var(--brand); background: transparent; cursor: pointer; font-size: .7rem; font-weight: 800; }
-.bom-toolbar__filters small { color: var(--muted); font-size: .65rem; line-height: 1.3; }
 
 .bom-explorer { display: grid; min-width: 0; }
 .bom-explorer--details-open { grid-template-columns: minmax(0, 1fr) minmax(340px, 390px); gap: 14px; }
@@ -495,14 +490,12 @@
   .bom-summary__metric:last-child { grid-column: 1 / -1; border-right: 0; border-bottom: 0; }
   .bom-validation__item { grid-template-columns: 1fr; gap: 4px; }
   .bom-toolbar { grid-template-columns: 1fr; }
-  .bom-toolbar__filter-grid { grid-template-columns: 1fr 1fr; }
   .bom-toolbar__actions { justify-self: stretch; }
   .bom-toolbar__actions .button { flex: 1; }
   .bom-rollup__intro { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 430px) {
-  .bom-toolbar__filter-grid { grid-template-columns: 1fr; }
   .bom-view-tabs { overflow-x: auto; }
   .bom-view-tabs button { flex: 0 0 auto; padding-inline: 12px; }
   .bom-tree { height: min(62vh, 620px); }

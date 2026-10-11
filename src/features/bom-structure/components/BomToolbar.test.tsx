@@ -43,7 +43,6 @@ function Harness({ onFiltersChange = vi.fn(), onQueryChange = vi.fn() }: {
         onQueryChange(next)
       }}
       query={query}
-      unmappedDimensionsAvailable
     />
   )
 }
@@ -65,32 +64,24 @@ describe('BomToolbar', () => {
     expect(onFiltersChange).toHaveBeenLastCalledWith(expect.objectContaining({ level: 3 }))
   })
 
-  test('does not render item type, source type, or expand-to-level controls', () => {
+  test('does not render removed filter and expand controls', () => {
     render(<Harness />)
     expect(screen.queryByText('Item type')).toBeNull()
     expect(screen.queryByText('Source type')).toBeNull()
     expect(screen.queryByText('Expand to level')).toBeNull()
-  })
-
-  test('leaves, reused, warnings, and unmapped toggles report checked state', async () => {
-    const user = userEvent.setup()
-    const onFiltersChange = vi.fn()
-    render(<Harness onFiltersChange={onFiltersChange} />)
-    await user.click(screen.getByLabelText('Leaves only'))
-    await user.click(screen.getByLabelText('Reused only'))
-    await user.click(screen.getByLabelText('Warnings only'))
-    await user.click(screen.getByLabelText('Unmapped dimensions'))
-    const next = onFiltersChange.mock.calls.at(-1)?.[0] as BomToolbarFilters
-    expect(next).toMatchObject({ leafOnly: true, reusedOnly: true, warningsOnly: true, unmappedDimensionsOnly: true })
+    expect(screen.queryByLabelText('Leaves only')).toBeNull()
+    expect(screen.queryByLabelText('Reused only')).toBeNull()
+    expect(screen.queryByLabelText('Warnings only')).toBeNull()
+    expect(screen.queryByLabelText('Unmapped dimensions')).toBeNull()
   })
 
   test('clear filters restores defaults once a filter is active', async () => {
     const user = userEvent.setup()
     render(<Harness />)
     expect(screen.queryByRole('button', { name: /clear filters/i })).toBeNull()
-    await user.click(screen.getByLabelText('Leaves only'))
+    await user.selectOptions(screen.getByLabelText(/filter by level/i), '3')
     await user.click(screen.getByRole('button', { name: /clear filters/i }))
     expect(screen.queryByRole('button', { name: /clear filters/i })).toBeNull()
-    expect(screen.getByLabelText('Leaves only')).not.toBeChecked()
+    expect(screen.getByLabelText(/filter by level/i)).toHaveValue('')
   })
 })
