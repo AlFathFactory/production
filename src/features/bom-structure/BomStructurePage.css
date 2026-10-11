@@ -451,6 +451,17 @@
 .bom-import-actions button, .bom-version-history button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--brand); background: var(--surface); cursor: pointer; }
 .bom-import-actions button:disabled, .bom-version-history button:disabled { cursor: default; opacity: .5; }
 .bom-extraction-preview select { min-width: 110px; }
+.bom-pipeline-progress ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.bom-pipeline-progress li { display: grid; gap: 5px; border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; color: var(--ink); font-size: .72rem; }
+.bom-pipeline-progress li span { color: var(--muted); font-size: .64rem; font-weight: 800; text-transform: uppercase; }
+.bom-pipeline-progress li[aria-current='step'] { border-color: var(--brand); background: var(--brand-soft); }
+.bom-pipeline-progress li[aria-current='step'] span { color: var(--brand); }
+.bom-pipeline-progress li[data-state='failed'] { border-color: #a04431; }
+.bom-pipeline-progress li[data-state='failed'] span { color: #a04431; }
+.bom-recovery-notice { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: .8rem; background: var(--surface); }
+.bom-recovery-notice[data-tone='warning'] { border-color: #a04431; color: #a04431; }
+.bom-tree__more { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 4px; color: var(--muted); font-size: .78rem; }
+.bom-tree__more button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--brand); background: var(--surface); cursor: pointer; }
 
 @media (max-width: 1450px) {
   .bom-summary { grid-template-columns: repeat(5, minmax(110px, 1fr)); }
@@ -468,6 +479,7 @@
   .bom-import-preparation__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bom-import-preparation__facts div { border-bottom: 1px solid var(--line); }
   .bom-import-preparation__progress { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bom-pipeline-progress ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bom-file-picker { align-items: flex-start; flex-direction: column; }
   .bom-file-picker .button { width: 100%; }
   .bom-file-picker__status,

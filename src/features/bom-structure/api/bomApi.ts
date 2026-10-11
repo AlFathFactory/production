@@ -8,6 +8,7 @@ import type {
   BomDimensionMappingSavePayload,
   BomDimensionRole,
   BomExtractionCandidateRow,
+  BomExtractionExecutePayload,
   BomImportListFilters,
   BomImportRow,
   BomNodeBulkPayload,
@@ -228,5 +229,17 @@ export const bomApi = {
       rows.push(...data)
       if (data.length < 1000) return rows
     }
+  },
+
+  async getExtractionStatus(importId: string): Promise<Json> {
+    const { data, error } = await supabase.rpc('get_bom_production_extraction_status', { p_bom_import_id: importId })
+    if (error) throw error
+    return data
+  },
+
+  async extractToProduction(payload: BomExtractionExecutePayload): Promise<Json> {
+    const { data, error } = await supabase.rpc('extract_bom_to_production', payload)
+    if (error) throw error
+    return data
   },
 }

@@ -35,6 +35,14 @@ export function useBomExtractionPreview(importId: string | null, enabled: boolea
   })
 }
 
+export function useBomExtractionStatus(importId: string | null, enabled: boolean) {
+  return useQuery({
+    queryKey: bomKeys.extractionStatus(importId ?? ''),
+    queryFn: () => bomRepository.getExtractionStatus(importId!),
+    enabled: Boolean(importId && enabled),
+  })
+}
+
 export function useBomTree(importId: string | null, enabled: boolean) {
   return useQuery({
     queryKey: bomKeys.tree(importId ?? ''),

@@ -204,6 +204,12 @@ export interface BomDimensionAssignmentPayload {
   role: BomDimensionRole
 }
 
+export interface BomExtractionExecutePayload {
+  p_bom_import_id: string
+  p_assignments: Json
+  p_request_id: string
+}
+
 export interface BomImportListFilters {
   projectId?: string
   projectNumberId?: string

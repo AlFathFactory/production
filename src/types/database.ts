@@ -824,6 +824,8 @@ export interface Database {
       }
       save_bom_dimension_mapping: { Args: { p_code: string; p_description: string; p_assignments: Json }; Returns: Json }
       get_bom_production_extraction_preview: { Args: { p_bom_import_id: string }; Returns: Array<Database['public']['Views']['bom_production_extraction_candidates']['Row']> }
+      get_bom_production_extraction_status: { Args: { p_bom_import_id: string }; Returns: Json }
+      extract_bom_to_production: { Args: { p_bom_import_id: string; p_assignments: Json; p_request_id: string }; Returns: Json }
       search_bending_destination_inventory: {
         Args: {
           p_destination_id?: string
@@ -1181,7 +1183,7 @@ import_production_preparation_file: {
     }
     Enums: {
       app_role: AppRole
-      production_item_source: 'excel_import' | 'manual'
+      production_item_source: 'excel_import' | 'manual' | 'bom_extraction'
       production_route: 'BEND' | 'NO BEND' | 'ROD' | 'ROLLING' | 'LADDER' | 'OTHER'
       production_stage: 'CUT' | 'OUT_BEND' | 'BEND' | 'ROLLING' | 'DISPENSE'
     }

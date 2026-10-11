@@ -20,7 +20,7 @@ function matches(node: BomNode, filters: BomTreeFilters): boolean {
   const allSourcesSelected = FILTERABLE_SOURCE_TYPES.every((source) => filters.sourceTypes.has(source))
   const typeMatches = allTypesSelected || filters.itemTypes.has(node.itemType)
   const sourceMatches = allSourcesSelected || filters.sourceTypes.has(node.sourceType)
-  const textMatches = !normalizedQuery || [node.code, node.name, node.name2, node.material, node.drawingNumber]
+  const textMatches = !normalizedQuery || [node.code, node.name, node.name2, node.description ?? '', node.material, node.drawingNumber]
     .some((value) => value.toLocaleLowerCase().includes(normalizedQuery))
   return typeMatches && sourceMatches && textMatches
 }

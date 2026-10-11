@@ -17,6 +17,7 @@ import type {
   BomDimensionSaveResult,
   BomExtractionCandidate,
   BomImport,
+  BomProductionExtractionResult,
   BomReuseCount,
   PersistedBomNode,
   PersistedBomSummary,
@@ -258,4 +259,48 @@ export function mapBomExtractionCandidate(row: BomExtractionCandidateRow): BomEx
     blockers: row.blockers,
     isReadyForProduction: row.is_ready_for_production ?? false,
   }
+}
+
+function isRecord(value: Json): value is Record<string, Json> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function mapBomExtractionPayload(value: Json, importId: string): BomProductionExtractionResult {
+  if (!isRecord(value)
+    || typeof value.extraction_id !== 'string'
+    || typeof value.bom_import_id !== 'string'
+    || typeof value.version_number !== 'number'
+    || typeof value.lot_id !== 'string'
+    || typeof value.request_id !== 'string'
+    || typeof value.candidate_count !== 'number'
+    || typeof value.created_count !== 'number'
+    || typeof value.skipped_count !== 'number'
+    || typeof value.already_extracted !== 'boolean'
+    || typeof value.created_at !== 'string') {
+    throw new Error('The server returned an invalid Production extraction result. Check the extraction status before retrying.')
+  }
+  if (value.bom_import_id !== importId) {
+    throw new Error('The extraction result references a different BOM import. Reload the import before retrying.')
+  }
+  return {
+    extractionId: value.extraction_id,
+    importId: value.bom_import_id,
+    versionNumber: value.version_number,
+    lotId: value.lot_id,
+    requestId: value.request_id,
+    candidateCount: value.candidate_count,
+    createdCount: value.created_count,
+    skippedCount: value.skipped_count,
+    alreadyExtracted: value.already_extracted,
+    createdAt: new Date(value.created_at),
+  }
+}
+
+export function mapBomExtractionStatus(value: Json, importId: string): BomProductionExtractionResult | null {
+  if (value === null) return null
+  return mapBomExtractionPayload(value, importId)
+}
+
+export function mapBomExtractionResult(value: Json, importId: string): BomProductionExtractionResult {
+  return mapBomExtractionPayload(value, importId)
 }

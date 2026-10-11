@@ -14,4 +14,5 @@ export const bomKeys = {
   versions: (groupId: string) => ['bom', 'versions', groupId] as const,
   currentVersion: (groupId: string) => ['bom', 'current-version', groupId] as const,
   extraction: (id: string) => ['bom', 'extraction', id] as const,
+  extractionStatus: (id: string) => ['bom', 'extraction-status', id] as const,
 }

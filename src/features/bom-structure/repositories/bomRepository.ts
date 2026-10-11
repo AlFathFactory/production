@@ -5,6 +5,8 @@ import {
   mapBomDimensionMapping,
   mapBomDimensionSaveResult,
   mapBomExtractionCandidate,
+  mapBomExtractionResult,
+  mapBomExtractionStatus,
   mapBomImport,
   mapBomNode,
   mapBomReuseCount,
@@ -17,6 +19,7 @@ import type {
   AttachBomSourceFilePayload,
   BomDeletePayload,
   BomDimensionMappingSavePayload,
+  BomExtractionExecutePayload,
   BomImportListFilters,
   BomNodeBulkPayload,
   CreateBomImportPayload,
@@ -47,6 +50,31 @@ async function execute<T>(action: string, operation: () => Promise<T>): Promise<
     return await operation()
   } catch (error) {
     throw new BomRepositoryError(messageFor(error, action), error)
+  }
+}
+
+function serverMessage(error: unknown): string | null {
+  if (typeof error !== 'object' || error === null || !('message' in error)) return null
+  const message = String(error.message).trim()
+  return message ? message : null
+}
+
+async function executeExtraction<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation()
+  } catch (error) {
+    // Extraction rejections carry the approved contract reason (duplicate
+    // article, unresolved blocker, already extracted, version conflict).
+    // Surface the server message so the conflict is actionable instead of
+    // collapsing it into a generic failure.
+    const message = serverMessage(error)
+    if (message && /Only active admins or supervisors|Authentication required|permission denied|42501/i.test(message)) {
+      throw new BomRepositoryError('You do not have permission to extract BOM to Production.', error)
+    }
+    if (message && message.length <= 280) {
+      throw new BomRepositoryError(message, error)
+    }
+    throw new BomRepositoryError(messageFor(error, 'extract BOM to Production'), error)
   }
 }
 
@@ -89,5 +117,7 @@ export const bomRepository = {
   getDimensionMapping: (code: string, description: string) => execute('load dimension mappings', async () => (await bomApi.getDimensionMapping(code, description)).map(mapBomDimensionMapping)),
   saveDimensionMapping: (payload: BomDimensionMappingSavePayload) => execute('save dimension mappings', async () => mapBomDimensionSaveResult(await bomApi.saveDimensionMapping(payload))),
   getExtractionPreview: (importId: string) => execute('load the extraction preview', async () => (await bomApi.getExtractionPreview(importId)).map(mapBomExtractionCandidate)),
+  getExtractionStatus: (importId: string) => execute('load the Production extraction status', async () => mapBomExtractionStatus(await bomApi.getExtractionStatus(importId), importId)),
+  extractToProduction: (payload: BomExtractionExecutePayload) => executeExtraction(async () => mapBomExtractionResult(await bomApi.extractToProduction(payload), payload.p_bom_import_id)),
   validateNodes: (nodes: Json) => execute('validate BOM nodes', async () => mapBomValidation(await bomApi.validateNodes(nodes))),
 }

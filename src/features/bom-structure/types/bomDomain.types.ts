@@ -121,3 +121,16 @@ export interface BomExtractionCandidate {
   blockers: Json | null
   isReadyForProduction: boolean
 }
+
+export interface BomProductionExtractionResult {
+  extractionId: string
+  importId: string
+  versionNumber: number
+  lotId: string
+  requestId: string
+  candidateCount: number
+  createdCount: number
+  skippedCount: number
+  alreadyExtracted: boolean
+  createdAt: Date
+}
