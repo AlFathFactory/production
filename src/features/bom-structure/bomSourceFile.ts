@@ -1,10 +1,6 @@
-export const MAX_BOM_FILE_SIZE_BYTES = 25 * 1024 * 1024
-export const BOM_PARSER_VERSION = 'bom-parser-v1'
+import { BOM_ALLOWED_EXTENSIONS, BOM_SOURCE_MIME_TYPES, MAX_BOM_FILE_SIZE_BYTES } from './bomSettings'
 
-const EXCEL_MIME_TYPES = {
-  xls: 'application/vnd.ms-excel',
-  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-} as const
+export { BOM_PARSER_VERSION, MAX_BOM_FILE_SIZE_BYTES } from './bomSettings'
 
 export class BomSourceFileError extends Error {
   constructor(message: string) {
@@ -15,14 +11,14 @@ export class BomSourceFileError extends Error {
 
 export function getBomSourceMimeType(file: File): string {
   const extension = /\.([^.]+)$/.exec(file.name)?.[1]?.toLowerCase()
-  if (extension !== 'xls' && extension !== 'xlsx') {
+  if (!BOM_ALLOWED_EXTENSIONS.some((allowed) => allowed === extension)) {
     throw new BomSourceFileError('Choose an Excel workbook with an .xlsx or .xls extension.')
   }
   if (file.size < 1 || file.size > MAX_BOM_FILE_SIZE_BYTES) {
     throw new BomSourceFileError('The workbook must be between 1 byte and 25 MB.')
   }
 
-  const expectedMimeType = EXCEL_MIME_TYPES[extension]
+  const expectedMimeType = BOM_SOURCE_MIME_TYPES[extension as keyof typeof BOM_SOURCE_MIME_TYPES]
   // Some browsers leave File.type empty. The extension supplies the bucket's canonical MIME in that case.
   if (file.type && file.type.toLowerCase() !== expectedMimeType) {
     throw new BomSourceFileError('The workbook MIME type does not match its Excel extension.')
@@ -35,8 +31,8 @@ export function getBomSourceObjectPath(importId: string, originalFileName: strin
     throw new BomSourceFileError('The BOM import ID is invalid.')
   }
   const baseName = originalFileName.split(/[\\/]/).pop() ?? ''
-  const extension = /\.(xlsx|xls)$/i.exec(baseName)?.[1]?.toLowerCase()
-  if (!extension) throw new BomSourceFileError('The workbook extension is invalid.')
+  const extension = /\.([^.]+)$/.exec(baseName)?.[1]?.toLowerCase()
+  if (!extension || !BOM_ALLOWED_EXTENSIONS.some((allowed) => allowed === extension)) throw new BomSourceFileError('The workbook extension is invalid.')
   const stem = baseName.slice(0, -(extension.length + 1))
     .normalize('NFKD')
     .replace(/[^a-zA-Z0-9_-]+/g, '_')

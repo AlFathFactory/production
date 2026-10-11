@@ -812,15 +812,15 @@ export interface Database {
       validate_bom_import_nodes: { Args: { p_nodes: Json }; Returns: Json }
       get_bom_tree: {
         Args: { p_bom_import_id: string }
-        Returns: Array<{ id: string; bom_import_id: string; parent_id: string | null; level: number; source_row: number; code: string; parent_code: string | null; position: string; article_type: string; item_type: string; source_type: string; name: string; name2: string; description: string; drawing_number: string; material: string; quantity_per_parent: number; calculated_cumulative_quantity: number; excel_cumulative_quantity: number | null; position_weight_kg: number | null; rolled_weight_kg: number }>
+        Returns: Array<{ id: string; bom_import_id: string; parent_id: string | null; level: number; source_row: number; code: string | null; parent_code: string | null; position: string | null; article_type: string | null; item_type: string; source_type: string | null; name: string | null; name2: string | null; description: string | null; drawing_number: string | null; material: string | null; quantity_per_parent: number; calculated_cumulative_quantity: number; excel_cumulative_quantity: number | null; position_weight_kg: number | null; rolled_weight_kg: number }>
       }
       get_bom_node_details: {
         Args: { p_node_id: string }
-        Returns: Array<{ id: string; bom_import_id: string; parent_id: string | null; level: number; source_row: number; code: string; parent_code: string | null; position: string; article_type: string; item_type: string; source_type: string; name: string; name2: string; description: string; drawing_number: string; material: string; quantity_per_parent: number; calculated_cumulative_quantity: number; excel_cumulative_quantity: number | null; position_weight_kg: number | null; rolled_weight_kg: number; raw_data: Json; formatted_raw_data: Json; created_at: string; updated_at: string }>
+        Returns: Array<{ id: string; bom_import_id: string; parent_id: string | null; level: number; source_row: number; code: string | null; parent_code: string | null; position: string | null; article_type: string | null; item_type: string; source_type: string | null; name: string | null; name2: string | null; description: string | null; drawing_number: string | null; material: string | null; quantity_per_parent: number; calculated_cumulative_quantity: number; excel_cumulative_quantity: number | null; position_weight_kg: number | null; rolled_weight_kg: number; raw_data: Json; formatted_raw_data: Json; created_at: string; updated_at: string }>
       }
       get_bom_dimension_mapping: {
         Args: { p_code: string; p_description: string }
-        Returns: Array<{ id: string; code: string; description: string; token_index: number; token_raw: string; token_value: number; role: string; match_scope: string; created_by: string; created_at: string; updated_at: string }>
+        Returns: Array<{ id: string; code: string | null; description: string; token_index: number; token_raw: string; token_value: number | null; role: string; match_scope: string; created_by: string; created_at: string; updated_at: string }>
       }
       save_bom_dimension_mapping: { Args: { p_code: string; p_description: string; p_assignments: Json }; Returns: Json }
       get_bom_production_extraction_preview: { Args: { p_bom_import_id: string }; Returns: Array<Database['public']['Views']['bom_production_extraction_candidates']['Row']> }

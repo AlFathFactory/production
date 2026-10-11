@@ -24,7 +24,7 @@ const { outputFiles } = await build({
             ? 'export const useMutation = (...args) => globalThis.__bomHookTest.useMutation(...args); export const useQueryClient = () => globalThis.__bomHookTest.queryClient'
             : path.endsWith('bomRepository')
               ? 'export const bomRepository = { validateNodes: (...args) => globalThis.__bomHookTest.repository.validateNodes(...args), saveNodes: (...args) => globalThis.__bomHookTest.repository.saveNodes(...args), replaceNodes: (...args) => globalThis.__bomHookTest.repository.replaceNodes(...args) }'
-              : 'export const bomKeys = { import: id => ["bom", "import", id], tree: id => ["bom", "tree", id], summary: id => ["bom", "summary", id], warnings: id => ["bom", "warnings", id], rollups: id => ["bom", "rollups", id] }',
+              : 'export const bomKeys = { import: id => ["bom", "import", id], tree: id => ["bom", "tree", id], summary: id => ["bom", "summary", id], warnings: id => ["bom", "warnings", id], rollups: id => ["bom", "rollups", id], extraction: id => ["bom", "extraction", id] }',
         loader: 'js',
       }))
     },

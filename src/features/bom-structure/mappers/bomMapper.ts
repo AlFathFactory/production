@@ -59,6 +59,8 @@ export function mapBomImport(row: BomImportRow): BomImport {
     id: row.id,
     createdBy: row.created_by,
     createdByName: null,
+    updatedBy: row.updated_by,
+    updatedByName: null,
     fileName: row.file_name,
     status: row.status,
     projectId: row.project_id,

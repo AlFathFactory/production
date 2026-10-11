@@ -1,6 +1,7 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useState, type KeyboardEvent } from 'react'
 
 import type { VisibleBomNode } from '../bomTree'
+import { BOM_TREE_RENDER_STEP } from '../bomSettings'
 import type { BomNode } from '../types'
 
 interface BomTreeProps {
@@ -16,7 +17,6 @@ interface BomTreeProps {
 // Incremental rendering keeps large BOMs (thousands of rows) responsive:
 // only the first slice mounts, collapsed branches never render, and rows
 // below memoize on their own props instead of the whole tree.
-const BOM_TREE_RENDER_STEP = 400
 
 function Highlight({ children, query }: { children: string; query: string }) {
   const normalizedQuery = query.trim().toLocaleLowerCase()
@@ -29,20 +29,24 @@ interface BomTreeRowProps {
   isExpanded: boolean
   isMatch: boolean
   isSelected: boolean
+  isTabStop: boolean
   node: BomNode
   query: string
   onSelect: (node: BomNode) => void
   onToggle: (node: BomNode) => void
 }
 
-const BomTreeRow = memo(function BomTreeRow({ isExpanded, isMatch, isSelected, node, onSelect, onToggle, query }: BomTreeRowProps) {
+const BomTreeRow = memo(function BomTreeRow({ isExpanded, isMatch, isSelected, isTabStop, node, onSelect, onToggle, query }: BomTreeRowProps) {
   return (
     <div
       aria-level={node.level}
+      aria-expanded={node.children.length ? isExpanded : undefined}
+      aria-label={`${node.code || 'Unnamed node'}: ${node.name || 'No description'}`}
       aria-selected={isSelected}
       className={`bom-tree-row bom-tree-row--level-${((node.level - 1) % 6) + 1}${node.isLeaf ? ' bom-tree-row--leaf-node' : ''}${isSelected ? ' bom-tree-row--selected' : ''}${isMatch ? ' bom-tree-row--match' : ''}`}
       id={`bom-tree-${node.id}`}
       role="treeitem"
+      tabIndex={isTabStop ? 0 : -1}
       onDoubleClick={() => node.children.length && onToggle(node)}
     >
       <span className="bom-tree-row__level">{node.level}</span>
@@ -99,9 +103,32 @@ export const BomTree = memo(function BomTree({
   }, [limit, revealId, visibleNodes])
 
   const rendered = visibleNodes.slice(0, limit)
+  const tabStopId = rendered.find(({ node }) => node.id === selectedId)?.node.id ?? rendered[0]?.node.id
+  const onTreeKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const row = (event.target as HTMLElement).closest<HTMLElement>('[role="treeitem"]')
+    if (!row || !event.currentTarget.contains(row)) return
+    const index = rendered.findIndex(({ node }) => row.id === `bom-tree-${node.id}`)
+    if (index < 0) return
+    const node = rendered[index].node
+    let focusId: string | null = null
+    if (event.key === 'ArrowDown') focusId = rendered[index + 1]?.node.id ?? null
+    else if (event.key === 'ArrowUp') focusId = rendered[index - 1]?.node.id ?? null
+    else if (event.key === 'ArrowRight' && node.children.length) {
+      if (!expandedIds.has(node.id)) onToggle(node)
+      else if (rendered[index + 1]?.node.level > node.level) focusId = rendered[index + 1].node.id
+    }
+    else if (event.key === 'ArrowLeft') {
+      if (node.children.length && expandedIds.has(node.id)) onToggle(node)
+      else focusId = rendered.slice(0, index).reverse().find(({ node: candidate }) => candidate.level === node.level - 1)?.node.id ?? null
+    } else if ((event.key === 'Enter' || event.key === ' ') && event.target === row) onSelect(node)
+    else return
+    event.preventDefault()
+    if (focusId) document.getElementById(`bom-tree-${focusId}`)?.focus()
+  }
 
   return (
-    <div className="bom-tree" role="tree" aria-label="BOM hierarchy">
+    <div className="bom-tree" role="tree" aria-label="BOM hierarchy" aria-describedby="bom-tree-keyboard-help" onKeyDown={onTreeKeyDown}>
+      <p className="sr-only" id="bom-tree-keyboard-help">Use up and down arrows to move between rows, right and left arrows to expand or collapse, and Enter to open details.</p>
       <div className="bom-tree__header" aria-hidden="true">
         <span>Level</span><span>Structure / Code</span><span>Description</span>
       </div>
@@ -112,6 +139,7 @@ export const BomTree = memo(function BomTree({
             isExpanded={expandedIds.has(node.id)}
             isMatch={isMatch}
             isSelected={selectedId === node.id}
+            isTabStop={tabStopId === node.id}
             node={node}
             onSelect={onSelect}
             onToggle={onToggle}

@@ -14,17 +14,6 @@ export interface DimensionToken {
   value: number | null
 }
 
-export interface DimensionAssignment {
-  role: DimensionRole
-  token: DimensionToken
-}
-
-export interface DimensionMapping {
-  assignments: DimensionAssignment[]
-  /** Description the tokens were extracted from. */
-  description: string
-}
-
 export const DIMENSION_ROLES: DimensionRole[] = ['profile', 'length', 'width', 'height', 'unassigned']
 
 export const DIMENSION_ROLE_LABELS: Record<DimensionRole, string> = {
@@ -63,14 +52,6 @@ export function extractDimensionTokens(description: string): DimensionToken[] {
 export function suggestDimensionRoles(tokenCount: number): DimensionRole[] {
   const preferred: DimensionRole[] = ['profile', 'length', 'width', 'height']
   return Array.from({ length: tokenCount }, (_, index) => preferred[index] ?? 'unassigned')
-}
-
-export function buildDimensionMapping(description: string, roles: DimensionRole[]): DimensionMapping {
-  const tokens = extractDimensionTokens(description)
-  return {
-    assignments: tokens.map((token, index) => ({ role: roles[index] ?? 'unassigned', token })),
-    description,
-  }
 }
 
 export function buildDimensionAssignments(description: string, roles: DimensionRole[]): BomDimensionAssignmentPayload[] {

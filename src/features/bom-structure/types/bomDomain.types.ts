@@ -6,6 +6,8 @@ export interface BomImport {
   id: string
   createdBy: string
   createdByName: string | null
+  updatedBy: string | null
+  updatedByName: string | null
   fileName: string
   status: BomImportStatus
   projectId: string | null

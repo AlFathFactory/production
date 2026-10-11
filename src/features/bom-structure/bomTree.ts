@@ -87,7 +87,3 @@ export function getAncestorIds(node: BomNode, nodesById: Map<string, BomNode>): 
   }
   return ids
 }
-
-export function countDescendants(node: BomNode): number {
-  return node.children.reduce((total, child) => total + 1 + countDescendants(child), 0)
-}

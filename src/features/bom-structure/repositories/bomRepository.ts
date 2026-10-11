@@ -1,5 +1,6 @@
 import type { Json } from '../../../types/database'
 import { bomApi } from '../api/bomApi'
+import { reportBomError } from '../bomObservability'
 import { mapBomSaveResult, mapBomValidation } from '../mappers/bomValidation'
 import {
   mapBomDimensionMapping,
@@ -49,6 +50,7 @@ async function execute<T>(action: string, operation: () => Promise<T>): Promise<
   try {
     return await operation()
   } catch (error) {
+    reportBomError(action === 'upload the source workbook' ? 'upload' : /version|re-import|replace/i.test(action) ? 'version-conflict' : 'rpc', error)
     throw new BomRepositoryError(messageFor(error, action), error)
   }
 }
@@ -63,6 +65,7 @@ async function executeExtraction<T>(operation: () => Promise<T>): Promise<T> {
   try {
     return await operation()
   } catch (error) {
+    reportBomError('rpc', error)
     // Extraction rejections carry the approved contract reason (duplicate
     // article, unresolved blocker, already extracted, version conflict).
     // Surface the server message so the conflict is actionable instead of
@@ -87,8 +90,9 @@ export const bomRepository = {
   listVersions: (groupId: string) => execute('load BOM version history', async () => {
     const rows = await bomApi.listVersions(groupId)
     // Profile lookup is supplementary; keep the version history usable if it is not permitted.
-    const creators = await bomApi.getCreatorNames([...new Set(rows.map((row) => row.created_by))]).catch(() => ({} as Record<string, string>))
-    return rows.map((row) => ({ ...mapBomImport(row), createdByName: creators[row.created_by] ?? null }))
+    const userIds = [...new Set(rows.flatMap((row) => [row.created_by, row.updated_by].filter((id): id is string => Boolean(id))))]
+    const names = await bomApi.getCreatorNames(userIds).catch(() => ({} as Record<string, string>))
+    return rows.map((row) => ({ ...mapBomImport(row), createdByName: names[row.created_by] ?? null, updatedByName: row.updated_by ? names[row.updated_by] ?? null : null }))
   }),
   getCurrentSavedVersionId: (groupId: string) => execute('resolve the current saved BOM version', () => bomApi.getCurrentSavedVersionId(groupId)),
   createImport: (payload: CreateBomImportPayload) => execute('create the BOM import', async () => mapBomImport(await bomApi.createImport(payload))),

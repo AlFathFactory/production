@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 
 import { BomWorkbookError, parseBomWorkbook } from '../parseBomWorkbook'
 import { BomSourceFileError, getBomSourceMimeType } from '../bomSourceFile'
+import { reportBomError } from '../bomObservability'
 import type { BomParseResult } from '../types'
 
 export { MAX_BOM_FILE_SIZE_BYTES } from '../bomSourceFile'
@@ -35,6 +36,7 @@ export function useBomWorkbook() {
       setSourceFile(file)
       setResult(parsed)
     } catch (parseError) {
+      reportBomError('parser', parseError)
       if (requestId !== selectionId.current) return
       setResult(null)
       setFileName(null)

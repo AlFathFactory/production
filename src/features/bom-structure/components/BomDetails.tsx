@@ -50,7 +50,7 @@ export function BomDetails({ byCode, node, nodesById, onClose, onNavigate, canMa
     && Math.abs(node.excelCumulativeQuantity - node.calculatedCumulativeQuantity) > 0.000001
 
   return (
-    <aside className="bom-details" aria-label={`Details for ${node.code || 'BOM node'}`}>
+    <aside className="bom-details" aria-label={`Details for ${node.code || 'BOM node'}`} onKeyDown={(event) => { if (event.key === 'Escape') onClose() }}>
       <header className="bom-details__header">
         <div><span>Node details</span><strong>{node.code || 'No code'}</strong><p>{node.name || 'No description'}</p></div>
         <button aria-label="Close node details" className="bom-details__close" type="button" onClick={onClose}>×</button>

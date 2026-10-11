@@ -339,6 +339,7 @@
 .bom-tree-row--leaf-node:hover { background: #f7faf8; }
 .bom-tree-row--leaf-node .bom-tree-row__level { color: var(--muted); }
 .bom-tree-row--selected { background: #edf7f3; box-shadow: inset 3px 0 0 var(--brand); }
+.bom-tree-row:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; }
 .bom-tree-row--match { background: #fff9eb; }
 .bom-tree-row > * { display: flex; min-width: 0; align-items: center; padding: 7px 10px; border-right: 1px solid #f0f3f2; }
 .bom-tree-row > *:last-child { border-right: 0; }

@@ -7,6 +7,7 @@ import type { BomNodeSaveDto } from '../mappers/bomSavePayload'
 import { bomRepository } from '../repositories/bomRepository'
 import type { BomParseResult } from '../types'
 import type { BomValidationResult } from '../mappers/bomValidation'
+import { bomKeys } from '../queries/bomKeys'
 
 export function useBomNodeSave() {
   const queryClient = useQueryClient()
@@ -57,12 +58,22 @@ export function useBomNodeSave() {
       return result
   }
 
-  const onSaved = async () => {
+  const onSaved = async (result: { importId: string }) => {
       setValidatedPayload(null)
       setValidation(null)
       setValidatedImportId(null)
       setAcknowledgedWarnings(false)
-      await queryClient.invalidateQueries({ queryKey: ['bom'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['bom', 'imports'] }),
+        queryClient.invalidateQueries({ queryKey: bomKeys.import(result.importId) }),
+        queryClient.invalidateQueries({ queryKey: bomKeys.tree(result.importId) }),
+        queryClient.invalidateQueries({ queryKey: bomKeys.summary(result.importId) }),
+        queryClient.invalidateQueries({ queryKey: bomKeys.warnings(result.importId) }),
+        queryClient.invalidateQueries({ queryKey: bomKeys.rollups(result.importId) }),
+        queryClient.invalidateQueries({ queryKey: ['bom', 'versions'] }),
+        queryClient.invalidateQueries({ queryKey: ['bom', 'current-version'] }),
+        queryClient.invalidateQueries({ queryKey: bomKeys.extraction(result.importId) }),
+      ])
   }
 
   const saveMutation = useMutation({

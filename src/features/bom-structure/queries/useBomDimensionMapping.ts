@@ -4,6 +4,7 @@ import type { Json } from '../../../types/database'
 import { buildDimensionAssignments, type DimensionRole } from '../descriptionDimensions'
 import { bomRepository } from '../repositories/bomRepository'
 import { bomKeys } from './bomKeys'
+import { BOM_DIMENSION_MAPPING_STALE_TIME_MS } from '../bomSettings'
 
 interface SaveDimensionInput {
   code: string
@@ -18,7 +19,7 @@ export function useBomDimensionMapping(code: string, description: string, enable
     queryKey,
     queryFn: () => bomRepository.getDimensionMapping(code, description),
     enabled: enabled && Boolean(description.trim()),
-    staleTime: 30_000,
+    staleTime: BOM_DIMENSION_MAPPING_STALE_TIME_MS,
   })
   const saveMutation = useMutation({
     mutationFn: async ({ code: saveCode, description: saveDescription, roles }: SaveDimensionInput) => {

@@ -137,7 +137,11 @@ export function BomStructurePage() {
     if (!isPersisted || !treeQuery.data || !summaryQuery.data || !warningsQuery.data || !rollupsQuery.data) return null
     const nodes = treeQuery.data.nodes
     const byCode = new Map<string, BomNode[]>()
-    for (const node of nodes) byCode.set(node.code, [...(byCode.get(node.code) ?? []), node])
+    for (const node of nodes) {
+      const occurrences = byCode.get(node.code)
+      if (occurrences) occurrences.push(node)
+      else byCode.set(node.code, [node])
+    }
     return {
       byCode,
       headerRow: selectedImport?.headerRow ?? 0,
@@ -176,16 +180,17 @@ export function BomStructurePage() {
 
   useEffect(() => {
     if (!view) return
-    setActiveView(urlState.tab)
     setExpandedIds(new Set(view.nodes.filter((node) => node.children.length).map((node) => node.id)))
-    setIsDetailsOpen(false)
-    setQuery(urlState.query)
     setRevealId(null)
+  }, [view])
+
+  useEffect(() => {
+    if (!view) return
     const deepLinkedNode = urlState.nodeId ? nodesById.get(urlState.nodeId) ?? null : null
     setSelectedNode(deepLinkedNode)
     setIsDetailsOpen(Boolean(deepLinkedNode))
     if (deepLinkedNode) setExpandedIds((current) => new Set([...current, ...getAncestorIds(deepLinkedNode, nodesById)]))
-  }, [nodesById, urlState.nodeId, urlState.query, urlState.tab, view])
+  }, [nodesById, urlState.nodeId, view])
 
   useEffect(() => {
     if (view && activeView === 'extraction' && !(isBackendView && isCurrentSaved)) {
@@ -409,7 +414,7 @@ export function BomStructurePage() {
           {canManageImports && isCurrentSaved && !canReplaceWithCurrentParser ? <p role="alert">This BOM was created with parser version {selectedImport.parserVersion ?? 'unknown'}, while the current application uses {BOM_PARSER_VERSION}. In-place replacement is blocked to preserve import reproducibility. Use Re-Import to create a new version with the current parser.</p> : null}
           {reimportSourceId === selectedImport.id ? <p>Choose a workbook above to create v{selectedImport.versionNumber + 1}. The saved v{selectedImport.versionNumber} remains current until the candidate is saved. <button type="button" onClick={() => setReimportSourceId(null)}>Cancel</button></p> : null}
           {replaceImportId === selectedImport.id ? <p>Replacing nodes from this import’s verified original workbook. <button type="button" onClick={() => { setReplaceImportId(null); saving.reset() }}>Cancel replacement</button></p> : null}
-          {showDelete && isAdmin ? <div role="group" aria-label="Delete BOM import confirmation"><p>Delete import v{selectedImport.versionNumber} ({selectedImport.fileName}) and its nodes/warnings? This cannot be undone. Type DELETE to confirm.</p><input aria-label="Type DELETE to confirm" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} /><button disabled={deleteConfirmation !== 'DELETE' || actionBusy} type="button" onClick={() => void deleteImport()}>Delete this import</button></div> : null}
+          {showDelete && isAdmin ? <div role="group" aria-label="Delete BOM import confirmation" onKeyDown={(event) => { if (event.key === 'Escape') { setShowDelete(false); setDeleteConfirmation('') } }}><p>Delete import v{selectedImport.versionNumber} ({selectedImport.fileName}) and its nodes/warnings? This cannot be undone. Type DELETE to confirm.</p><input autoFocus aria-label="Type DELETE to confirm" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} /><button disabled={deleteConfirmation !== 'DELETE' || actionBusy} type="button" onClick={() => void deleteImport()}>Delete this import</button></div> : null}
           {actionError ? <p role="alert">{actionError}</p> : null}
         </> : null}
         {selectedImportId && importQuery.error ? <div className="bom-state-message" role="alert">Unable to load this import. <button type="button" onClick={() => void importQuery.refetch()}>Retry</button></div> : null}
@@ -438,7 +443,7 @@ export function BomStructurePage() {
         ) : null}
         {canStartReplace && selectedImport && replaceImportId === selectedImportId && activePreview ? <BomSaveReview
           importId={selectedImport.id} mode="replace" result={activePreview} saving={saving}
-          onSaved={() => { setReplaceImportId(null); void queryClient.invalidateQueries({ queryKey: ['bom'] }) }}
+          onSaved={() => { setReplaceImportId(null) }}
         /> : null}
         {selectedImport?.status === 'parsed' && !activePreview ? (
           <div className="bom-state-message">This import has an attached source, but its structure is not saved. Reopen the original workbook to continue preparing it.</div>
@@ -508,7 +513,7 @@ export function BomStructurePage() {
                   {currentNode && isDetailsOpen ? (
                     isBackendView && detailsQuery.isPending ? <aside className="bom-details bom-details--empty" role="status">Loading saved node details…</aside>
                       : isBackendView && (detailsQuery.error || !detailsQuery.data) ? <aside className="bom-details bom-details--empty" role="alert">Could not load saved node details. <button type="button" onClick={() => void detailsQuery.refetch()}>Retry</button></aside>
-                        : <BomDetails byCode={view.byCode} node={detailNode} nodesById={nodesById} canManageMappings={canManageImports && (!isBackendView || Boolean(isCurrentSaved))} persisted={isBackendView} onClose={() => { setIsDetailsOpen(false); setSelectedNode(null); updateWorkspaceUrl({ nodeId: null }) }} onNavigate={revealNode} />
+                        : <BomDetails byCode={view.byCode} node={detailNode} nodesById={nodesById} canManageMappings={canManageImports && (!isBackendView || Boolean(isCurrentSaved))} persisted={isBackendView} onClose={() => { const rowId = currentNode.id; setIsDetailsOpen(false); setSelectedNode(null); updateWorkspaceUrl({ nodeId: null }); window.requestAnimationFrame(() => document.getElementById(`bom-tree-${rowId}`)?.focus()) }} onNavigate={revealNode} />
                   ) : null}
                 </div>
               </>
