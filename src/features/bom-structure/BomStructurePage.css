@@ -416,6 +416,9 @@
 .bom-rollup__table td { padding: 12px 14px; border-bottom: 1px solid #edf1ef; color: var(--ink); font-size: 0.9rem; font-weight: 700; }
 .bom-rollup__table tbody tr:hover { background: #f7faf8; }
 .bom-rollup__table td:first-child { color: var(--brand); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.bom-rollup__pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 20px; color: var(--muted); font-size: .78rem; }
+.bom-rollup__pagination-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.bom-rollup__pagination-controls .button { min-height: 34px; padding-inline: 10px; font-size: .72rem; }
 .bom-local-only { justify-self: end; color: var(--muted); font-size: 0.7rem; }
 .bom-local-only span { margin-right: 5px; color: #4d9a79; }
 

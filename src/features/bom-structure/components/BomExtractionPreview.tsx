@@ -36,7 +36,7 @@ interface BomExtractionPreviewProps {
   canExecute: boolean
 }
 
-export function BomExtractionPreview({ candidates, importId, lotId, versionNumber, canExecute }: BomExtractionPreviewProps) {
+export function BomExtractionPreview({ candidates, importId, versionNumber, canExecute }: BomExtractionPreviewProps) {
   const [assignments, setAssignments] = useState<Record<string, Route>>({})
   const [confirmed, setConfirmed] = useState(false)
   const [search, setSearch] = useState('')
