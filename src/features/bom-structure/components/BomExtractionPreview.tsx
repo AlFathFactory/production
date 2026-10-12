@@ -12,12 +12,6 @@ const PAGE_SIZE = 25
 
 function formatNumber(value: number | null): string { return value === null ? '—' : value.toLocaleString('en-US') }
 
-function formatBlockers(value: BomExtractionCandidate['blockers']): string {
-  if (value === null) return 'None'
-  if (Array.isArray(value)) return value.length ? value.map((entry) => typeof entry === 'string' ? entry : JSON.stringify(entry)).join('; ') : 'None'
-  return typeof value === 'string' ? value : JSON.stringify(value)
-}
-
 function hasNonRoutingBlocker(value: BomExtractionCandidate['blockers']): boolean {
   if (!Array.isArray(value)) return true
   return value.some((entry) => entry !== 'routing-assignment-required')
@@ -101,16 +95,18 @@ export function BomExtractionPreview({ candidates, importId, versionNumber, canE
         onChange={(event) => { setSearch(event.target.value); setPage(1) }} />
     </label>
 
-    <div className="bom-extraction-preview__scroll"><table>
-      <thead><tr><th>Article</th><th>Designation</th><th>Dimensions</th><th>Material</th><th>Quantity</th><th>Weight (kg)</th><th>Blockers</th><th>Route assignment</th></tr></thead>
+    <div className="bom-extraction-preview__scroll"><table className="bom-extraction-preview__table">
+      <thead><tr><th>Article</th><th>Designation</th><th>Dimensions</th><th>Material</th><th>Quantity</th><th>Unit weight (kg)</th><th>Total weight (kg)</th><th>Route assignment</th></tr></thead>
       <tbody>{visibleCandidates.map(({ candidate, key, index }) => {
         const rowKey = candidate.representativeNodeId ?? `${candidate.article ?? 'candidate'}-${index}`
         const blocked = hasNonRoutingBlocker(candidate.blockers)
         return <tr key={rowKey}>
-          <td>{candidate.article ?? '—'}</td><td>{candidate.designation ?? '—'}</td>
+          <td><strong>{candidate.article ?? '—'}</strong></td><td>{candidate.designation ?? '—'}</td>
           <td>Profile: {candidate.profile ?? '—'} · L: {formatNumber(candidate.lengthValue)} · W: {formatNumber(candidate.widthValue)} · H: {formatNumber(candidate.heightValue)}</td>
-          <td>{candidate.material ?? '—'}</td><td>{formatNumber(candidate.totalQuantity)}</td><td>{formatNumber(candidate.totalWeightKg)}</td>
-          <td>{formatBlockers(candidate.blockers)}</td>
+          <td>{candidate.material ?? '—'}</td>
+          <td className="bom-number">{formatNumber(candidate.totalQuantity)}</td>
+          <td className="bom-number">{formatNumber(candidate.unitWeightKg)}</td>
+          <td className="bom-number">{formatNumber(candidate.totalWeightKg)}</td>
           <td>{key === null || blocked
             ? <span>Not assignable</span>
             : <select aria-label={`Route for ${key}`} disabled={!canExecute || alreadyExtracted} value={key && assignments[key] ? assignments[key] : ''}
