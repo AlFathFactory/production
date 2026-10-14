@@ -3436,6 +3436,19 @@ button.hierarchy-list__select:hover,
   gap: 18px;
 }
 
+.settings-page { display: grid; gap: 18px; }
+.settings-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.settings-card, .settings-routes { border: 1px solid var(--line); border-radius: 12px; padding: 20px; background: var(--surface); box-shadow: 0 12px 30px rgb(14 44 43 / 4%); }
+.settings-card h2, .settings-routes h2 { margin: 0; font-size: 1rem; }
+.settings-card p, .settings-routes p { color: var(--muted); line-height: 1.5; }
+.settings-routes__header { display: flex; justify-content: space-between; gap: 16px; align-items: start; margin-bottom: 16px; }
+.settings-routes__header > div:last-child { display: flex; flex-wrap: wrap; gap: 8px; }
+.settings-routes__table-wrap { overflow-x: auto; }
+.settings-routes__table { border-collapse: collapse; min-width: 700px; width: 100%; }
+.settings-routes__table th, .settings-routes__table td { padding: 12px; border-bottom: 1px solid #e7edeb; text-align: left; }
+.settings-routes__table th { color: #56706c; background: #f6f9f7; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; }
+.form-field__hint { margin: 6px 0 0; color: var(--muted); font-size: .78rem; }
+
 .users-workspace {
   display: grid;
   gap: 12px;

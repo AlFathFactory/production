@@ -40,6 +40,10 @@ export function canAccessUserManagement(role: AppRole): boolean {
   return role === 'admin'
 }
 
+export function canManageAdministrationSettings(role: AppRole): boolean {
+  return role === 'admin'
+}
+
 export function canAccessBendingDocuments(role: AppRole): boolean {
   return role === 'admin' || role === 'supervisor'
 }

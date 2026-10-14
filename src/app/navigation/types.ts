@@ -9,6 +9,7 @@ export type NavigationIcon =
   | 'bending'
   | 'documents'
   | 'users'
+  | 'settings'
 
 export interface NavigationItem {
   label: string

@@ -1,6 +1,7 @@
 import {
   canAccessBendingDocuments,
   canAccessUserManagement,
+  canManageAdministrationSettings,
 } from '../../features/auth/permissions'
 import type { NavigationItem } from './types'
 
@@ -29,6 +30,12 @@ export const administrationNavigationItems: NavigationItem[] = [
     path: '/users',
     icon: 'users',
     isVisible: canAccessUserManagement,
+  },
+  {
+    label: 'Settings',
+    path: '/settings',
+    icon: 'settings',
+    isVisible: canManageAdministrationSettings,
   },
 ]
 

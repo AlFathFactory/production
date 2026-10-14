@@ -19,6 +19,7 @@ function NavigationIcon({ icon }: { icon: NavigationIcon }) {
     bending: <path d="M4 5v5a6 6 0 0 0 12 0V5m0 0h4m-4 0v4" />,
     documents: <path d="M6 3h9l4 4v14H6zM15 3v5h5M9 13h6M9 17h6" />,
     users: <path d="M16 20v-1.5a4.5 4.5 0 0 0-9 0V20m4.5-8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm6.5 8v-1.5a4.4 4.4 0 0 0-2.5-4M16 6.2a3 3 0 0 1 0 5.6" />,
+    settings: <path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Zm0-12.2v2m0 13.8v2m9-9h-2M5 12H3m15.4-6.4-1.4 1.4M7 17l-1.4 1.4m12.8 0L17 17M7 7 5.6 5.6" />,
   }
 
   return (

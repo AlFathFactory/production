@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 
 import { NotFoundPage } from '../components/shared/NotFoundPage'
-import { canAccessBendingDocuments, canAccessUserManagement } from '../features/auth/permissions'
+import { canAccessBendingDocuments, canAccessUserManagement, canManageAdministrationSettings } from '../features/auth/permissions'
 import { LoginRoute } from '../features/auth/components/LoginRoute'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { BendingPage } from '../features/bending/BendingPage'
@@ -12,6 +12,7 @@ import { ProjectsPage } from '../features/projects/ProjectsPage'
 import { ProductionPage } from '../features/production/ProductionPage'
 import { ReportsPage } from '../features/reports/ReportsPage'
 import { UsersPage } from '../features/users/UsersPage'
+import { SettingsPage } from '../features/settings/SettingsPage'
 import { AppLayout } from './layouts/AppLayout'
 import { RequirePermission } from './navigation/RequirePermission'
 
@@ -68,6 +69,14 @@ export const router = createBrowserRouter([
             element: (
               <RequirePermission canAccess={canAccessUserManagement}>
                 <UsersPage />
+              </RequirePermission>
+            ),
+          },
+          {
+            path: 'settings',
+            element: (
+              <RequirePermission canAccess={canManageAdministrationSettings}>
+                <SettingsPage />
               </RequirePermission>
             ),
           },

@@ -5,7 +5,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { BomExtractionPreview } from './BomExtractionPreview'
 import type { BomExtractionCandidate, BomProductionExtractionResult } from '../types/bomDomain.types'
 
-const { statusState, executeState } = vi.hoisted(() => ({
+const { statusState, executeState, routeOptionsState } = vi.hoisted(() => ({
   statusState: { data: null as BomProductionExtractionResult | null, error: null as Error | null, isPending: false },
   executeState: {
     data: null as BomProductionExtractionResult | null,
@@ -13,6 +13,14 @@ const { statusState, executeState } = vi.hoisted(() => ({
     isPending: false,
     mutate: vi.fn(),
     requestId: 'request-execute-1',
+  },
+  routeOptionsState: {
+    data: [
+      { id: 'route-bend', route: 'BEND', label: 'Bending', isActive: true, sortOrder: 10, createdAt: new Date(), updatedAt: new Date() },
+      { id: 'route-rod', route: 'ROD', label: 'Rod line', isActive: true, sortOrder: 20, createdAt: new Date(), updatedAt: new Date() },
+    ],
+    error: null as Error | null,
+    isPending: false,
   },
 }))
 
@@ -27,6 +35,10 @@ vi.mock('../queries/usePersistedBom', () => ({
 
 vi.mock('../hooks/useBomExtraction', () => ({
   useBomExtraction: () => ({ executeMutation: executeState, requestId: executeState.requestId, rotateRequestId: vi.fn() }),
+}))
+
+vi.mock('../../settings/queries/routeAssignmentOptionsQueries', () => ({
+  useRouteAssignmentOptions: () => ({ ...routeOptionsState, isSuccess: !routeOptionsState.isPending && !routeOptionsState.error, refetch: vi.fn() }),
 }))
 
 function candidate(article: string, blockers: BomExtractionCandidate['blockers'] = ['routing-assignment-required']): BomExtractionCandidate {
@@ -80,6 +92,12 @@ function resetMocks() {
   executeState.data = null
   executeState.error = null
   executeState.isPending = false
+  routeOptionsState.data = [
+    { id: 'route-bend', route: 'BEND', label: 'Bending', isActive: true, sortOrder: 10, createdAt: new Date(), updatedAt: new Date() },
+    { id: 'route-rod', route: 'ROD', label: 'Rod line', isActive: true, sortOrder: 20, createdAt: new Date(), updatedAt: new Date() },
+  ]
+  routeOptionsState.error = null
+  routeOptionsState.isPending = false
 }
 
 describe('BomExtractionPreview', () => {
@@ -105,6 +123,35 @@ describe('BomExtractionPreview', () => {
     expect(execute).toBeEnabled()
     await user.click(execute)
     expect(executeState.mutate).toHaveBeenCalledWith({ 'A-1': 'BEND', 'A-2': 'ROD' })
+  })
+
+  test('displays configured labels while submitting their fixed system-route values', async () => {
+    resetMocks()
+    const user = userEvent.setup()
+    render(<BomExtractionPreview candidates={[candidate('A-1')]} canExecute importId="import-1" lotId="lot-1" versionNumber={1} />)
+    expect(screen.getByRole('option', { name: 'Bending' })).toHaveValue('BEND')
+    await user.selectOptions(screen.getByLabelText('Route for A-1'), 'BEND')
+    await user.click(screen.getByLabelText(/i confirm extraction of v1/i))
+    await user.click(screen.getByRole('button', { name: /extract to production/i }))
+    expect(executeState.mutate).toHaveBeenCalledWith({ 'A-1': 'BEND' })
+  })
+
+  test('fails closed when no active route options are configured', () => {
+    resetMocks()
+    routeOptionsState.data = []
+    render(<BomExtractionPreview candidates={[candidate('A-1')]} canExecute importId="import-1" lotId="lot-1" versionNumber={1} />)
+    expect(screen.getByText(/no active route assignment options/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Route for A-1')).toBeDisabled()
+    expect(screen.getByRole('button', { name: /extract to production/i })).toBeDisabled()
+  })
+
+  test('does not fall back to hardcoded routes when the settings query fails', () => {
+    resetMocks()
+    routeOptionsState.error = new Error('Unavailable')
+    render(<BomExtractionPreview candidates={[candidate('A-1')]} canExecute importId="import-1" lotId="lot-1" versionNumber={1} />)
+    expect(screen.getByText(/could not load route assignment options/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Route for A-1')).toBeDisabled()
+    expect(screen.queryByRole('option', { name: 'NO BEND' })).toBeNull()
   })
 
   test('searches candidates and keeps route assignments across pages', async () => {

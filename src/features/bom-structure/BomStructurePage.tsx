@@ -22,7 +22,6 @@ import { BomToolbar, type BomToolbarFilters } from './components/BomToolbar'
 import { BomTree } from './components/BomTree'
 import { BomWarnings } from './components/BomWarnings'
 import { BomVersionHistory } from './components/BomVersionHistory'
-import { RolledUpParts } from './components/RolledUpParts'
 import { useBomImportPreparation } from './hooks/useBomImportPreparation'
 import { useBomNodeSave } from './hooks/useBomNodeSave'
 import { useBomUnsavedGuard } from './hooks/useBomUnsavedGuard'
@@ -37,7 +36,6 @@ import {
   useBomExtractionPreview,
   useBomImport,
   useBomNodeDetails,
-  useBomRolledUpParts,
   useBomSummary,
   useBomTree,
   useBomWarnings,
@@ -69,7 +67,7 @@ function toUrlFilters(filters: BomToolbarFilters): BomWorkspaceUrlState['filters
   return { ...filters, itemTypes: new Set(filters.itemTypes), sourceTypes: new Set(filters.sourceTypes) }
 }
 
-type WorkspaceData = Pick<BomParseResult, 'byCode' | 'headerRow' | 'nodes' | 'rolledUpParts' | 'roots' | 'sheetName' | 'summary' | 'warnings'>
+type WorkspaceData = Pick<BomParseResult, 'byCode' | 'headerRow' | 'nodes' | 'roots' | 'sheetName' | 'summary' | 'warnings'>
 type WorkspaceView = { source: 'local-preview' | 'persisted'; data: WorkspaceData }
 
 export function BomStructurePage() {
@@ -129,13 +127,12 @@ export function BomStructurePage() {
   const treeQuery = useBomTree(selectedImportId, isPersisted)
   const summaryQuery = useBomSummary(selectedImportId, isPersisted)
   const warningsQuery = useBomWarnings(selectedImportId, isPersisted)
-  const rollupsQuery = useBomRolledUpParts(selectedImportId, isPersisted)
   const activePreview = (replaceImportId === selectedImportId || !isPersisted) && workbook.result
     && (replaceImportId === selectedImportId || !selectedImportId || selectedImportId === preparation.attempt?.importItem.id)
     ? workbook.result : null
 
   const persistedWorkspace = useMemo<WorkspaceData | null>(() => {
-    if (!isPersisted || !treeQuery.data || !summaryQuery.data || !warningsQuery.data || !rollupsQuery.data) return null
+    if (!isPersisted || !treeQuery.data || !summaryQuery.data || !warningsQuery.data) return null
     const nodes = treeQuery.data.nodes
     const byCode = new Map<string, BomNode[]>()
     for (const node of nodes) {
@@ -147,13 +144,12 @@ export function BomStructurePage() {
       byCode,
       headerRow: selectedImport?.headerRow ?? 0,
       nodes,
-      rolledUpParts: rollupsQuery.data,
       roots: treeQuery.data.roots,
       sheetName: selectedImport?.sheetName ?? selectedImport?.fileName ?? 'Saved BOM',
       summary: summaryQuery.data,
       warnings: warningsQuery.data,
     }
-  }, [isPersisted, rollupsQuery.data, selectedImport, summaryQuery.data, treeQuery.data, warningsQuery.data])
+  }, [isPersisted, selectedImport, summaryQuery.data, treeQuery.data, warningsQuery.data])
   const workspace: WorkspaceView | null = isPersisted && replaceImportId !== selectedImportId
     ? persistedWorkspace ? { source: 'persisted', data: persistedWorkspace } : null
     : activePreview ? { source: 'local-preview', data: activePreview } : null
@@ -320,9 +316,9 @@ export function BomStructurePage() {
     }
   }
 
-  const persistedError = [treeQuery, summaryQuery, warningsQuery, rollupsQuery]
+  const persistedError = [treeQuery, summaryQuery, warningsQuery]
     .map((state) => state.error).find(Boolean)
-  const missingPersistedData = isPersisted && [treeQuery, summaryQuery, warningsQuery, rollupsQuery]
+  const missingPersistedData = isPersisted && [treeQuery, summaryQuery, warningsQuery]
     .every((state) => state.isSuccess) && !persistedWorkspace
   const loadingPersisted = isPersisted && !persistedWorkspace && !persistedError && !missingPersistedData
 
@@ -334,7 +330,7 @@ export function BomStructurePage() {
     hasValidation: Boolean(saving.validation && saving.validatedImportId),
     isParsing: workbook.isParsing,
     isPersisted: Boolean(isPersisted && persistedWorkspace),
-    isRefreshing: treeQuery.isFetching || summaryQuery.isFetching || warningsQuery.isFetching || rollupsQuery.isFetching,
+    isRefreshing: treeQuery.isFetching || summaryQuery.isFetching || warningsQuery.isFetching,
     isSaving: saving.saveMutation.isPending || saving.replaceMutation.isPending,
     isValidating: saving.validateMutation.isPending,
     parseError: workbook.error,
@@ -344,7 +340,7 @@ export function BomStructurePage() {
     saveError: saveErrorMessage ?? replaceErrorMessage,
     sourceUploaded: preparation.attempt?.uploaded ?? false,
     validationError: saving.validateMutation.error instanceof Error ? saving.validateMutation.error.message : null,
-  }), [activePreview, isPersisted, persistedWorkspace, preparation.attempt, preparation.error, preparation.isComplete, preparation.stage, replaceErrorMessage, rollupsQuery.isFetching, saveErrorMessage, saving.replaceMutation.isPending, saving.replaceMutation.isSuccess, saving.saveMutation.isPending, saving.saveMutation.isSuccess, saving.validatedImportId, saving.validateMutation.error, saving.validateMutation.isPending, saving.validation, summaryQuery.isFetching, treeQuery.isFetching, warningsQuery.isFetching, workbook.error, workbook.isParsing])
+  }), [activePreview, isPersisted, persistedWorkspace, preparation.attempt, preparation.error, preparation.isComplete, preparation.stage, replaceErrorMessage, saveErrorMessage, saving.replaceMutation.isPending, saving.replaceMutation.isSuccess, saving.saveMutation.isPending, saving.saveMutation.isSuccess, saving.validatedImportId, saving.validateMutation.error, saving.validateMutation.isPending, saving.validation, summaryQuery.isFetching, treeQuery.isFetching, warningsQuery.isFetching, workbook.error, workbook.isParsing])
   const showPipeline = workbook.isParsing || Boolean(workbook.error) || Boolean(activePreview)
     || preparation.stage !== 'idle' || saving.validateMutation.isPending || Boolean(saving.validation)
     || saving.saveMutation.isPending || saving.replaceMutation.isPending
@@ -462,9 +458,9 @@ export function BomStructurePage() {
         {selectedImport?.status === 'failed' ? <div className="bom-state-message">This import failed and has no saved structure to display.</div> : null}
         {showPipeline ? <BomPipelineProgress stages={pipelineStages} /> : null}
         {recoveryAdvice ? <p className="bom-recovery-notice" data-tone={recoveryAdvice.tone} role="alert">{recoveryAdvice.message}</p> : null}
-        {loadingPersisted ? <div className="bom-state-message" role="status">Loading saved tree, summary, warnings, and rolled-up parts…</div> : null}
+        {loadingPersisted ? <div className="bom-state-message" role="status">Loading saved tree, summary, and warnings…</div> : null}
         {persistedError ? <div className="bom-state-message" role="alert">Could not load the saved BOM. <button type="button" onClick={() => {
-          void treeQuery.refetch(); void summaryQuery.refetch(); void warningsQuery.refetch(); void rollupsQuery.refetch()
+          void treeQuery.refetch(); void summaryQuery.refetch(); void warningsQuery.refetch()
         }}>Retry</button></div> : null}
         {missingPersistedData ? <div className="bom-state-message" role="alert">This import is marked saved, but its backend summary or structure is missing. Please review the import before proceeding.</div> : null}
         {!view && !selectedImportId ? (
@@ -484,7 +480,6 @@ export function BomStructurePage() {
             <BomWarnings key={`${isBackendView ? 'saved' : 'preview'}:${selectedImportId ?? 'unsaved'}`} persisted={isBackendView} warnings={view.warnings} />
             <div className="bom-view-tabs" role="tablist" aria-label="BOM views">
               <button aria-selected={activeView === 'structure'} role="tab" type="button" onClick={() => { setActiveView('structure'); updateWorkspaceUrl({ tab: 'structure' }) }}>Structure Explorer</button>
-              <button aria-selected={activeView === 'rollup'} role="tab" type="button" onClick={() => { setActiveView('rollup'); updateWorkspaceUrl({ tab: 'rollup' }) }}>Rolled-up Parts <span>{view.rolledUpParts.length.toLocaleString('en-US')}</span></button>
               {isBackendView && isCurrentSaved ? <button aria-selected={activeView === 'extraction'} role="tab" type="button" onClick={() => { setActiveView('extraction'); updateWorkspaceUrl({ tab: 'extraction' }) }}>Extraction Preview</button> : null}
             </div>
             {activeView === 'structure' ? (
@@ -526,8 +521,7 @@ export function BomStructurePage() {
                   ) : null}
                 </div>
               </>
-            ) : activeView === 'rollup' ? <RolledUpParts parts={view.rolledUpParts} persisted={isBackendView} />
-              : isBackendView && isCurrentSaved ? extractionQuery.isPending ? <p role="status">Loading extraction preview…</p>
+            ) : isBackendView && isCurrentSaved ? extractionQuery.isPending ? <p role="status">Loading extraction preview…</p>
                 : extractionQuery.error ? <p role="alert">Could not load extraction preview. <button type="button" onClick={() => void extractionQuery.refetch()}>Retry</button></p>
                   : <BomExtractionPreview key={selectedImportId} candidates={extractionQuery.data ?? []} canExecute={canManageImports} importId={selectedImportId!} lotId={selectedImport?.lotId ?? null} versionNumber={selectedImport?.versionNumber ?? 0} /> : null}
           </>

@@ -445,7 +445,16 @@
 .bom-import-actions .select { width: min(100%, 380px); }
 .bom-version-history button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--brand); background: var(--surface); cursor: pointer; }
 .bom-version-history button:disabled { cursor: default; opacity: .5; }
-.bom-extraction-preview select { min-width: 110px; }
+.bom-route-select { position: relative; min-width: 168px; }
+.bom-route-select__indicator { position: absolute; z-index: 1; top: 50%; left: 12px; width: 8px; height: 8px; border-radius: 50%; background: #8b9b97; transform: translateY(-50%); pointer-events: none; }
+.bom-route-select select { width: 100%; min-height: 38px; appearance: none; border: 1px solid #cbd8d4; border-radius: 8px; padding: 8px 34px 8px 29px; color: #47615b; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23546e68' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center; box-shadow: 0 1px 2px rgb(16 48 45 / 5%); font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease; }
+.bom-route-select select:hover { border-color: #8ba7a0; }
+.bom-route-select select:focus-visible { outline: 0; border-color: var(--brand); box-shadow: 0 0 0 3px rgb(42 120 120 / 16%); }
+.bom-route-select[data-state='selected'] select { border-color: #8ac3af; color: #176449; background-color: #f2fbf6; }
+.bom-route-select[data-state='selected'] .bom-route-select__indicator { background: #2f9a69; }
+.bom-route-select[data-state='unavailable'] select { border-color: #d59b7a; color: #934626; background-color: #fff7f1; }
+.bom-route-select[data-state='unavailable'] .bom-route-select__indicator { background: #bf5b31; }
+.bom-route-select select:disabled { border-color: #dce5e1; color: #869691; background-color: #f4f7f6; cursor: not-allowed; opacity: 1; }
 .bom-extraction-preview__search { display: grid; width: min(100%, 380px); gap: 6px; margin: 16px 0 12px; font-size: .78rem; font-weight: 700; }
 .bom-extraction-preview__pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 12px; color: var(--muted); font-size: .78rem; }
 .bom-extraction-preview__pagination-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }

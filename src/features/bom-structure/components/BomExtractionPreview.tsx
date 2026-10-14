@@ -5,9 +5,9 @@ import { Input } from '../../../components/ui/Input'
 import { useBomExtraction } from '../hooks/useBomExtraction'
 import { useBomExtractionStatus } from '../queries/usePersistedBom'
 import type { BomExtractionCandidate } from '../types/bomDomain.types'
+import { useRouteAssignmentOptions } from '../../settings/queries/routeAssignmentOptionsQueries'
+import type { ProductionRoute } from '../../production/types'
 
-type Route = 'BEND' | 'NO BEND' | 'ROD' | 'ROLLING' | 'LADDER' | 'OTHER'
-const ROUTES: Route[] = ['BEND', 'NO BEND', 'ROD', 'ROLLING', 'LADDER', 'OTHER']
 const PAGE_SIZE = 25
 
 function formatNumber(value: number | null): string { return value === null ? '—' : value.toLocaleString('en-US') }
@@ -31,14 +31,17 @@ interface BomExtractionPreviewProps {
 }
 
 export function BomExtractionPreview({ candidates, importId, versionNumber, canExecute }: BomExtractionPreviewProps) {
-  const [assignments, setAssignments] = useState<Record<string, Route>>({})
+  const [assignments, setAssignments] = useState<Record<string, ProductionRoute>>({})
   const [confirmed, setConfirmed] = useState(false)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const statusQuery = useBomExtractionStatus(importId, true)
+  const routeOptionsQuery = useRouteAssignmentOptions()
   const extraction = useBomExtraction(importId)
   const status = statusQuery.data ?? null
   const alreadyExtracted = status !== null
+  const activeRouteOptions = useMemo(() => (routeOptionsQuery.data ?? []).filter((option) => option.isActive), [routeOptionsQuery.data])
+  const activeRoutes = useMemo(() => new Set(activeRouteOptions.map((option) => option.route)), [activeRouteOptions])
 
   const assignable = useMemo(
     () => candidates.map((candidate, index) => ({ candidate, index, key: assignmentKey(candidate) })),
@@ -58,10 +61,11 @@ export function BomExtractionPreview({ candidates, importId, versionNumber, canE
     () => candidates.filter((candidate) => hasNonRoutingBlocker(candidate.blockers)).length,
     [candidates],
   )
-  const assignedCount = assignable.filter(({ key }) => key && assignments[key]).length
+  const assignedCount = assignable.filter(({ key }) => key && assignments[key] && activeRoutes.has(assignments[key])).length
   const assignableCount = assignable.filter(({ key }) => key !== null).length
   const allAssigned = assignableCount > 0 && assignedCount === assignableCount
-  const canSubmit = canExecute && !alreadyExtracted && !statusQuery.isPending
+  const routeSettingsReady = routeOptionsQuery.isSuccess && activeRouteOptions.length > 0
+  const canSubmit = canExecute && routeSettingsReady && !alreadyExtracted && !statusQuery.isPending
     && candidates.length > 0 && blockedCount === 0 && allAssigned && confirmed
     && !extraction.executeMutation.isPending
 
@@ -88,6 +92,9 @@ export function BomExtractionPreview({ candidates, importId, versionNumber, canE
       (extraction {status.extractionId}). Re-extraction of this version is not allowed.
     </p> : null}
     {!canExecute ? <p role="note">Extraction requires an active Supervisor or Admin account. Operators can inspect this preview.</p> : null}
+    {routeOptionsQuery.isPending ? <p role="status">Loading route assignment options…</p> : null}
+    {routeOptionsQuery.error ? <p role="alert">Could not load route assignment options. Extraction is unavailable until this is resolved. <button type="button" onClick={() => void routeOptionsQuery.refetch()}>Retry</button></p> : null}
+    {routeOptionsQuery.isSuccess && activeRouteOptions.length === 0 ? <p role="alert">No active Route Assignment options are configured. Contact an administrator.</p> : null}
 
     <label className="bom-extraction-preview__search">
       <span>Search candidates</span>
@@ -100,6 +107,8 @@ export function BomExtractionPreview({ candidates, importId, versionNumber, canE
       <tbody>{visibleCandidates.map(({ candidate, key, index }) => {
         const rowKey = candidate.representativeNodeId ?? `${candidate.article ?? 'candidate'}-${index}`
         const blocked = hasNonRoutingBlocker(candidate.blockers)
+        const selectedRoute = key ? assignments[key] : undefined
+        const isUnavailable = Boolean(selectedRoute && !activeRoutes.has(selectedRoute))
         return <tr key={rowKey}>
           <td><strong>{candidate.article ?? '—'}</strong></td><td>{candidate.designation ?? '—'}</td>
           <td>Profile: {candidate.profile ?? '—'} · L: {formatNumber(candidate.lengthValue)} · W: {formatNumber(candidate.widthValue)} · H: {formatNumber(candidate.heightValue)}</td>
@@ -109,10 +118,15 @@ export function BomExtractionPreview({ candidates, importId, versionNumber, canE
           <td className="bom-number">{formatNumber(candidate.totalWeightKg)}</td>
           <td>{key === null || blocked
             ? <span>Not assignable</span>
-            : <select aria-label={`Route for ${key}`} disabled={!canExecute || alreadyExtracted} value={key && assignments[key] ? assignments[key] : ''}
-              onChange={(event) => setAssignments((current) => ({ ...current, [key]: event.target.value as Route }))}>
-              <option value="">Unassigned</option>{ROUTES.map((route) => <option key={route} value={route}>{route}</option>)}
-            </select>}</td>
+            : <div className="bom-route-select" data-state={isUnavailable ? 'unavailable' : selectedRoute ? 'selected' : 'empty'}>
+              <span aria-hidden="true" className="bom-route-select__indicator" />
+              <select aria-label={`Route for ${key}`} disabled={!canExecute || alreadyExtracted || !routeSettingsReady} value={selectedRoute ?? ''}
+                onChange={(event) => setAssignments((current) => ({ ...current, [key]: event.target.value as ProductionRoute }))}>
+                <option value="">Choose route…</option>
+                {isUnavailable ? <option value={selectedRoute} disabled>Unavailable: {selectedRoute}</option> : null}
+                {activeRouteOptions.map((option) => <option key={option.id} value={option.route}>{option.label}</option>)}
+              </select>
+            </div>}</td>
         </tr>
       })}</tbody>
     </table></div>

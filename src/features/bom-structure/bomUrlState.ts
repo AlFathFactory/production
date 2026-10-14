@@ -1,6 +1,6 @@
 import type { BomItemType } from './types'
 
-export type BomWorkspaceTab = 'structure' | 'rollup' | 'extraction'
+export type BomWorkspaceTab = 'structure' | 'extraction'
 
 export interface BomWorkspaceUrlState {
   filters: {
@@ -20,7 +20,7 @@ export interface BomWorkspaceUrlState {
 
 const ITEM_TYPES: BomItemType[] = ['assembly', 'part', 'material']
 const SOURCE_TYPES = ['Eigenfertigung', 'Fremdbezug']
-const TABS: BomWorkspaceTab[] = ['structure', 'rollup', 'extraction']
+const TABS: BomWorkspaceTab[] = ['structure', 'extraction']
 
 function selectedValues<T extends string>(value: string | null, allowed: readonly T[]): Set<T> {
   if (!value) return new Set(allowed)

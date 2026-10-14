@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "test": "node --test src/features/bom-structure/*.test.mjs src/features/bom-structure/hooks/*.test.mjs",
-    "test:components": "vitest run src/features/bom-structure/components",
+    "test:components": "vitest run src/features/bom-structure/components src/features/settings",
     "test:integration": "vitest run src/features/bom-structure/integration src/test",
     "test:e2e": "playwright test",
     "typecheck": "tsc -b --pretty false",
