@@ -12,6 +12,7 @@ export interface BomWorkspaceUrlState {
     unmappedDimensionsOnly: boolean
     warningsOnly: boolean
   }
+  focusedNodeId: string | null
   importId: string | null
   nodeId: string | null
   query: string
@@ -43,6 +44,7 @@ function selectedParam<T extends string>(value: Set<T>, all: readonly T[]): stri
 export function readBomWorkspaceUrl(search: URLSearchParams): BomWorkspaceUrlState {
   const tab = search.get('bomTab')
   return {
+    focusedNodeId: search.get('focused_node') || null,
     importId: search.get('bomImportId') || null,
     nodeId: search.get('bomNodeId') || null,
     query: search.get('bomQuery') || '',
@@ -67,6 +69,7 @@ function setOrDelete(params: URLSearchParams, key: string, value: string | null)
 /** Writes only BOM workspace keys, preserving unrelated route state. */
 export function writeBomWorkspaceUrl(current: URLSearchParams, state: BomWorkspaceUrlState): URLSearchParams {
   const next = new URLSearchParams(current)
+  setOrDelete(next, 'focused_node', state.focusedNodeId)
   setOrDelete(next, 'bomImportId', state.importId)
   setOrDelete(next, 'bomNodeId', state.nodeId)
   setOrDelete(next, 'bomQuery', state.query.trim() || null)

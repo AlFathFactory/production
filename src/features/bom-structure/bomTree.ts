@@ -18,6 +18,35 @@ export interface VisibleBomNode {
   node: BomNode
 }
 
+/**
+ * Returns one exact BOM occurrence, with its existing nested descendants.
+ *
+ * Nodes are occurrence IDs rather than article codes, so repeated codes remain
+ * unambiguous. The returned array is a new root collection, but deliberately
+ * reuses the immutable nested node data instead of rebuilding or mutating it.
+ */
+export function getSubtreeByNodeId(roots: readonly BomNode[], selectedNodeId: string): BomNode[] {
+  for (const root of roots) {
+    if (root.id === selectedNodeId) return [root]
+    const subtree = getSubtreeByNodeId(root.children, selectedNodeId)
+    if (subtree.length) return subtree
+  }
+  return []
+}
+
+/** Collects every expandable occurrence in a nested branch in one traversal. */
+export function getExpandableNodeIds(roots: readonly BomNode[]): Set<string> {
+  const ids = new Set<string>()
+  const collect = (node: BomNode) => {
+    if (node.children.length) {
+      ids.add(node.id)
+      node.children.forEach(collect)
+    }
+  }
+  roots.forEach(collect)
+  return ids
+}
+
 const FILTERABLE_ITEM_TYPES: BomItemType[] = ['assembly', 'part', 'material']
 const FILTERABLE_SOURCE_TYPES = ['Eigenfertigung', 'Fremdbezug']
 

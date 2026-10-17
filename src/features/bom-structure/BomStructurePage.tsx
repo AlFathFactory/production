@@ -7,10 +7,11 @@ import { Select } from '../../components/ui/Select'
 import { isDesktopRuntime } from '../../config/platform'
 import { useAuth } from '../auth/hooks/useAuth'
 import { canManageBomImports } from '../auth/permissions'
-import { getAncestorIds, getVisibleBomNodes } from './bomTree'
+import { getAncestorIds, getExpandableNodeIds, getSubtreeByNodeId, getVisibleBomNodes } from './bomTree'
 import { buildBomPipelineStages } from './bomPipeline'
 import { getBomRecoveryAdvice } from './bomRecovery'
 import { BomDetails } from './components/BomDetails'
+import { BomFocusControls } from './components/BomFocusControls'
 import { BomExtractionPreview } from './components/BomExtractionPreview'
 import { BomFilePicker } from './components/BomFilePicker'
 import { BomImportSelector } from './components/BomImportSelector'
@@ -93,6 +94,7 @@ export function BomStructurePage() {
   const [importSearch, setImportSearch] = useState('')
   const [query, setQuery] = useState(urlState.query)
   const [filters, setFilters] = useState<BomToolbarFilters>(() => toToolbarFilters(urlState.filters))
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(urlState.focusedNodeId)
   const [revealId, setRevealId] = useState<string | null>(null)
   const [selectedNode, setSelectedNode] = useState<BomNode | null>(null)
   const updateWorkspaceUrl = useCallback((update: Partial<Omit<BomWorkspaceUrlState, 'filters'>> & { filters?: BomWorkspaceUrlState['filters'] }) => {
@@ -106,6 +108,7 @@ export function BomStructurePage() {
     setActiveView(urlState.tab)
     setQuery(urlState.query)
     setFilters(toToolbarFilters(urlState.filters))
+    setFocusedNodeId(urlState.focusedNodeId)
     if (!urlState.nodeId) {
       setSelectedNode(null)
       setIsDetailsOpen(false)
@@ -157,6 +160,10 @@ export function BomStructurePage() {
   const isBackendView = workspace?.source === 'persisted'
   const nodesById = useMemo(() => new Map(view?.nodes.map((node) => [node.id, node]) ?? []), [view])
   const currentNode = selectedNode ? nodesById.get(selectedNode.id) ?? null : null
+  const focusedRoots = useMemo(() => view && focusedNodeId
+    ? getSubtreeByNodeId(view.roots, focusedNodeId)
+    : null, [focusedNodeId, view])
+  const focusedNode = focusedRoots?.[0] ?? null
   const detailsQuery = useBomNodeDetails(currentNode?.id ?? null, Boolean(isPersisted && replaceImportId !== selectedImportId && isDetailsOpen))
   const detailNode = isBackendView && currentNode && detailsQuery.data
     ? { ...currentNode, ...detailsQuery.data, children: currentNode.children, isLeaf: currentNode.isLeaf, reuseCount: currentNode.reuseCount }
@@ -167,13 +174,13 @@ export function BomStructurePage() {
     .map((candidate) => candidate.article)
     .filter((code): code is string => Boolean(code))), [extractionQuery.data])
   const visibleNodes = useMemo(() => view
-    ? getVisibleBomNodes(view.roots, expandedIds, {
+    ? getVisibleBomNodes(focusedRoots ?? view.roots, expandedIds, {
         ...filters,
         query,
         sourceRowsWithWarnings,
         unmappedDimensionCodes,
       })
-    : [], [expandedIds, filters, query, sourceRowsWithWarnings, unmappedDimensionCodes, view])
+    : [], [expandedIds, filters, focusedRoots, query, sourceRowsWithWarnings, unmappedDimensionCodes, view])
 
   useEffect(() => {
     if (!view) return
@@ -182,8 +189,19 @@ export function BomStructurePage() {
   }, [view])
 
   useEffect(() => {
+    if (!view || !focusedNodeId) return
+    if (!focusedNode) {
+      setFocusedNodeId(null)
+      updateWorkspaceUrl({ focusedNodeId: null })
+      return
+    }
+    setExpandedIds(getExpandableNodeIds([focusedNode]))
+    setRevealId(focusedNode.id)
+  }, [focusedNode, focusedNodeId, updateWorkspaceUrl, view])
+
+  useEffect(() => {
     if (!view) return
-    const deepLinkedNode = urlState.nodeId ? nodesById.get(urlState.nodeId) ?? null : null
+    const deepLinkedNode = (urlState.nodeId || urlState.focusedNodeId) ? nodesById.get(urlState.nodeId || urlState.focusedNodeId!) ?? null : null
     setSelectedNode(deepLinkedNode)
     setIsDetailsOpen(Boolean(deepLinkedNode))
     if (deepLinkedNode) setExpandedIds((current) => new Set([...current, ...getAncestorIds(deepLinkedNode, nodesById)]))
@@ -197,7 +215,7 @@ export function BomStructurePage() {
   }, [activeView, isBackendView, isCurrentSaved, updateWorkspaceUrl, view])
 
   const selectImport = (importId: string | null) => {
-    updateWorkspaceUrl({ importId, nodeId: null })
+    updateWorkspaceUrl({ focusedNodeId: null, importId, nodeId: null })
   }
 
   const toggleExpanded = useCallback((node: BomNode) => {
@@ -224,6 +242,19 @@ export function BomStructurePage() {
     setRevealId(node.id)
     updateWorkspaceUrl({ nodeId: node.id, tab: 'structure' })
   }, [nodesById, updateWorkspaceUrl])
+
+  const focusNode = useCallback((node: BomNode) => {
+    setFocusedNodeId(node.id)
+    setExpandedIds(getExpandableNodeIds([node]))
+    setRevealId(node.id)
+    updateWorkspaceUrl({ focusedNodeId: node.id, nodeId: node.id, tab: 'structure' })
+  }, [updateWorkspaceUrl])
+
+  const showFullStructure = useCallback(() => {
+    setFocusedNodeId(null)
+    setRevealId(null)
+    updateWorkspaceUrl({ focusedNodeId: null })
+  }, [updateWorkspaceUrl])
 
   const expandAll = () => {
     if (!view) return
@@ -504,9 +535,16 @@ export function BomStructurePage() {
                     updateWorkspaceUrl({ query: next })
                   }}
                 />
+                <BomFocusControls
+                  focusedNode={focusedNode}
+                  selectedNode={currentNode}
+                  onFocus={focusNode}
+                  onShowFullStructure={showFullStructure}
+                />
                 <div className={`bom-explorer${currentNode && isDetailsOpen ? ' bom-explorer--details-open' : ''}`}>
                   <BomTree
                     expandedIds={expandedIds}
+                    levelOffset={focusedNode ? focusedNode.level - 1 : 0}
                     query={query}
                     revealId={revealId}
                     selectedId={currentNode?.id ?? null}

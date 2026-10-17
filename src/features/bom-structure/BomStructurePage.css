@@ -283,6 +283,12 @@
 .bom-toolbar__filter-grid .select { min-height: 31px; font-size: .72rem; }
 .bom-toolbar__clear-filters { justify-self: start; border: 0; padding: 0; color: var(--brand); background: transparent; cursor: pointer; font-size: .7rem; font-weight: 800; }
 
+.bom-focus-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 16px 12px; }
+.bom-focus-controls__status { margin: 0; color: var(--muted); font-size: .78rem; }
+.bom-focus-controls__status strong { color: var(--brand); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.bom-focus-controls__actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.bom-focus-controls__actions .button { min-height: 32px; padding-inline: 10px; font-size: .72rem; }
+
 .bom-explorer { display: grid; min-width: 0; }
 .bom-explorer--details-open { grid-template-columns: minmax(0, 1fr) minmax(340px, 390px); gap: 14px; }
 
@@ -510,6 +516,7 @@
   .bom-toolbar { grid-template-columns: 1fr; }
   .bom-toolbar__actions { justify-self: stretch; }
   .bom-toolbar__actions .button { flex: 1; }
+  .bom-focus-controls { align-items: flex-start; flex-direction: column; }
   .bom-rollup__intro { align-items: flex-start; flex-direction: column; }
 }
 

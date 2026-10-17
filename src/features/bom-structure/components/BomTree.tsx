@@ -13,6 +13,7 @@ function unitWeight(node: BomNode): number | null {
 
 interface BomTreeProps {
   expandedIds: Set<string>
+  levelOffset?: number
   onSelect: (node: BomNode) => void
   onToggle: (node: BomNode) => void
   query: string
@@ -37,30 +38,31 @@ interface BomTreeRowProps {
   isMatch: boolean
   isSelected: boolean
   isTabStop: boolean
+  level: number
   node: BomNode
   query: string
   onSelect: (node: BomNode) => void
   onToggle: (node: BomNode) => void
 }
 
-const BomTreeRow = memo(function BomTreeRow({ isExpanded, isMatch, isSelected, isTabStop, node, onSelect, onToggle, query }: BomTreeRowProps) {
+const BomTreeRow = memo(function BomTreeRow({ isExpanded, isMatch, isSelected, isTabStop, level, node, onSelect, onToggle, query }: BomTreeRowProps) {
   const unitWeightKg = unitWeight(node)
   return (
     <div
-      aria-level={node.level}
+      aria-level={level}
       aria-expanded={node.children.length ? isExpanded : undefined}
       aria-label={`${node.code || 'Unnamed node'}: ${node.name || 'No description'}`}
       aria-selected={isSelected}
-      className={`bom-tree-row bom-tree-row--level-${((node.level - 1) % 6) + 1}${node.isLeaf ? ' bom-tree-row--leaf-node' : ''}${isSelected ? ' bom-tree-row--selected' : ''}${isMatch ? ' bom-tree-row--match' : ''}`}
+      className={`bom-tree-row bom-tree-row--level-${((level - 1) % 6) + 1}${node.isLeaf ? ' bom-tree-row--leaf-node' : ''}${isSelected ? ' bom-tree-row--selected' : ''}${isMatch ? ' bom-tree-row--match' : ''}`}
       id={`bom-tree-${node.id}`}
       role="treeitem"
       tabIndex={isTabStop ? 0 : -1}
       onDoubleClick={() => node.children.length && onToggle(node)}
     >
-      <span className="bom-tree-row__level">{node.level}</span>
-      <div className="bom-tree-row__structure" style={{ paddingInlineStart: `${Math.max(0, node.level - 1) * 18 + 10}px` }}>
+      <span className="bom-tree-row__level">{level}</span>
+      <div className="bom-tree-row__structure" style={{ paddingInlineStart: `${Math.max(0, level - 1) * 18 + 10}px` }}>
         <span className="bom-tree-row__guides" aria-hidden="true">
-          {Array.from({ length: Math.max(0, node.level - 1) }, (_, index) => (
+          {Array.from({ length: Math.max(0, level - 1) }, (_, index) => (
             <span key={index} style={{ insetInlineStart: `${index * 18 + 18}px` }} />
           ))}
         </span>
@@ -93,6 +95,7 @@ const BomTreeRow = memo(function BomTreeRow({ isExpanded, isMatch, isSelected, i
 
 export const BomTree = memo(function BomTree({
   expandedIds,
+  levelOffset = 0,
   onSelect,
   onToggle,
   query,
@@ -116,6 +119,7 @@ export const BomTree = memo(function BomTree({
   }, [limit, revealId, visibleNodes])
 
   const rendered = visibleNodes.slice(0, limit)
+  const displayLevel = (node: BomNode) => Math.max(1, node.level - levelOffset)
   const tabStopId = rendered.find(({ node }) => node.id === selectedId)?.node.id ?? rendered[0]?.node.id
   const onTreeKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const row = (event.target as HTMLElement).closest<HTMLElement>('[role="treeitem"]')
@@ -128,11 +132,11 @@ export const BomTree = memo(function BomTree({
     else if (event.key === 'ArrowUp') focusId = rendered[index - 1]?.node.id ?? null
     else if (event.key === 'ArrowRight' && node.children.length) {
       if (!expandedIds.has(node.id)) onToggle(node)
-      else if (rendered[index + 1]?.node.level > node.level) focusId = rendered[index + 1].node.id
+      else if (rendered[index + 1] && displayLevel(rendered[index + 1].node) > displayLevel(node)) focusId = rendered[index + 1].node.id
     }
     else if (event.key === 'ArrowLeft') {
       if (node.children.length && expandedIds.has(node.id)) onToggle(node)
-      else focusId = rendered.slice(0, index).reverse().find(({ node: candidate }) => candidate.level === node.level - 1)?.node.id ?? null
+      else focusId = rendered.slice(0, index).reverse().find(({ node: candidate }) => displayLevel(candidate) === displayLevel(node) - 1)?.node.id ?? null
     } else if ((event.key === 'Enter' || event.key === ' ') && event.target === row) onSelect(node)
     else return
     event.preventDefault()
@@ -153,6 +157,7 @@ export const BomTree = memo(function BomTree({
             isMatch={isMatch}
             isSelected={selectedId === node.id}
             isTabStop={tabStopId === node.id}
+            level={displayLevel(node)}
             node={node}
             onSelect={onSelect}
             onToggle={onToggle}
