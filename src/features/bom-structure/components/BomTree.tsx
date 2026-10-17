@@ -4,6 +4,13 @@ import type { VisibleBomNode } from '../bomTree'
 import { BOM_TREE_RENDER_STEP } from '../bomSettings'
 import type { BomNode } from '../types'
 
+const number = new Intl.NumberFormat('en-US', { maximumFractionDigits: 3 })
+
+function unitWeight(node: BomNode): number | null {
+  if (node.positionWeightKg === null || node.quantityPerParent === 0) return null
+  return node.positionWeightKg / node.quantityPerParent
+}
+
 interface BomTreeProps {
   expandedIds: Set<string>
   onSelect: (node: BomNode) => void
@@ -37,6 +44,7 @@ interface BomTreeRowProps {
 }
 
 const BomTreeRow = memo(function BomTreeRow({ isExpanded, isMatch, isSelected, isTabStop, node, onSelect, onToggle, query }: BomTreeRowProps) {
+  const unitWeightKg = unitWeight(node)
   return (
     <div
       aria-level={node.level}
@@ -74,6 +82,11 @@ const BomTreeRow = memo(function BomTreeRow({ isExpanded, isMatch, isSelected, i
         <Highlight query={query}>{node.name || '—'}</Highlight>
         {node.name2 ? <small><Highlight query={query}>{node.name2}</Highlight></small> : null}
       </button>
+      <span className="bom-tree-row__metric bom-number" title="Cumulative quantity">{number.format(node.calculatedCumulativeQuantity)}</span>
+      <span className="bom-tree-row__metric bom-number" title="Per-piece weight">
+        {unitWeightKg === null ? '—' : `${number.format(unitWeightKg)} kg`}
+      </span>
+      <span className="bom-tree-row__metric bom-number bom-number--total" title="Total rolled weight">{number.format(node.rolledWeightKg)} kg</span>
     </div>
   )
 })
@@ -130,7 +143,7 @@ export const BomTree = memo(function BomTree({
     <div className="bom-tree" role="tree" aria-label="BOM hierarchy" aria-describedby="bom-tree-keyboard-help" onKeyDown={onTreeKeyDown}>
       <p className="sr-only" id="bom-tree-keyboard-help">Use up and down arrows to move between rows, right and left arrows to expand or collapse, and Enter to open details.</p>
       <div className="bom-tree__header" aria-hidden="true">
-        <span>Level</span><span>Structure / Code</span><span>Description</span>
+        <span>Level</span><span>Structure / Code</span><span>Description</span><span>Quantity</span><span>Unit weight</span><span>Total weight</span>
       </div>
       <div className="bom-tree__rows">
         {rendered.map(({ isMatch, node }) => (
