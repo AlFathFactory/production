@@ -8,10 +8,15 @@ import { useBomExtractionStatus } from '../queries/usePersistedBom'
 import type { BomExtractionCandidate } from '../types/bomDomain.types'
 import { useRouteAssignmentOptions } from '../../settings/queries/routeAssignmentOptionsQueries'
 import type { ProductionRoute } from '../../production/types'
-import { designationCode } from '../designationTypes'
+import { designationCode, designationSelectionStatus, type DesignationSelectionStatus } from '../designationTypes'
 import { useBomDesignationMappings } from '../queries/useBomDesignationMappings'
 
 const PAGE_SIZE = 25
+const DESIGNATION_STATUS_LABELS: Record<DesignationSelectionStatus, string> = {
+  unselected: 'Not selected',
+  pending: 'Pending',
+  saved: 'Saved',
+}
 
 function formatNumber(value: number | null): string { return value === null ? '—' : value.toLocaleString('en-US') }
 
@@ -52,6 +57,7 @@ export function BomExtractionPreview({
   const [pendingMappingUpdate, setPendingMappingUpdate] = useState<PendingMappingUpdate | null>(null)
   const [confirmed, setConfirmed] = useState(false)
   const [search, setSearch] = useState('')
+  const [designationStatusFilter, setDesignationStatusFilter] = useState<'all' | DesignationSelectionStatus>('all')
   const [page, setPage] = useState(1)
   const statusQuery = useBomExtractionStatus(importId, true)
   const routeOptionsQuery = useRouteAssignmentOptions()
@@ -77,16 +83,31 @@ export function BomExtractionPreview({
   const designationLoadError = designationMappings.typesQuery.error || designationMappings.mappingsQuery.error
   const designationSaveError = designationMappings.createMutation.error || designationMappings.updateMutation.error
 
+  const designationStatusForCode = (code: string | null): DesignationSelectionStatus => {
+    const persistedTypeId = code ? mappedDesignationByCode.get(code)?.typeId : undefined
+    const selectedTypeId = code ? designationSelections[code] ?? persistedTypeId : undefined
+    return designationSelectionStatus(persistedTypeId, selectedTypeId)
+  }
+
   const assignable = useMemo(
     () => candidates.map((candidate, index) => ({ candidate, index, key: assignmentKey(candidate) })),
     [candidates],
   )
-  const filteredCandidates = useMemo(() => {
+  const searchedCandidates = useMemo(() => {
     const query = search.trim().toLocaleLowerCase()
     if (!query) return assignable
     return assignable.filter(({ candidate }) => [candidate.article, candidate.designation, candidate.profile, candidate.material]
       .some((value) => value?.toLocaleLowerCase().includes(query)))
   }, [assignable, search])
+  const designationStatusCounts = useMemo(() => {
+    const counts: Record<DesignationSelectionStatus, number> = { unselected: 0, pending: 0, saved: 0 }
+    for (const { candidate } of assignable) counts[designationStatusForCode(designationCode(candidate.designation))] += 1
+    return counts
+  }, [assignable, designationSelections, mappedDesignationByCode])
+  const filteredCandidates = useMemo(() => designationStatusFilter === 'all'
+    ? searchedCandidates
+    : searchedCandidates.filter(({ candidate }) => designationStatusForCode(designationCode(candidate.designation)) === designationStatusFilter),
+  [searchedCandidates, designationStatusFilter, designationSelections, mappedDesignationByCode])
   const pageCount = Math.max(1, Math.ceil(filteredCandidates.length / PAGE_SIZE))
   const currentPage = Math.min(page, pageCount)
   const firstIndex = (currentPage - 1) * PAGE_SIZE
@@ -169,6 +190,15 @@ export function BomExtractionPreview({
       <Input type="search" placeholder="Article, designation, profile, or material" value={search}
         onChange={(event) => { setSearch(event.target.value); setPage(1) }} />
     </label>
+    <label className="bom-extraction-preview__status-filter">
+      <span>Designation Type Status</span>
+      <Select aria-label="Filter designation type status" value={designationStatusFilter} onChange={(event) => { setDesignationStatusFilter(event.target.value as 'all' | DesignationSelectionStatus); setPage(1) }}>
+        <option value="all">All ({candidates.length})</option>
+        <option value="unselected">Not Selected ({designationStatusCounts.unselected})</option>
+        <option value="pending">Pending ({designationStatusCounts.pending})</option>
+        <option value="saved">Saved ({designationStatusCounts.saved})</option>
+      </Select>
+    </label>
 
     <div className="bom-extraction-preview__scroll"><table className="bom-extraction-preview__table">
       <thead><tr><th>Article</th><th>Designation</th><th>Designation Type</th><th>Dimensions</th><th>Material</th><th>Quantity</th><th>Unit weight (kg)</th><th>Total weight (kg)</th><th>Route assignment</th></tr></thead>
@@ -180,16 +210,16 @@ export function BomExtractionPreview({
         const code = designationCode(candidate.designation)
         const existingDesignationMapping = code ? mappedDesignationByCode.get(code) : undefined
         const selectedDesignationType = code ? designationSelections[code] ?? existingDesignationMapping?.typeId ?? '' : ''
+        const designationStatus = designationStatusForCode(code)
         const canSelectDesignation = designationReady && Boolean(code) && canManageDesignationMappings
           && (!existingDesignationMapping || canUpdateDesignationMappings)
         const needsNewMappingSave = Boolean(code && selectedDesignationType && !existingDesignationMapping)
         const needsUpdateConfirmation = pendingMappingUpdate?.code === code && Boolean(existingDesignationMapping)
         return <tr key={rowKey}>
           <td><strong>{candidate.article ?? '—'}</strong></td><td>{candidate.designation ?? '—'}</td>
-          <td>{designationLoadError ? <span role="alert">Unavailable</span>
+          <td><div className="bom-designation-type" data-status={designationStatus}>{designationLoadError ? <span role="alert">Unavailable</span>
             : !code ? <span>Not available</span>
-              : <div className="bom-designation-type" data-state={existingDesignationMapping ? 'mapped' : selectedDesignationType ? 'manually-selected' : 'unmapped'}>
-                <Select className="bom-designation-type__select" aria-label={`Designation type for ${code}`} disabled={!canSelectDesignation}
+              : <><Select className="bom-designation-type__select" aria-label={`Designation type for ${code}`} disabled={!canSelectDesignation}
                   value={selectedDesignationType} onChange={(event) => selectDesignationType(code, event.target.value)}>
                   <option value="">Select type</option>
                   {designationTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
@@ -204,7 +234,7 @@ export function BomExtractionPreview({
                     setPendingMappingUpdate(null)
                   }}>Cancel</Button>
                 </span> : null}
-              </div>}</td>
+              </>}</div><span className="bom-designation-type__status" data-status={designationStatus}>{DESIGNATION_STATUS_LABELS[designationStatus]}</span></td>
           <td>Profile: {candidate.profile ?? '—'} · L: {formatNumber(candidate.lengthValue)} · W: {formatNumber(candidate.widthValue)} · H: {formatNumber(candidate.heightValue)}</td>
           <td>{candidate.material ?? '—'}</td>
           <td className="bom-number">{formatNumber(candidate.totalQuantity)}</td>

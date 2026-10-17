@@ -32,8 +32,8 @@ const { statusState, executeState, routeOptionsState, designationState } = vi.ho
     mappings: [] as Array<{ id: string; code: string; typeId: string; sortOrder: number }>,
     error: null as Error | null,
     isPending: false,
-    createMutation: { isPending: false, mutate: vi.fn() },
-    updateMutation: { isPending: false, mutate: vi.fn() },
+    createMutation: { error: null as Error | null, isPending: false, mutate: vi.fn() },
+    updateMutation: { error: null as Error | null, isPending: false, mutate: vi.fn() },
     refresh: vi.fn(),
   },
 }))
@@ -142,8 +142,10 @@ function resetMocks() {
   designationState.error = null
   designationState.isPending = false
   designationState.createMutation.isPending = false
+  designationState.createMutation.error = null
   designationState.createMutation.mutate.mockReset()
   designationState.updateMutation.isPending = false
+  designationState.updateMutation.error = null
   designationState.updateMutation.mutate.mockReset()
   designationState.refresh.mockReset()
 }
@@ -278,6 +280,8 @@ describe('BomExtractionPreview', () => {
     expect(screen.getByLabelText('Designation type for RD')).toHaveValue('type-rod')
     expect(screen.getByLabelText('Designation type for HEA')).toHaveValue('type-section')
     expect(screen.getByLabelText('Designation type for ROAD')).toHaveValue('')
+    expect(screen.getAllByText('Saved')).toHaveLength(4)
+    expect(screen.getByText('Not selected')).toHaveAttribute('data-status', 'unselected')
     expect(screen.getByText('AKT L 5/60/60/825')).toBeInTheDocument()
     expect(screen.getAllByText(/Profile:/)).toHaveLength(5)
   })
@@ -319,6 +323,56 @@ describe('BomExtractionPreview', () => {
     expect(designationState.updateMutation.mutate).not.toHaveBeenCalled()
     await user.click(screen.getByRole('button', { name: 'Update Mapping' }))
     expect(designationState.updateMutation.mutate).toHaveBeenCalledWith({ mappingId: 'mapping-akt', typeId: 'type-pipe' }, expect.any(Object))
+  })
+
+  test('filters shared designation states, combines with search, and restores Saved after reverting', async () => {
+    resetMocks()
+    designationState.mappings = [{ id: 'mapping-akt', code: 'AKT', typeId: 'type-plate', sortOrder: 10 }]
+    const user = userEvent.setup()
+    render(<BomExtractionPreview candidates={[
+      candidate('A-1', undefined, 'AKT L 5/60/60/825'),
+      candidate('A-2', undefined, 'XYZ 10/20/300'),
+      candidate('A-3', undefined, 'XYZ 9/40/500'),
+    ]} canExecute canUpdateDesignationMappings importId="import-1" lotId="lot-1" versionNumber={1} />)
+
+    expect(screen.getByText('Saved')).toHaveAttribute('data-status', 'saved')
+    expect(screen.getAllByText('Not selected')).toHaveLength(2)
+    await user.selectOptions(screen.getAllByLabelText('Designation type for XYZ')[0]!, 'type-plate')
+    expect(screen.getAllByText('Pending')).toHaveLength(2)
+    expect(screen.getAllByText('Pending').every((badge) => badge.getAttribute('data-status') === 'pending')).toBe(true)
+
+    await user.selectOptions(screen.getByLabelText('Filter designation type status'), 'pending')
+    expect(screen.queryByText('AKT L 5/60/60/825')).toBeNull()
+    expect(screen.getByText('XYZ 10/20/300')).toBeInTheDocument()
+    await user.type(screen.getByRole('searchbox', { name: 'Search candidates' }), '9/40')
+    expect(screen.queryByText('XYZ 10/20/300')).toBeNull()
+    expect(screen.getByText('XYZ 9/40/500')).toBeInTheDocument()
+
+    await user.clear(screen.getByRole('searchbox', { name: 'Search candidates' }))
+    await user.selectOptions(screen.getByLabelText('Filter designation type status'), 'all')
+    await user.selectOptions(screen.getByLabelText('Designation type for AKT'), 'type-pipe')
+    expect(screen.getAllByText('Pending')).toHaveLength(3)
+    await user.selectOptions(screen.getByLabelText('Designation type for AKT'), 'type-plate')
+    expect(screen.getByText('Saved')).toHaveAttribute('data-status', 'saved')
+  })
+
+  test('keeps an unknown selection Pending after save failure and marks same-code rows Saved after save success', async () => {
+    resetMocks()
+    designationState.createMutation.error = new Error('Save failed')
+    designationState.createMutation.mutate.mockImplementation((_input: unknown, options: { onError: () => void }) => options.onError())
+    const user = userEvent.setup()
+    const props = { candidates: [candidate('A-1', undefined, 'XYZ 10/20/300'), candidate('A-2', undefined, 'XYZ 9/40/500')], canExecute: true, importId: 'import-1', lotId: 'lot-1', versionNumber: 1 }
+    const view = render(<BomExtractionPreview {...props} />)
+    await user.selectOptions(screen.getAllByLabelText('Designation type for XYZ')[0]!, 'type-plate')
+    await user.click(screen.getAllByRole('button', { name: 'Save Mapping' })[0]!)
+    expect(screen.getByText(/could not save the designation mapping/i)).toBeInTheDocument()
+    expect(screen.getAllByText('Pending')).toHaveLength(2)
+
+    designationState.createMutation.error = null
+    designationState.createMutation.mutate.mockImplementation((input: { typeId: string }, options: { onSuccess: (value: { id: string; typeId: string }) => void }) => options.onSuccess({ id: 'mapping-xyz', typeId: input.typeId }))
+    view.rerender(<BomExtractionPreview {...props} />)
+    await user.click(screen.getAllByRole('button', { name: 'Save Mapping' })[0]!)
+    expect(screen.getAllByText('Saved')).toHaveLength(2)
   })
 
   test('does not fall back to hardcoded designation types when mapping data cannot load', () => {
