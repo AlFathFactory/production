@@ -6,6 +6,8 @@ import type {
   BomDeletePayload,
   BomDimensionMappingLookupRow,
   BomDimensionMappingSavePayload,
+  BomDesignationMappingRow,
+  BomDesignationTypeRow,
   BomDimensionRole,
   BomExtractionCandidateRow,
   BomExtractionExecutePayload,
@@ -218,6 +220,80 @@ export const bomApi = {
     const { data, error } = await supabase.rpc('save_bom_dimension_mapping', payload)
     if (error) throw error
     return data
+  },
+
+  async getActiveDesignationTypes(): Promise<BomDesignationTypeRow[]> {
+    const { data, error } = await supabase.from('bom_designation_types').select('*')
+      .eq('is_active', true).order('sort_order').order('name')
+    if (error) throw error
+    return data
+  },
+
+  async getActiveDesignationMappings(): Promise<BomDesignationMappingRow[]> {
+    const { data, error } = await supabase.from('bom_designation_mappings').select('*')
+      .eq('is_active', true).order('sort_order').order('code')
+    if (error) throw error
+    return data
+  },
+
+  async createActiveDesignationMapping(code: string, typeId: string): Promise<BomDesignationMappingRow> {
+    const { data, error } = await supabase.from('bom_designation_mappings')
+      .insert({ code, type_id: typeId, is_active: true, sort_order: 0 }).select().single()
+    if (error) throw error
+    return data
+  },
+
+  async updateDesignationMappingType(mappingId: string, typeId: string): Promise<BomDesignationMappingRow> {
+    const { data, error } = await supabase.from('bom_designation_mappings')
+      .update({ type_id: typeId }).eq('id', mappingId).select().single()
+    if (error) throw error
+    return data
+  },
+
+  async listDesignationTypes(): Promise<BomDesignationTypeRow[]> {
+    const { data, error } = await supabase.from('bom_designation_types').select('*').order('sort_order').order('name')
+    if (error) throw error
+    return data
+  },
+
+  async createDesignationType(input: { name: string; isActive: boolean; sortOrder: number }): Promise<BomDesignationTypeRow> {
+    const { data, error } = await supabase.from('bom_designation_types').insert({ name: input.name.trim(), is_active: input.isActive, sort_order: input.sortOrder }).select().single()
+    if (error) throw error
+    return data
+  },
+
+  async updateDesignationType(id: string, input: { name: string; isActive: boolean; sortOrder: number }): Promise<BomDesignationTypeRow> {
+    const { data, error } = await supabase.from('bom_designation_types').update({ name: input.name.trim(), is_active: input.isActive, sort_order: input.sortOrder }).eq('id', id).select().single()
+    if (error) throw error
+    return data
+  },
+
+  async deleteDesignationType(id: string): Promise<void> {
+    const { error } = await supabase.from('bom_designation_types').delete().eq('id', id)
+    if (error) throw error
+  },
+
+  async listDesignationMappings(): Promise<BomDesignationMappingRow[]> {
+    const { data, error } = await supabase.from('bom_designation_mappings').select('*').order('sort_order').order('code')
+    if (error) throw error
+    return data
+  },
+
+  async createDesignationMappingRecord(input: { code: string; typeId: string; isActive: boolean; sortOrder: number }): Promise<BomDesignationMappingRow> {
+    const { data, error } = await supabase.from('bom_designation_mappings').insert({ code: input.code.trim().toUpperCase(), type_id: input.typeId, is_active: input.isActive, sort_order: input.sortOrder }).select().single()
+    if (error) throw error
+    return data
+  },
+
+  async updateDesignationMappingRecord(id: string, input: { code: string; typeId: string; isActive: boolean; sortOrder: number }): Promise<BomDesignationMappingRow> {
+    const { data, error } = await supabase.from('bom_designation_mappings').update({ code: input.code.trim().toUpperCase(), type_id: input.typeId, is_active: input.isActive, sort_order: input.sortOrder }).eq('id', id).select().single()
+    if (error) throw error
+    return data
+  },
+
+  async deleteDesignationMapping(id: string): Promise<void> {
+    const { error } = await supabase.from('bom_designation_mappings').delete().eq('id', id)
+    if (error) throw error
   },
 
   async getExtractionPreview(importId: string): Promise<BomExtractionCandidateRow[]> {

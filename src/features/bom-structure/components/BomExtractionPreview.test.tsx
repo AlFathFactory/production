@@ -5,7 +5,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { BomExtractionPreview } from './BomExtractionPreview'
 import type { BomExtractionCandidate, BomProductionExtractionResult } from '../types/bomDomain.types'
 
-const { statusState, executeState, routeOptionsState } = vi.hoisted(() => ({
+const { statusState, executeState, routeOptionsState, designationState } = vi.hoisted(() => ({
   statusState: { data: null as BomProductionExtractionResult | null, error: null as Error | null, isPending: false },
   executeState: {
     data: null as BomProductionExtractionResult | null,
@@ -21,6 +21,20 @@ const { statusState, executeState, routeOptionsState } = vi.hoisted(() => ({
     ],
     error: null as Error | null,
     isPending: false,
+  },
+  designationState: {
+    types: [
+      { id: 'type-plate', name: 'PLATE', sortOrder: 10 },
+      { id: 'type-pipe', name: 'PIPE', sortOrder: 20 },
+      { id: 'type-rod', name: 'ROD', sortOrder: 30 },
+      { id: 'type-section', name: 'Section', sortOrder: 40 },
+    ],
+    mappings: [] as Array<{ id: string; code: string; typeId: string; sortOrder: number }>,
+    error: null as Error | null,
+    isPending: false,
+    createMutation: { isPending: false, mutate: vi.fn() },
+    updateMutation: { isPending: false, mutate: vi.fn() },
+    refresh: vi.fn(),
   },
 }))
 
@@ -41,11 +55,31 @@ vi.mock('../../settings/queries/routeAssignmentOptionsQueries', () => ({
   useRouteAssignmentOptions: () => ({ ...routeOptionsState, isSuccess: !routeOptionsState.isPending && !routeOptionsState.error, refetch: vi.fn() }),
 }))
 
-function candidate(article: string, blockers: BomExtractionCandidate['blockers'] = ['routing-assignment-required']): BomExtractionCandidate {
+vi.mock('../queries/useBomDesignationMappings', () => ({
+  useBomDesignationMappings: () => ({
+    typesQuery: {
+      data: designationState.types,
+      error: designationState.error,
+      isPending: designationState.isPending,
+      isSuccess: !designationState.isPending && !designationState.error,
+    },
+    mappingsQuery: {
+      data: designationState.mappings,
+      error: designationState.error,
+      isPending: designationState.isPending,
+      isSuccess: !designationState.isPending && !designationState.error,
+    },
+    createMutation: designationState.createMutation,
+    updateMutation: designationState.updateMutation,
+    refresh: designationState.refresh,
+  }),
+}))
+
+function candidate(article: string, blockers: BomExtractionCandidate['blockers'] = ['routing-assignment-required'], designation = `Designation ${article}`): BomExtractionCandidate {
   return {
     article,
     blockers,
-    designation: `Designation ${article}`,
+    designation,
     drawingNumber: null,
     heightValue: null,
     importId: 'import-1',
@@ -98,6 +132,20 @@ function resetMocks() {
   ]
   routeOptionsState.error = null
   routeOptionsState.isPending = false
+  designationState.types = [
+    { id: 'type-plate', name: 'PLATE', sortOrder: 10 },
+    { id: 'type-pipe', name: 'PIPE', sortOrder: 20 },
+    { id: 'type-rod', name: 'ROD', sortOrder: 30 },
+    { id: 'type-section', name: 'Section', sortOrder: 40 },
+  ]
+  designationState.mappings = []
+  designationState.error = null
+  designationState.isPending = false
+  designationState.createMutation.isPending = false
+  designationState.createMutation.mutate.mockReset()
+  designationState.updateMutation.isPending = false
+  designationState.updateMutation.mutate.mockReset()
+  designationState.refresh.mockReset()
 }
 
 describe('BomExtractionPreview', () => {
@@ -203,5 +251,83 @@ describe('BomExtractionPreview', () => {
     expect(screen.getByText(/already exists in this production lot/i)).toBeInTheDocument()
     expect(screen.getByText(/request-execute-1/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /reload extraction status/i })).toBeInTheDocument()
+  })
+
+  test('shows active designation types and resolves exact first-token mappings without changing dimensions', () => {
+    resetMocks()
+    designationState.mappings = [
+      { id: 'mapping-akt', code: 'AKT', typeId: 'type-plate', sortOrder: 10 },
+      { id: 'mapping-ro', code: 'RO', typeId: 'type-pipe', sortOrder: 20 },
+      { id: 'mapping-rd', code: 'RD', typeId: 'type-rod', sortOrder: 30 },
+      { id: 'mapping-hea', code: 'HEA', typeId: 'type-section', sortOrder: 40 },
+    ]
+    render(<BomExtractionPreview candidates={[
+      candidate('A-1', undefined, 'AKT L 5/60/60/825'),
+      candidate('A-2', undefined, 'RO 48.3/3.2/6000'),
+      candidate('A-3', undefined, 'RD 25/6000'),
+      candidate('A-4', undefined, 'HEA 200/4500'),
+      candidate('A-5', undefined, 'ROAD 48/3000'),
+    ]} canExecute importId="import-1" lotId="lot-1" versionNumber={1} />)
+
+    expect(screen.getByText('Designation Type')).toBeInTheDocument()
+    const headers = screen.getAllByRole('columnheader').map((header) => header.textContent)
+    expect(headers.indexOf('Designation')).toBeLessThan(headers.indexOf('Designation Type'))
+    expect(headers.indexOf('Designation Type')).toBeLessThan(headers.indexOf('Dimensions'))
+    expect(screen.getByLabelText('Designation type for AKT')).toHaveValue('type-plate')
+    expect(screen.getByLabelText('Designation type for RO')).toHaveValue('type-pipe')
+    expect(screen.getByLabelText('Designation type for RD')).toHaveValue('type-rod')
+    expect(screen.getByLabelText('Designation type for HEA')).toHaveValue('type-section')
+    expect(screen.getByLabelText('Designation type for ROAD')).toHaveValue('')
+    expect(screen.getByText('AKT L 5/60/60/825')).toBeInTheDocument()
+    expect(screen.getAllByText(/Profile:/)).toHaveLength(5)
+  })
+
+  test('selecting and saving an unknown code resolves every visible row with that code', async () => {
+    resetMocks()
+    designationState.createMutation.mutate.mockImplementation((input: { code: string; typeId: string }, options: { onSuccess: (value: { id: string; typeId: string }) => void }) => {
+      options.onSuccess({ id: 'mapping-xyz', typeId: input.typeId })
+    })
+    const user = userEvent.setup()
+    render(<BomExtractionPreview candidates={[
+      candidate('A-1', undefined, 'XYZ 10/20/300'),
+      candidate('A-2', undefined, 'XYZ 9/40/500'),
+    ]} canExecute importId="import-1" lotId="lot-1" versionNumber={1} />)
+
+    const selects = screen.getAllByLabelText('Designation type for XYZ')
+    expect(selects[0]).toHaveValue('')
+    await user.selectOptions(selects[0]!, 'type-plate')
+    expect(screen.getAllByRole('button', { name: 'Save Mapping' })).toHaveLength(2)
+    await user.click(screen.getAllByRole('button', { name: 'Save Mapping' })[0]!)
+    expect(designationState.createMutation.mutate).toHaveBeenCalledWith({ code: 'XYZ', typeId: 'type-plate' }, expect.any(Object))
+    expect(screen.getAllByLabelText('Designation type for XYZ').every((select) => (select as HTMLSelectElement).value === 'type-plate')).toBe(true)
+  })
+
+  test('protects an existing mapping from supervisor edits and asks an admin to confirm an update', async () => {
+    resetMocks()
+    designationState.mappings = [{ id: 'mapping-akt', code: 'AKT', typeId: 'type-plate', sortOrder: 10 }]
+    const user = userEvent.setup()
+    const props = { candidates: [candidate('A-1', undefined, 'AKT L 5/60/60/825')], canExecute: true, importId: 'import-1', lotId: 'lot-1', versionNumber: 1 }
+    const { rerender } = render(<BomExtractionPreview {...props} canManageDesignationMappings canUpdateDesignationMappings={false} />)
+    expect(screen.getByLabelText('Designation type for AKT')).toBeDisabled()
+
+    designationState.updateMutation.mutate.mockImplementation((input: { mappingId: string; typeId: string }, options: { onSuccess: (value: { id: string; typeId: string }) => void }) => {
+      options.onSuccess({ id: input.mappingId, typeId: input.typeId })
+    })
+    rerender(<BomExtractionPreview {...props} canManageDesignationMappings canUpdateDesignationMappings />)
+    await user.selectOptions(screen.getByLabelText('Designation type for AKT'), 'type-pipe')
+    expect(screen.getByText(/update mapping for AKT from PLATE to PIPE/i)).toBeInTheDocument()
+    expect(designationState.updateMutation.mutate).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Update Mapping' }))
+    expect(designationState.updateMutation.mutate).toHaveBeenCalledWith({ mappingId: 'mapping-akt', typeId: 'type-pipe' }, expect.any(Object))
+  })
+
+  test('does not fall back to hardcoded designation types when mapping data cannot load', () => {
+    resetMocks()
+    designationState.error = new Error('Unavailable')
+    designationState.types = []
+    render(<BomExtractionPreview candidates={[candidate('A-1', undefined, 'XYZ 10/20/300')]} canExecute importId="import-1" lotId="lot-1" versionNumber={1} />)
+    expect(screen.getByText(/could not load designation types/i)).toBeInTheDocument()
+    expect(screen.getByText('Unavailable')).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'PLATE' })).toBeNull()
   })
 })

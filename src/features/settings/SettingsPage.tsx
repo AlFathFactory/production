@@ -15,6 +15,7 @@ import {
   useUpdateRouteAssignmentOption,
 } from './queries/routeAssignmentOptionsQueries'
 import type { BomRouteAssignmentOption, CreateBomRouteAssignmentOptionInput } from './types'
+import { ExcelMappingManager } from './components/ExcelMappingManager'
 
 const SYSTEM_ROUTES: readonly ProductionRoute[] = ['BEND', 'NO BEND', 'ROD', 'ROLLING', 'LADDER', 'OTHER']
 
@@ -66,6 +67,7 @@ export function SettingsPage() {
   const updateMutation = useUpdateRouteAssignmentOption()
   const deleteMutation = useDeleteRouteAssignmentOption()
   const [isManagingRoutes, setIsManagingRoutes] = useState(false)
+  const [isManagingExcelMapping, setIsManagingExcelMapping] = useState(false)
   const [editing, setEditing] = useState<BomRouteAssignmentOption | null | undefined>(undefined)
   const [deleting, setDeleting] = useState<BomRouteAssignmentOption | null>(null)
   const options = optionsQuery.data ?? []
@@ -85,10 +87,10 @@ export function SettingsPage() {
 
   return <section className="settings-page">
     <PageHeader title="Settings" description="Administration settings for BOM extraction." />
-    {!isManagingRoutes ? <div className="settings-cards">
+    {!isManagingRoutes && !isManagingExcelMapping ? <div className="settings-cards">
       <section className="settings-card"><h2>Route Assignment</h2><p>Manage the route options shown during BOM extraction.</p><Button onClick={() => setIsManagingRoutes(true)}>Manage Routes</Button></section>
-      <section className="settings-card"><h2>Excel Mapping</h2><p>Configure BOM Excel column mappings.</p><Button disabled variant="secondary">Coming Later</Button></section>
-    </div> : <section className="settings-routes">
+      <section className="settings-card"><h2>Excel Mapping</h2><p>Manage designation types and designation-code mappings.</p><Button onClick={() => setIsManagingExcelMapping(true)}>Manage Excel Mapping</Button></section>
+    </div> : isManagingExcelMapping ? <ExcelMappingManager onBack={() => setIsManagingExcelMapping(false)} /> : <section className="settings-routes">
       <div className="settings-routes__header"><div><h2>Route Assignment</h2><p>Labels are what users see. System routes remain fixed Production workflow values.</p></div><div><Button variant="secondary" onClick={() => setIsManagingRoutes(false)}>Back to Settings</Button><Button disabled={unusedRoutes.length === 0} onClick={() => setEditing(null)}>Add Route</Button></div></div>
       {optionsQuery.isPending ? <p role="status">Loading route options…</p> : optionsQuery.error ? <p role="alert">{optionsQuery.error.message} <Button variant="secondary" onClick={() => void optionsQuery.refetch()}>Retry</Button></p> : <div className="settings-routes__table-wrap"><table className="settings-routes__table"><thead><tr><th>Label</th><th>System Route</th><th>Status</th><th>Sort Order</th><th>Actions</th></tr></thead><tbody>
         {options.length === 0 ? <tr><td colSpan={5}>No route options are configured.</td></tr> : options.map((option) => <tr key={option.id}><td>{option.label}</td><td><code>{option.route}</code></td><td>{option.isActive ? 'Active' : 'Inactive'}</td><td>{option.sortOrder}</td><td><Button variant="secondary" onClick={() => setEditing(option)}>Edit</Button> <Button variant="danger" onClick={() => setDeleting(option)}>Delete</Button></td></tr>)}

@@ -4,6 +4,8 @@ import type {
   BomDimensionMappingRow,
   BomDimensionMappingLookupRow,
   BomImportRow,
+  BomDesignationMappingRow,
+  BomDesignationTypeRow,
   BomNodeRow,
   BomExtractionCandidateRow,
   BomReuseRow,
@@ -15,6 +17,8 @@ import type {
 import type {
   BomDimensionMapping,
   BomDimensionSaveResult,
+  BomDesignationMapping,
+  BomDesignationType,
   BomExtractionCandidate,
   BomImport,
   BomProductionExtractionResult,
@@ -195,6 +199,14 @@ export function mapBomDimensionSaveResult(value: Json): BomDimensionSaveResult {
     description: value.description,
     savedCount: value.saved_count,
   }
+}
+
+export function mapBomDesignationType(row: BomDesignationTypeRow): BomDesignationType {
+  return { id: row.id, name: row.name, isActive: row.is_active, sortOrder: Number(row.sort_order) }
+}
+
+export function mapBomDesignationMapping(row: BomDesignationMappingRow): BomDesignationMapping {
+  return { id: row.id, code: row.code, typeId: row.type_id, isActive: row.is_active, sortOrder: Number(row.sort_order) }
 }
 
 function numberOrZero(value: number | null): number {

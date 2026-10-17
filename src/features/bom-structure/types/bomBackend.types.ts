@@ -88,6 +88,29 @@ export interface BomDimensionMappingRow {
   updated_by: string | null
 }
 
+export interface BomDesignationTypeRow {
+  id: string
+  name: string
+  is_active: boolean
+  sort_order: number
+  created_by: string | null
+  updated_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface BomDesignationMappingRow {
+  id: string
+  code: string
+  type_id: string
+  is_active: boolean
+  sort_order: number
+  created_by: string | null
+  updated_by: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type BomDimensionMappingLookupRow = Omit<BomDimensionMappingRow, 'updated_by'> & {
   match_scope: string
 }

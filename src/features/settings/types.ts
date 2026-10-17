@@ -18,3 +18,31 @@ export interface CreateBomRouteAssignmentOptionInput {
 }
 
 export type UpdateBomRouteAssignmentOptionInput = Omit<CreateBomRouteAssignmentOptionInput, 'route'>
+
+export interface DesignationTypeSetting {
+  id: string
+  name: string
+  isActive: boolean
+  sortOrder: number
+}
+
+export interface DesignationMappingSetting {
+  id: string
+  code: string
+  typeId: string
+  isActive: boolean
+  sortOrder: number
+}
+
+export interface DesignationTypeInput {
+  name: string
+  isActive: boolean
+  sortOrder: number
+}
+
+export interface DesignationMappingInput {
+  code: string
+  typeId: string
+  isActive: boolean
+  sortOrder: number
+}

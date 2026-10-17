@@ -2,11 +2,14 @@ import { useMemo, useState } from 'react'
 
 import { Button } from '../../../components/ui/Button'
 import { Input } from '../../../components/ui/Input'
+import { Select } from '../../../components/ui/Select'
 import { useBomExtraction } from '../hooks/useBomExtraction'
 import { useBomExtractionStatus } from '../queries/usePersistedBom'
 import type { BomExtractionCandidate } from '../types/bomDomain.types'
 import { useRouteAssignmentOptions } from '../../settings/queries/routeAssignmentOptionsQueries'
 import type { ProductionRoute } from '../../production/types'
+import { designationCode } from '../designationTypes'
+import { useBomDesignationMappings } from '../queries/useBomDesignationMappings'
 
 const PAGE_SIZE = 25
 
@@ -28,20 +31,51 @@ interface BomExtractionPreviewProps {
   lotId: string | null
   versionNumber: number
   canExecute: boolean
+  canManageDesignationMappings?: boolean
+  canUpdateDesignationMappings?: boolean
 }
 
-export function BomExtractionPreview({ candidates, importId, versionNumber, canExecute }: BomExtractionPreviewProps) {
+interface PendingMappingUpdate {
+  code: string
+  mappingId: string
+  typeId: string
+}
+
+export function BomExtractionPreview({
+  candidates, importId, versionNumber, canExecute,
+  canManageDesignationMappings = canExecute,
+  canUpdateDesignationMappings = false,
+}: BomExtractionPreviewProps) {
   const [assignments, setAssignments] = useState<Record<string, ProductionRoute>>({})
+  const [designationSelections, setDesignationSelections] = useState<Record<string, string>>({})
+  const [savedMappings, setSavedMappings] = useState<Record<string, { id: string; typeId: string }>>({})
+  const [pendingMappingUpdate, setPendingMappingUpdate] = useState<PendingMappingUpdate | null>(null)
   const [confirmed, setConfirmed] = useState(false)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const statusQuery = useBomExtractionStatus(importId, true)
   const routeOptionsQuery = useRouteAssignmentOptions()
+  const designationMappings = useBomDesignationMappings()
   const extraction = useBomExtraction(importId)
   const status = statusQuery.data ?? null
   const alreadyExtracted = status !== null
   const activeRouteOptions = useMemo(() => (routeOptionsQuery.data ?? []).filter((option) => option.isActive), [routeOptionsQuery.data])
   const activeRoutes = useMemo(() => new Set(activeRouteOptions.map((option) => option.route)), [activeRouteOptions])
+  const designationTypes = designationMappings.typesQuery.data ?? []
+  const designationTypeById = useMemo(() => new Map(designationTypes.map((type) => [type.id, type])), [designationTypes])
+  const mappedDesignationByCode = useMemo(() => {
+    const rows = new Map<string, { id: string; typeId: string }>()
+    for (const mapping of designationMappings.mappingsQuery.data ?? []) {
+      if (!designationTypeById.has(mapping.typeId)) continue
+      const code = designationCode(mapping.code)
+      if (code && !rows.has(code)) rows.set(code, { id: mapping.id, typeId: mapping.typeId })
+    }
+    for (const [code, mapping] of Object.entries(savedMappings)) rows.set(code, mapping)
+    return rows
+  }, [designationMappings.mappingsQuery.data, designationTypeById, savedMappings])
+  const designationReady = designationMappings.typesQuery.isSuccess && designationMappings.mappingsQuery.isSuccess
+  const designationLoadError = designationMappings.typesQuery.error || designationMappings.mappingsQuery.error
+  const designationSaveError = designationMappings.createMutation.error || designationMappings.updateMutation.error
 
   const assignable = useMemo(
     () => candidates.map((candidate, index) => ({ candidate, index, key: assignmentKey(candidate) })),
@@ -81,6 +115,37 @@ export function BomExtractionPreview({ candidates, importId, versionNumber, canE
   const result = extraction.executeMutation.data ?? null
   const error = extraction.executeMutation.error instanceof Error ? extraction.executeMutation.error.message : null
 
+  const selectDesignationType = (code: string | null, typeId: string) => {
+    if (!code) return
+    const existing = mappedDesignationByCode.get(code)
+    if (existing && existing.typeId !== typeId && !canUpdateDesignationMappings) return
+    setDesignationSelections((current) => ({ ...current, [code]: typeId }))
+    setPendingMappingUpdate(existing && existing.typeId !== typeId
+      ? { code, mappingId: existing.id, typeId }
+      : null)
+  }
+
+  const saveNewDesignationMapping = (code: string) => {
+    const typeId = designationSelections[code]
+    if (!typeId) return
+    designationMappings.createMutation.mutate({ code, typeId }, {
+      onSuccess: (mapping) => setSavedMappings((current) => ({ ...current, [code]: { id: mapping.id, typeId: mapping.typeId } })),
+      onError: () => { void designationMappings.refresh() },
+    })
+  }
+
+  const updateDesignationMapping = () => {
+    if (!pendingMappingUpdate) return
+    const pending = pendingMappingUpdate
+    designationMappings.updateMutation.mutate({ mappingId: pending.mappingId, typeId: pending.typeId }, {
+      onSuccess: (mapping) => {
+        setSavedMappings((current) => ({ ...current, [pending.code]: { id: mapping.id, typeId: mapping.typeId } }))
+        setPendingMappingUpdate(null)
+      },
+      onError: () => { void designationMappings.refresh() },
+    })
+  }
+
   return <section className="bom-extraction-preview" aria-label="Production extraction preview">
     <h2>Production extraction preview</h2>
     {statusQuery.isPending ? <p role="status">Checking whether this version was already extracted…</p> : null}
@@ -95,6 +160,9 @@ export function BomExtractionPreview({ candidates, importId, versionNumber, canE
     {routeOptionsQuery.isPending ? <p role="status">Loading route assignment options…</p> : null}
     {routeOptionsQuery.error ? <p role="alert">Could not load route assignment options. Extraction is unavailable until this is resolved. <button type="button" onClick={() => void routeOptionsQuery.refetch()}>Retry</button></p> : null}
     {routeOptionsQuery.isSuccess && activeRouteOptions.length === 0 ? <p role="alert">No active Route Assignment options are configured. Contact an administrator.</p> : null}
+    {designationMappings.typesQuery.isPending || designationMappings.mappingsQuery.isPending ? <p role="status">Loading designation types…</p> : null}
+    {designationLoadError ? <p role="alert">Could not load designation types. No fallback values are available. <button type="button" onClick={() => void designationMappings.refresh()}>Retry</button></p> : null}
+    {designationSaveError ? <p role="alert">Could not save the designation mapping. The preview selection was kept; reload mappings before retrying.</p> : null}
 
     <label className="bom-extraction-preview__search">
       <span>Search candidates</span>
@@ -103,14 +171,40 @@ export function BomExtractionPreview({ candidates, importId, versionNumber, canE
     </label>
 
     <div className="bom-extraction-preview__scroll"><table className="bom-extraction-preview__table">
-      <thead><tr><th>Article</th><th>Designation</th><th>Dimensions</th><th>Material</th><th>Quantity</th><th>Unit weight (kg)</th><th>Total weight (kg)</th><th>Route assignment</th></tr></thead>
+      <thead><tr><th>Article</th><th>Designation</th><th>Designation Type</th><th>Dimensions</th><th>Material</th><th>Quantity</th><th>Unit weight (kg)</th><th>Total weight (kg)</th><th>Route assignment</th></tr></thead>
       <tbody>{visibleCandidates.map(({ candidate, key, index }) => {
         const rowKey = candidate.representativeNodeId ?? `${candidate.article ?? 'candidate'}-${index}`
         const blocked = hasNonRoutingBlocker(candidate.blockers)
         const selectedRoute = key ? assignments[key] : undefined
         const isUnavailable = Boolean(selectedRoute && !activeRoutes.has(selectedRoute))
+        const code = designationCode(candidate.designation)
+        const existingDesignationMapping = code ? mappedDesignationByCode.get(code) : undefined
+        const selectedDesignationType = code ? designationSelections[code] ?? existingDesignationMapping?.typeId ?? '' : ''
+        const canSelectDesignation = designationReady && Boolean(code) && canManageDesignationMappings
+          && (!existingDesignationMapping || canUpdateDesignationMappings)
+        const needsNewMappingSave = Boolean(code && selectedDesignationType && !existingDesignationMapping)
+        const needsUpdateConfirmation = pendingMappingUpdate?.code === code && Boolean(existingDesignationMapping)
         return <tr key={rowKey}>
           <td><strong>{candidate.article ?? '—'}</strong></td><td>{candidate.designation ?? '—'}</td>
+          <td>{designationLoadError ? <span role="alert">Unavailable</span>
+            : !code ? <span>Not available</span>
+              : <div className="bom-designation-type" data-state={existingDesignationMapping ? 'mapped' : selectedDesignationType ? 'manually-selected' : 'unmapped'}>
+                <Select className="bom-designation-type__select" aria-label={`Designation type for ${code}`} disabled={!canSelectDesignation}
+                  value={selectedDesignationType} onChange={(event) => selectDesignationType(code, event.target.value)}>
+                  <option value="">Select type</option>
+                  {designationTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}
+                </Select>
+                {needsNewMappingSave ? <Button type="button" variant="secondary" isLoading={designationMappings.createMutation.isPending}
+                  onClick={() => saveNewDesignationMapping(code)}>Save Mapping</Button> : null}
+                {needsUpdateConfirmation ? <span className="bom-designation-type__confirmation">
+                  Update mapping for {code} from {designationTypeById.get(existingDesignationMapping!.typeId)?.name ?? 'current type'} to {designationTypeById.get(selectedDesignationType)?.name ?? 'selected type'}?
+                  <Button type="button" variant="secondary" isLoading={designationMappings.updateMutation.isPending} onClick={updateDesignationMapping}>Update Mapping</Button>
+                  <Button type="button" variant="secondary" onClick={() => {
+                    setDesignationSelections((current) => { const next = { ...current }; delete next[code]; return next })
+                    setPendingMappingUpdate(null)
+                  }}>Cancel</Button>
+                </span> : null}
+              </div>}</td>
           <td>Profile: {candidate.profile ?? '—'} · L: {formatNumber(candidate.lengthValue)} · W: {formatNumber(candidate.widthValue)} · H: {formatNumber(candidate.heightValue)}</td>
           <td>{candidate.material ?? '—'}</td>
           <td className="bom-number">{formatNumber(candidate.totalQuantity)}</td>

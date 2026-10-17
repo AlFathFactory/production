@@ -88,6 +88,21 @@ export interface BomDimensionSaveResult {
   savedCount: number
 }
 
+export interface BomDesignationType {
+  id: string
+  name: string
+  isActive: boolean
+  sortOrder: number
+}
+
+export interface BomDesignationMapping {
+  id: string
+  code: string
+  typeId: string
+  isActive: boolean
+  sortOrder: number
+}
+
 export type PersistedBomSummary = BomSummary
 export type PersistedRolledUpBomPart = RolledUpBomPart
 

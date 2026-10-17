@@ -526,6 +526,18 @@ export interface Database {
         Update: { id?: string; code?: string | null; description?: string; token_index?: number; token_raw?: string; token_value?: number | null; role?: string; created_by?: string; created_at?: string; updated_at?: string; updated_by?: string | null }
         Relationships: []
       }
+      bom_designation_types: {
+        Row: { id: string; name: string; is_active: boolean; sort_order: number; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; name: string; is_active?: boolean; sort_order?: number; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; name?: string; is_active?: boolean; sort_order?: number; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      bom_designation_mappings: {
+        Row: { id: string; code: string; type_id: string; is_active: boolean; sort_order: number; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; code: string; type_id: string; is_active?: boolean; sort_order?: number; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; code?: string; type_id?: string; is_active?: boolean; sort_order?: number; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
     }
     Views: {
       bending_destination_inventory: {
@@ -829,6 +841,7 @@ export interface Database {
         Returns: Array<{ id: string; code: string | null; description: string; token_index: number; token_raw: string; token_value: number | null; role: string; match_scope: string; created_by: string; created_at: string; updated_at: string }>
       }
       save_bom_dimension_mapping: { Args: { p_code: string; p_description: string; p_assignments: Json }; Returns: Json }
+      resolve_bom_designation_type: { Args: { p_designation: string }; Returns: Array<{ mapping_id: string; type_id: string; code: string; type_name: string }> }
       get_bom_production_extraction_preview: { Args: { p_bom_import_id: string }; Returns: Array<Database['public']['Views']['bom_production_extraction_candidates']['Row']> }
       get_bom_production_extraction_status: { Args: { p_bom_import_id: string }; Returns: Json }
       extract_bom_to_production: { Args: { p_bom_import_id: string; p_assignments: Json; p_request_id: string }; Returns: Json }

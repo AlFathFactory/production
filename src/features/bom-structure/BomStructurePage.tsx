@@ -561,7 +561,7 @@ export function BomStructurePage() {
               </>
             ) : isBackendView && isCurrentSaved ? extractionQuery.isPending ? <p role="status">Loading extraction preview…</p>
                 : extractionQuery.error ? <p role="alert">Could not load extraction preview. <button type="button" onClick={() => void extractionQuery.refetch()}>Retry</button></p>
-                  : <BomExtractionPreview key={selectedImportId} candidates={extractionQuery.data ?? []} canExecute={canManageImports} importId={selectedImportId!} lotId={selectedImport?.lotId ?? null} versionNumber={selectedImport?.versionNumber ?? 0} /> : null}
+                  : <BomExtractionPreview key={selectedImportId} candidates={extractionQuery.data ?? []} canExecute={canManageImports} canManageDesignationMappings={canManageImports} canUpdateDesignationMappings={isAdmin} importId={selectedImportId!} lotId={selectedImport?.lotId ?? null} versionNumber={selectedImport?.versionNumber ?? 0} /> : null}
           </>
         ) : null}
         {activePreview && !isPersisted ? <div className="bom-local-only">Structure preview only · nodes not saved</div> : null}

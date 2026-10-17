@@ -3447,6 +3447,10 @@ button.hierarchy-list__select:hover,
 .settings-routes__table { border-collapse: collapse; min-width: 700px; width: 100%; }
 .settings-routes__table th, .settings-routes__table td { padding: 12px; border-bottom: 1px solid #e7edeb; text-align: left; }
 .settings-routes__table th { color: #56706c; background: #f6f9f7; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; }
+.settings-excel-mapping { gap: 18px; }
+.settings-excel-mapping__section { border-top: 1px solid var(--line); padding-top: 18px; }
+.settings-excel-mapping__section h3 { margin: 0; font-size: .95rem; }
+.settings-excel-mapping .settings-routes__header { margin-bottom: 12px; }
 .form-field__hint { margin: 6px 0 0; color: var(--muted); font-size: .78rem; }
 
 .users-workspace {

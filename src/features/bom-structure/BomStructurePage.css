@@ -423,7 +423,7 @@
 .bom-rollup__table td, .bom-extraction-preview__table td { padding: 12px 14px; border-bottom: 1px solid #edf1ef; color: var(--ink); font-size: 0.9rem; font-weight: 700; }
 .bom-rollup__table tbody tr:hover, .bom-extraction-preview__table tbody tr:hover { background: #f7faf8; }
 .bom-rollup__table td:first-child, .bom-extraction-preview__table td:first-child { color: var(--brand); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-.bom-extraction-preview__table { min-width: 1120px; }
+.bom-extraction-preview__table { min-width: 1320px; }
 .bom-rollup__pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 20px; color: var(--muted); font-size: .78rem; }
 .bom-rollup__pagination-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .bom-rollup__pagination-controls .button { min-height: 34px; padding-inline: 10px; font-size: .72rem; }
@@ -466,6 +466,11 @@
 .bom-extraction-preview__pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 12px; color: var(--muted); font-size: .78rem; }
 .bom-extraction-preview__pagination-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .bom-extraction-preview__pagination-controls .button { min-height: 34px; padding-inline: 10px; font-size: .72rem; }
+.bom-designation-type { display: grid; gap: 6px; min-width: 180px; }
+.bom-designation-type__select { min-width: 160px; min-height: 38px; padding: 8px 32px 8px 10px; border-color: var(--line); border-radius: 7px; font-size: .82rem; font-weight: 700; line-height: 1.25; }
+.bom-designation-type__select:disabled { cursor: not-allowed; opacity: .68; background: #f4f7f6; color: var(--muted); }
+.bom-designation-type .button { min-height: 30px; padding-inline: 8px; font-size: .72rem; justify-self: start; }
+.bom-designation-type__confirmation { display: grid; gap: 5px; color: var(--muted); font-size: .72rem; font-weight: 600; }
 .bom-pipeline-progress ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .bom-pipeline-progress li { display: grid; gap: 5px; border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; color: var(--ink); font-size: .72rem; }
 .bom-pipeline-progress li span { color: var(--muted); font-size: .64rem; font-weight: 800; text-transform: uppercase; }
